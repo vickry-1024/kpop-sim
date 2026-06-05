@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#FFFAFA">
+  <title>Kpop嫂子模拟器</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <!-- 应用容器 -->
+  <div id="app" class="app-container">
+
+    <!-- 页面内容区 -->
+    <main id="pages" class="pages-container">
+      <!-- 日程页 -->
+      <section id="page-schedule" class="page active">
+        <div class="page-header">
+          <h1 class="page-title">📅 日程</h1>
+          <p class="page-subtitle">安排你的行程</p>
+        </div>
+        <div class="page-content">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">📋</div>
+            <p class="placeholder-text">回合制行程系统</p>
+            <p class="placeholder-hint">将在阶段4实现</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 手机页 -->
+      <section id="page-phone" class="page">
+        <div class="page-header">
+          <h1 class="page-title">📱 手机</h1>
+          <p class="page-subtitle">你的社交中心</p>
+        </div>
+        <div class="page-content">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">📱</div>
+            <p class="placeholder-text">智能手机系统</p>
+            <p class="placeholder-hint">将在阶段5实现</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 我的页 -->
+      <section id="page-profile" class="page">
+        <div class="page-header">
+          <h1 class="page-title">👤 我的</h1>
+          <p class="page-subtitle">个人属性面板</p>
+        </div>
+        <div class="page-content">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">💎</div>
+            <p class="placeholder-text">角色属性系统</p>
+            <p class="placeholder-hint">将在阶段2-3实现</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 关系页 -->
+      <section id="page-relations" class="page">
+        <div class="page-header">
+          <h1 class="page-title">💜 关系</h1>
+          <p class="page-subtitle">查看你与爱豆的关系</p>
+        </div>
+        <div class="page-content">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">💜</div>
+            <p class="placeholder-text">关系面板</p>
+            <p class="placeholder-hint">将在阶段3实现</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 事件页 -->
+      <section id="page-events" class="page">
+        <div class="page-header">
+          <h1 class="page-title">🗂️ 事件</h1>
+          <p class="page-subtitle">剧情回顾与日志</p>
+        </div>
+        <div class="page-content">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">📖</div>
+            <p class="placeholder-text">事件日志系统</p>
+            <p class="placeholder-hint">将在阶段9实现</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav id="bottom-nav" class="bottom-nav">
+      <button class="nav-item active" data-page="schedule" aria-label="日程">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">日程</span>
+      </button>
+      <button class="nav-item" data-page="phone" aria-label="手机">
+        <span class="nav-icon">📱</span>
+        <span class="nav-label">手机</span>
+      </button>
+      <button class="nav-item" data-page="profile" aria-label="我的">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">我的</span>
+      </button>
+      <button class="nav-item" data-page="relations" aria-label="关系">
+        <span class="nav-icon">💜</span>
+        <span class="nav-label">关系</span>
+      </button>
+      <button class="nav-item" data-page="events" aria-label="事件">
+        <span class="nav-icon">🗂️</span>
+        <span class="nav-label">事件</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="js/app.js"></script>
+  <script src="js/router.js"></script>
+</body>
+</html>

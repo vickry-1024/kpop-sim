@@ -1,0 +1,81 @@
+/* CSS变量 — 全局设计令牌 */
+
+:root {
+  /* ===== 主色调 ===== */
+  --color-primary: #F8A5C2;
+  --color-primary-light: #FCE4EC;
+  --color-primary-dark: #D4687E;
+
+  /* ===== 日常模式（默认） ===== */
+  --bg-main: #FFFAFA;
+  --bg-card: #FFFFFF;
+  --bg-input: #F5F5F5;
+  --text-primary: #2D2D2D;
+  --text-secondary: #8E8E93;
+  --text-hint: #C7C7CC;
+  --border-color: #F0F0F0;
+
+  /* ===== 秘密模式 ===== */
+  --secret-bg: #1A1A2E;
+  --secret-card: #16213E;
+  --secret-text: #E0E0E0;
+  --secret-accent: #BB86FC;
+  --secret-warning: #CF6679;
+
+  /* ===== 状态色 ===== */
+  --color-danger: #FF4757;
+  --color-danger-light: #FFE0E3;
+  --color-warning: #FFA502;
+  --color-warning-light: #FFF3E0;
+  --color-safe: #2ED573;
+  --color-safe-light: #E8F8EF;
+
+  /* ===== 数值色 ===== */
+  --color-affection: #F8A5C2;   /* 好感度-粉 */
+  --color-stress: #A0A0A0;      /* 压力-灰 */
+  --color-suspicion: #FF6B6B;   /* 嫌疑度-红 */
+  --color-stamina: #4ECDC4;     /* 体力-青 */
+  --color-charm: #A78BFA;       /* 魅力-紫 */
+
+  /* ===== 间距系统 ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* ===== 圆角系统 ===== */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 25px;
+  --radius-full: 50%;
+
+  /* ===== 字号系统 ===== */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-xxl: 28px;
+
+  /* ===== 阴影系统 ===== */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-float: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-glow-pink: 0 0 12px rgba(248,165,194,0.3);
+
+  /* ===== 底部导航 ===== */
+  --nav-height: 56px;
+  --nav-icon-size: 24px;
+
+  /* ===== 安全区域 ===== */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* ===== 过渡 ===== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease-out;
+  --transition-slow: 500ms ease;
+}

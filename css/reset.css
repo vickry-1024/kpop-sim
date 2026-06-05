@@ -1,0 +1,71 @@
+/* CSS Reset — 统一各浏览器默认样式 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;  /* 防止iOS横屏时字体放大 */
+  -webkit-tap-highlight-color: transparent; /* 去除移动端点击高亮 */
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Pretendard", "Noto Sans SC", "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #2D2D2D;
+  background-color: #FFFAFA;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* 防止iOS橡皮筋效果导致页面弹跳 */
+  overscroll-behavior: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  /* 移动端触控优化 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  /* iOS输入框阴影去除 */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* 隐藏滚动条但保留滚动功能 */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
