@@ -50,6 +50,7 @@ Game.Actions = (() => {
       staminaCost: 8,
       effects: { affection: [4, 8], stress: [-8, -2] },
       needsTarget: true,
+      subType: 'chat',  // 弹出视频通话对话界面
       desc: '深夜视频通话，私密又温馨'
     },
 
@@ -95,7 +96,7 @@ Game.Actions = (() => {
     {
       id: 'fan-interact', category: 'social', name: '粉丝互动', icon: '💬',
       staminaCost: 10,
-      effects: { charm: [2, 4], stress: [0, 5] },
+      effects: { charm: [2, 4], stress: [0, 5], followers: [50, 150] },
       needsTarget: false,
       desc: '和粉丝互动，增加人气'
     },
@@ -129,6 +130,7 @@ Game.Actions = (() => {
       staminaCost: 12,
       effects: { affection: [6, 12], charm: [0, 2] },
       needsTarget: true,
+      subType: 'select',  // 弹出子选项（礼物类型）
       desc: '精心挑选一份礼物送给爱豆'
     },
     {
@@ -136,6 +138,7 @@ Game.Actions = (() => {
       staminaCost: 15,
       effects: { affection: [8, 15], suspicion: [3, 8], charm: [1, 3] },
       needsTarget: true,
+      subType: 'select',  // 弹出子选项（应援规模）
       desc: '给拍摄现场送咖啡车，场面大但容易引起注意'
     },
 
@@ -145,6 +148,7 @@ Game.Actions = (() => {
       staminaCost: 8,
       effects: { stress: [-5, 0], suspicion: [0, 2] },
       needsTarget: true,
+      subType: 'select',  // 弹出子选项（互动方式）
       desc: '刷刷爱豆的社交账号，了解近况'
     },
     {
@@ -152,6 +156,7 @@ Game.Actions = (() => {
       staminaCost: 12,
       effects: { suspicion: [3, 10], stress: [0, 5] },
       needsTarget: true,
+      subType: 'select',  // 弹出子选项（消息来源）
       desc: '通过人脉打听爱豆行程，有风险'
     },
 
@@ -203,62 +208,154 @@ Game.Actions = (() => {
     'sns-post': [
       { id: 'sns-lovestagram', label: '暗戳戳秀恩爱', icon: '💕',
         desc: '发一张只有你们懂的暗示照，粉丝会疯狂解码',
-        effectMods: { suspicion: [3, 8], stress: [-5, -2] } },
+        effectMods: { suspicion: [3, 8], stress: [-5, -2], followers: [50, 200], posts: [1, 1] } },
       { id: 'sns-fan', label: '以粉丝视角应援', icon: '📣',
         desc: '晒专辑、刷话题、宣传新歌，阳光正面',
-        effectMods: { charm: [2, 5], suspicion: [-1, 0] } },
+        effectMods: { charm: [2, 5], suspicion: [-1, 0], followers: [200, 500], posts: [1, 1] } },
       { id: 'sns-daily', label: '晒日常美照', icon: '🌸',
         desc: '发自拍和生活碎片，自然经营社交形象',
-        effectMods: { charm: [3, 6], suspicion: [0, 2] } }
+        effectMods: { charm: [3, 6], suspicion: [0, 2], followers: [100, 300], posts: [1, 1] } }
+    ],
+    gift: [
+      { id: 'gift-practical', label: '实用小物', icon: '🧤',
+        desc: '送条围巾或手套，温暖又贴心，不张扬',
+        effectMods: { affection: [1, 3], suspicion: [-2, 0] } },
+      { id: 'gift-romantic', label: '浪漫礼物', icon: '💐',
+        desc: '鲜花配手写卡片，浪漫满分但可能被队友看到',
+        effectMods: { affection: [3, 6], suspicion: [1, 4] } },
+      { id: 'gift-luxury', label: '贵重礼物', icon: '💎',
+        desc: '名牌包包或手表，出手大方但容易引人注意',
+        effectMods: { affection: [5, 10], suspicion: [3, 8], charm: [1, 3] } }
+    ],
+    'coffee-truck': [
+      { id: 'coffee-quiet', label: '低调小型应援', icon: '🤫',
+        desc: '以粉丝站名义低调送，只有咖啡和小零食',
+        effectMods: { affection: [2, 5], suspicion: [-1, 1] } },
+      { id: 'coffee-big', label: '高调大型应援', icon: '📣',
+        desc: '定制横幅+人形立牌+专属咖啡杯套，阵仗很大',
+        effectMods: { affection: [5, 9], suspicion: [5, 10], charm: [2, 4] } }
+    ],
+    'check-sns': [
+      { id: 'sns-lurk', label: '默默浏览不互动', icon: '👀',
+        desc: '只看看不留下痕迹，安全低调',
+        effectMods: { suspicion: [-2, 0], stress: [-3, 0] } },
+      { id: 'sns-engage', label: '点赞评论互动', icon: '💬',
+        desc: '积极点赞评论，爱豆可能会注意到你',
+        effectMods: { affection: [1, 3], suspicion: [1, 3] } },
+      { id: 'sns-stan', label: '开小号疯狂安利', icon: '🔥',
+        desc: '转发控评一条龙，沉浸式追星体验',
+        effectMods: { affection: [2, 5], suspicion: [0, 2], stress: [-5, -2] } }
+    ],
+    'ask-around': [
+      { id: 'ask-friend', label: '通过圈内朋友打听', icon: '👥',
+        desc: '找认识的圈内人问问，安全但信息有限',
+        effectMods: { suspicion: [1, 4], stress: [0, 3] } },
+      { id: 'ask-sasaeng', label: '找私生渠道', icon: '🕶️',
+        desc: '通过私生饭网络获取独家情报，高效但危险',
+        effectMods: { suspicion: [5, 12], stress: [-5, 0] } },
+      { id: 'ask-staff', label: '套工作人员的话', icon: '☕',
+        desc: '请工作人员喝咖啡顺便聊天，温和又有效',
+        effectMods: { suspicion: [0, 2], stress: [-2, 2] } }
     ]
   };
 
   // ===== 聊天对话剧本 =====
-  // 根据好感度阶段选择不同对话
+  // 按行动类型和好感度阶段组织
   const CHAT_DIALOGUES = {
-    low: {  // 好感度 < 30
-      messages: [
-        { from: 'idol', text: '嗯？突然找我有什么事吗？' },
-        { from: 'idol', text: '哦…就是想聊天啊。好吧，最近确实有点忙。' }
-      ],
-      replies: [
-        { id: 'chat-warm', label: '💜 温暖问候', text: '辛苦了～就是想问问你最近好不好',
-          effectMods: { affection: [1, 3], stress: [-3, 0] } },
-        { id: 'chat-funny', label: '😄 轻松闲聊', text: '就想找你聊聊天，没什么特别的事～',
-          effectMods: { affection: [2, 4], stress: [-5, -2] } },
-        { id: 'chat-cool', label: '😐 简短收尾', text: '嗯，确认你还好就行。先忙吧。',
-          effectMods: { affection: [-1, 1], stress: [0, 3] } }
-      ]
+    // 发消息聊天
+    chat: {
+      low: {
+        messages: [
+          { from: 'idol', text: '嗯？突然找我有什么事吗？' },
+          { from: 'idol', text: '哦…就是想聊天啊。好吧，最近确实有点忙。' }
+        ],
+        replies: [
+          { id: 'chat-warm', label: '💜 温暖问候', text: '辛苦了～就是想问问你最近好不好',
+            effectMods: { affection: [1, 3], stress: [-3, 0] } },
+          { id: 'chat-funny', label: '😄 轻松闲聊', text: '就想找你聊聊天，没什么特别的事～',
+            effectMods: { affection: [2, 4], stress: [-5, -2] } },
+          { id: 'chat-cool', label: '😐 简短收尾', text: '嗯，确认你还好就行。先忙吧。',
+            effectMods: { affection: [-1, 1], stress: [0, 3] } }
+        ]
+      },
+      mid: {
+        messages: [
+          { from: 'idol', text: '欧尼～怎么想起找我啦？' },
+          { from: 'idol', text: '我刚结束练习，累死了ㅠㅠ 看到你的消息瞬间精神了！' },
+          { from: 'idol', text: '你今天过得怎么样？' }
+        ],
+        replies: [
+          { id: 'chat-warm', label: '💜 温柔关心', text: '这么累啊，要多休息！我给你点了外卖～',
+            effectMods: { affection: [3, 5], stress: [-5, -2] } },
+          { id: 'chat-flirty', label: '😏 撩一下', text: '想你当然就找你啦，还需要理由吗？',
+            effectMods: { affection: [4, 7], stress: [-3, 0] } },
+          { id: 'chat-casual', label: '😊 日常分享', text: '我今天也不错～看了你昨天的舞台，超棒的！',
+            effectMods: { affection: [2, 4], stress: [-4, -1], charm: [0, 1] } }
+        ]
+      },
+      high: {
+        messages: [
+          { from: 'idol', text: '欧尼！！💜 正在想你你就发消息来了！' },
+          { from: 'idol', text: '今天一整天都在等你的消息呢…我是不是太粘人了？' },
+          { from: 'idol', text: '好想见你…下次什么时候能见面？' }
+        ],
+        replies: [
+          { id: 'chat-sweet', label: '💜 甜蜜回应', text: '我也好想你～很快就能见面了，等我！',
+            effectMods: { affection: [5, 8], stress: [-8, -3] } },
+          { id: 'chat-spicy', label: '🔥 更近一步', text: '这么想我？那今晚视频吧，想看你。',
+            effectMods: { affection: [6, 10], stress: [-5, 0] } },
+          { id: 'chat-plan', label: '📅 直接约下次', text: '那就这周末见面吧！我去找你～',
+            effectMods: { affection: [4, 7], stress: [-3, 0], charm: [1, 2] } }
+        ]
+      }
     },
-    mid: {  // 好感度 30-60
-      messages: [
-        { from: 'idol', text: '欧尼～怎么想起找我啦？' },
-        { from: 'idol', text: '我刚结束练习，累死了ㅠㅠ 看到你的消息瞬间精神了！' },
-        { from: 'idol', text: '你今天过得怎么样？' }
-      ],
-      replies: [
-        { id: 'chat-warm', label: '💜 温柔关心', text: '这么累啊，要多休息！我给你点了外卖～',
-          effectMods: { affection: [3, 5], stress: [-5, -2] } },
-        { id: 'chat-flirty', label: '😏 撩一下', text: '想你当然就找你啦，还需要理由吗？',
-          effectMods: { affection: [4, 7], stress: [-3, 0] } },
-        { id: 'chat-casual', label: '😊 日常分享', text: '我今天也不错～看了你昨天的舞台，超棒的！',
-          effectMods: { affection: [2, 4], stress: [-4, -1], charm: [0, 1] } }
-      ]
-    },
-    high: {  // 好感度 > 60
-      messages: [
-        { from: 'idol', text: '欧尼！！💜 正在想你你就发消息来了！' },
-        { from: 'idol', text: '今天一整天都在等你的消息呢…我是不是太粘人了？' },
-        { from: 'idol', text: '好想见你…下次什么时候能见面？' }
-      ],
-      replies: [
-        { id: 'chat-sweet', label: '💜 甜蜜回应', text: '我也好想你～很快就能见面了，等我！',
-          effectMods: { affection: [5, 8], stress: [-8, -3] } },
-        { id: 'chat-spicy', label: '🔥 更近一步', text: '这么想我？那今晚视频吧，想看你。',
-          effectMods: { affection: [6, 10], stress: [-5, 0] } },
-        { id: 'chat-plan', label: '📅 直接约下次', text: '那就这周末见面吧！我去找你～',
-          effectMods: { affection: [4, 7], stress: [-3, 0], charm: [1, 2] } }
-      ]
+    // 视频通话
+    videocall: {
+      low: {
+        messages: [
+          { from: 'idol', text: '哦？突然打视频过来…有什么事吗？' },
+          { from: 'idol', text: '（画面里看到爱豆素颜戴着眼镜，有点惊讶）' },
+          { from: 'idol', text: '等一下！我还没化妆…算了，反正你也看到了。' }
+        ],
+        replies: [
+          { id: 'vc-polite', label: '😊 礼貌回应', text: '打扰了～就是突然想看看你，不化妆也很好看',
+            effectMods: { affection: [2, 4], stress: [-3, 0] } },
+          { id: 'vc-casual', label: '😄 轻松聊天', text: '没事没事，素颜也好看！最近累不累？',
+            effectMods: { affection: [3, 5], stress: [-5, -2] } },
+          { id: 'vc-quick', label: '👋 简短通话', text: '啊抱歉打扰了，那我先挂啦，早点休息～',
+            effectMods: { affection: [-1, 1], stress: [0, 3] } }
+        ]
+      },
+      mid: {
+        messages: [
+          { from: 'idol', text: '欧尼～！（挥手）好开心你打过来！' },
+          { from: 'idol', text: '我刚洗完澡，头发还是湿的…（不好意思地笑）' },
+          { from: 'idol', text: '让我看看你～今天打扮得好漂亮！' }
+        ],
+        replies: [
+          { id: 'vc-sweet', label: '💜 甜蜜互动', text: '想你了嘛～看到你的脸就瞬间治愈了',
+            effectMods: { affection: [4, 7], stress: [-5, -2] } },
+          { id: 'vc-deep', label: '🌙 深夜谈心', text: '最近压力大吗？有什么想聊的都可以跟我说',
+            effectMods: { affection: [3, 6], stress: [-8, -3] } },
+          { id: 'vc-fun', label: '😆 搞笑逗乐', text: '你头发湿着好像一只落汤猫，可爱死了！',
+            effectMods: { affection: [5, 8], stress: [-3, 0] } }
+        ]
+      },
+      high: {
+        messages: [
+          { from: 'idol', text: '（秒接）欧尼！！我今天一直在等你的电话！' },
+          { from: 'idol', text: '我把灯调暗了，室友都睡了…所以只有我能看到你。' },
+          { from: 'idol', text: '（靠近镜头小声说）其实…我好想你现在就在我身边。' }
+        ],
+        replies: [
+          { id: 'vc-intimate', label: '💜 深情回应', text: '我也好想在你身边…很快就能见面了',
+            effectMods: { affection: [6, 10], stress: [-8, -3] } },
+          { id: 'vc-tease', label: '😏 撩拨一下', text: '这么想我啊？那想不想看我穿你送的那件…',
+            effectMods: { affection: [7, 12], stress: [-5, 0] } },
+          { id: 'vc-plan', label: '📅 定下次见面', text: '这周末有空吗？我去找你，就我们两个',
+            effectMods: { affection: [5, 8], stress: [-3, 0], charm: [1, 2] } }
+        ]
+      }
     }
   };
 
@@ -319,7 +416,14 @@ Game.Actions = (() => {
     getActionsByCategory,
     getGroupedActions,
     getSubChoices: (actionId) => SUB_CHOICES[actionId] || null,
-    getChatDialogue: (affection) => CHAT_DIALOGUES[getChatStage(affection)] || CHAT_DIALOGUES.low,
+    getChatDialogue: (actionId, affection) => {
+      const stage = getChatStage(affection);
+      const scripts = CHAT_DIALOGUES[actionId];
+      if (scripts && scripts[stage]) return scripts[stage];
+      // 降级：返回 chat 的对应阶段；再降级到 chat.low
+      if (scripts) return scripts.low || scripts[Object.keys(scripts)[0]];
+      return CHAT_DIALOGUES.chat ? (CHAT_DIALOGUES.chat[stage] || CHAT_DIALOGUES.chat.low) : null;
+    },
     CATEGORIES
   };
 

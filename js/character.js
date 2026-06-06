@@ -591,6 +591,11 @@ Game.Setup = (() => {
         suspicion: 0,
         stamina: 100,
         charm: 50
+      },
+      // 社交账号
+      social: {
+        followers: Game.State.getStartingFollowers(_playerData.identityTags),
+        posts: 0
       }
     };
 

@@ -373,6 +373,48 @@
   transition: width var(--transition-slow);
 }
 
+/* 社交账号信息 */
+.profile-social-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 0;
+}
+
+.profile-social-icon {
+  font-size: 24px;
+}
+
+.profile-social-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-social-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.profile-social-value {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+}
+
+.profile-social-posts {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+  flex-shrink: 0;
+}
+
+.profile-social-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+  margin-top: 4px;
+}
+
 /* 照片管理 */
 .photo-manage-item {
   padding: var(--spacing-sm) 0;

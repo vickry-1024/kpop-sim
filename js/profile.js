@@ -78,6 +78,26 @@ Game.Profile = (() => {
         </div>
       </div>
     `).join('');
+
+    // 社交账号信息
+    const social = Game.State.getSocialData();
+    const socialEl = document.getElementById('profile-social');
+    if (socialEl) {
+      const followerK = social.followers >= 10000
+        ? (social.followers / 10000).toFixed(1) + '万'
+        : social.followers.toLocaleString();
+      socialEl.innerHTML = `
+        <div class="profile-social-row">
+          <span class="profile-social-icon">📱</span>
+          <div class="profile-social-info">
+            <span class="profile-social-label">社交账号粉丝</span>
+            <span class="profile-social-value">${followerK}</span>
+          </div>
+          <span class="profile-social-posts">${social.posts} 条帖子</span>
+        </div>
+        <p class="profile-social-hint">粉丝越多，一举一动越容易被放大</p>
+      `;
+    }
   }
 
   /**

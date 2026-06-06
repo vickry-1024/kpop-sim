@@ -104,6 +104,64 @@ Game.State = (() => {
     autoSave();
   }
 
+  /**
+   * 修改社交账号粉丝数
+   * @param {number} delta - 变化量（正=涨粉，负=掉粉）
+   */
+  function addFollowers(delta) {
+    if (!Game.state.player.social) {
+      Game.state.player.social = { followers: 100, posts: 0 };
+    }
+    Game.state.player.social.followers = Math.max(0, Game.state.player.social.followers + Math.round(delta));
+    if (!Game.state.player.social.posts) Game.state.player.social.posts = 0;
+    autoSave();
+  }
+
+  /**
+   * 增加发帖计数
+   */
+  function incrementPosts() {
+    if (!Game.state.player.social) {
+      Game.state.player.social = { followers: 100, posts: 0 };
+    }
+    Game.state.player.social.posts = (Game.state.player.social.posts || 0) + 1;
+    autoSave();
+  }
+
+  /**
+   * 获取社交账号数据
+   * @returns {{ followers: number, posts: number }}
+   */
+  function getSocialData() {
+    const s = Game.state.player.social;
+    return s ? { followers: s.followers || 0, posts: s.posts || 0 } : { followers: 0, posts: 0 };
+  }
+
+  /**
+   * 根据身份标签计算起始粉丝数
+   * @param {string[]} identityTags - 身份标签数组
+   * @returns {number}
+   */
+  function getStartingFollowers(identityTags) {
+    if (!identityTags || identityTags.length === 0) return 500;
+    const tag = identityTags[0];
+    const map = {
+      '素人粉丝': 100,
+      '练习生': 2000,
+      '站姐': 5000,
+      '造型师': 800,
+      '化妆师': 800,
+      '记者': 3000,
+      '综艺PD': 3000,
+      '翻译': 500,
+      '青梅竹马': 300,
+      '学生': 200,
+      '运动教练': 1000,
+      '名门社交好友': 2000
+    };
+    return map[tag] || 500;
+  }
+
   // ===== 工具 =====
 
   function clamp(val) {
@@ -183,6 +241,14 @@ Game.State = (() => {
 
     // 补齐事件日志（阶段9使用）
     if (!data.eventLog) data.eventLog = [];
+
+    // 补齐社交账号数据
+    if (!data.player.social) {
+      data.player.social = {
+        followers: getStartingFollowers(data.player.identityTags || []),
+        posts: 0
+      };
+    }
 
     // 补齐对话历史摘要（阶段6使用）
     if (!data.conversationSummaries) data.conversationSummaries = [];
@@ -266,6 +332,10 @@ Game.State = (() => {
     addStamina,
     addCharm,
     setRelationshipStage,
+    addFollowers,
+    incrementPosts,
+    getSocialData,
+    getStartingFollowers,
     getSaveSummaries,
     loadGame,
     deleteSave,

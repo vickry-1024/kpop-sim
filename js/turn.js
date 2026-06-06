@@ -146,7 +146,15 @@ Game.Turn = (() => {
       if (rawDelta === 0) return; // 无变化则跳过
 
       // 应用身份修正
-      const delta = applyIdentityModifier(rawDelta, key, mods);
+      let delta = applyIdentityModifier(rawDelta, key, mods);
+
+      // 粉丝数对嫌疑度加成（粉丝越多越容易被盯上）
+      if (key === 'suspicion' && delta > 0) {
+        const followers = Game.state.player.social ? Game.state.player.social.followers : 0;
+        const followerMult = getFollowerSuspicionMultiplier(followers);
+        delta = Math.round(delta * followerMult);
+      }
+
       if (delta === 0) return;
 
       // 根据key调用对应的数值修改函数
@@ -173,6 +181,13 @@ Game.Turn = (() => {
         case 'charm':
           Game.State.addCharm(delta);
           log.push({ label: '魅力', delta: delta });
+          break;
+        case 'followers':
+          Game.State.addFollowers(delta);
+          log.push({ label: '粉丝数', delta: delta });
+          break;
+        case 'posts':
+          Game.State.incrementPosts();
           break;
       }
     });
@@ -467,7 +482,7 @@ Game.Turn = (() => {
 
     const idolName = idol.nickname || idol.name;
     const affection = idol.stats.affection || 0;
-    const dialogue = Game.Actions.getChatDialogue(affection);
+    const dialogue = Game.Actions.getChatDialogue(actionId, affection);
 
     const modal = document.getElementById('chat-modal');
     const title = document.getElementById('chat-modal-title');
@@ -520,7 +535,7 @@ Game.Turn = (() => {
     if (!action || !idol) return;
 
     const affection = idol.stats.affection || 0;
-    const dialogue = Game.Actions.getChatDialogue(affection);
+    const dialogue = Game.Actions.getChatDialogue(actionId, affection);
     const reply = dialogue.replies.find(r => r.id === replyId);
     if (!reply) return;
 
@@ -655,7 +670,15 @@ Game.Turn = (() => {
       const rawDelta = randomInRange(range[0], range[1]);
       if (rawDelta === 0) return;
 
-      const delta = applyIdentityModifier(rawDelta, key, mods);
+      let delta = applyIdentityModifier(rawDelta, key, mods);
+
+      // 粉丝数对嫌疑度加成（粉丝越多越容易被盯上）
+      if (key === 'suspicion' && delta > 0) {
+        const followers = Game.state.player.social ? Game.state.player.social.followers : 0;
+        const followerMult = getFollowerSuspicionMultiplier(followers);
+        delta = Math.round(delta * followerMult);
+      }
+
       if (delta === 0) return;
 
       switch (key) {
@@ -682,10 +705,32 @@ Game.Turn = (() => {
           Game.State.addCharm(delta);
           log.push({ label: '魅力', delta: delta });
           break;
+        case 'followers':
+          // 涨粉/掉粉
+          Game.State.addFollowers(delta);
+          log.push({ label: '粉丝数', delta: delta });
+          break;
+        case 'posts':
+          // 发帖计数（不显示在效果日志中）
+          Game.State.incrementPosts();
+          break;
       }
     });
 
     return log;
+  }
+
+  /**
+   * 根据粉丝数获取嫌疑度倍率
+   * 粉丝越多，一举一动越容易被放大解读
+   * @param {number} followers
+   * @returns {number}
+   */
+  function getFollowerSuspicionMultiplier(followers) {
+    if (followers >= 100000) return 2.0;
+    if (followers >= 10000) return 1.5;
+    if (followers >= 1000) return 1.2;
+    return 1.0;
   }
 
   /**
@@ -697,7 +742,8 @@ Game.Turn = (() => {
       stress: '压力',
       suspicion: '嫌疑',
       stamina: '体力',
-      charm: '魅力'
+      charm: '魅力',
+      followers: '粉丝'
     };
     return map[key] || key;
   }
