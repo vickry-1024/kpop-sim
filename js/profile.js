@@ -11,6 +11,7 @@ Game.Profile = (() => {
     if (!Game.state.initialized) return;
     renderPlayerInfo();
     renderStats();
+    renderApiSettings();
     renderPhotoManagement();
   }
 
@@ -286,7 +287,141 @@ Game.Profile = (() => {
     Game.State.autoSave();
   }
 
-  // ===== 初始化 =====
+  // ===== API Key 设置 =====
+
+  /**
+   * 渲染API Key设置区域
+   */
+  function renderApiSettings() {
+    const container = document.getElementById('profile-api-settings');
+    if (!container) return;
+
+    const hasPlayerKey = Game.Storage.hasApiKey();
+    const hasAnyKey = Game.API ? Game.API.hasAnyKey() : false;
+    const stats = Game.API ? Game.API.getUsageStats() : null;
+
+    let statusHtml = '';
+    if (hasAnyKey) {
+      const source = Game.Storage.hasApiKey() ? '自定义Key' : '默认Key';
+      statusHtml = '<span class="profile-api-status profile-api-status-active">● 已启用 (' + source + ')</span>';
+    } else {
+      statusHtml = '<span class="profile-api-status profile-api-status-inactive">○ 未启用 — 使用预设对话</span>';
+    }
+
+    container.innerHTML = `
+      <h3 class="profile-section-title">🔑 AI对话设置</h3>
+      <p class="profile-section-desc">接入DeepSeek API让爱豆对话更真实自然</p>
+
+      <div style="margin-top: var(--spacing-sm);">
+        ${statusHtml}
+      </div>
+
+      <div style="margin-top: var(--spacing-sm);">
+        <input type="password"
+               id="profile-api-key-input"
+               class="setup-input"
+               placeholder="${hasPlayerKey ? '已设置自定义Key（输入新Key覆盖）' : '输入你的DeepSeek API Key...'}"
+               maxlength="64"
+               autocomplete="off"
+               style="width:100%; box-sizing:border-box;">
+        <div style="display:flex; gap: var(--spacing-xs); margin-top: var(--spacing-xs);">
+          <button class="btn btn-primary btn-sm" onclick="Game.Profile.saveApiKey()" style="flex:1;">
+            💾 保存Key
+          </button>
+          ${hasPlayerKey ? `
+            <button class="btn btn-secondary btn-sm" onclick="Game.Profile.clearApiKey()">
+              🗑️ 清除
+            </button>
+          ` : ''}
+          <button class="btn btn-secondary btn-sm" onclick="Game.Profile.testApiConnection()">
+            🔍 测试
+          </button>
+        </div>
+        ${stats ? `
+          <p style="font-size: var(--font-size-xs); color: var(--text-hint); margin-top: 4px;">
+            📊 今日调用：${stats.dailyCalls}/${stats.maxDailyCalls}
+          </p>
+        ` : ''}
+        <p style="font-size: var(--font-size-xs); color: var(--text-hint); margin-top: 4px;">
+          没有Key？访问 <a href="https://platform.deepseek.com" target="_blank" style="color: var(--color-primary);">platform.deepseek.com</a> 获取（新用户有免费额度）
+        </p>
+      </div>
+    `;
+  }
+
+  /**
+   * 保存API Key
+   */
+  function saveApiKey() {
+    const input = document.getElementById('profile-api-key-input');
+    if (!input) return;
+
+    const key = input.value.trim();
+    if (!key) {
+      alert('请输入API Key');
+      return;
+    }
+
+    // 简单验证：DeepSeek Key 通常以 sk- 开头
+    if (!key.startsWith('sk-')) {
+      if (!confirm('API Key通常以"sk-"开头，你输入的似乎不是标准格式。确定保存吗？')) {
+        return;
+      }
+    }
+
+    Game.Storage.saveApiKey(key);
+    input.value = '';
+    renderApiSettings();
+    console.log('[Profile] API Key已保存');
+  }
+
+  /**
+   * 清除自定义API Key
+   */
+  function clearApiKey() {
+    if (!confirm('确定要清除自定义API Key吗？游戏将使用默认Key或预设对话。')) {
+      return;
+    }
+    localStorage.removeItem('kpop-sim:api-key');
+    renderApiSettings();
+    console.log('[Profile] API Key已清除');
+  }
+
+  /**
+   * 测试API连接
+   */
+  async function testApiConnection() {
+    if (!Game.API) {
+      alert('API模块未加载');
+      return;
+    }
+
+    // 如果输入框有内容，先保存
+    const input = document.getElementById('profile-api-key-input');
+    if (input && input.value.trim()) {
+      Game.Storage.saveApiKey(input.value.trim());
+      input.value = '';
+    }
+
+    const btn = document.querySelector('#profile-api-settings .btn');
+    if (btn) {
+      btn.textContent = '⏳ 测试中...';
+      btn.disabled = true;
+    }
+
+    try {
+      const result = await Game.API.testConnection();
+      alert(result.message);
+      renderApiSettings();
+    } catch (e) {
+      alert('测试失败: ' + e.message);
+    } finally {
+      if (btn) {
+        btn.textContent = '🔍 测试';
+        btn.disabled = false;
+      }
+    }
+  }
 
   function init() {
     // 监听选项卡切换，切换到"我的"时自动刷新
@@ -304,7 +439,10 @@ Game.Profile = (() => {
     handleWallpaperChange,
     removeWallpaper,
     handleAvatarChange,
-    removeAvatar
+    removeAvatar,
+    saveApiKey,
+    clearApiKey,
+    testApiConnection
   };
 
 })();

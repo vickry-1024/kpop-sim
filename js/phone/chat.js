@@ -156,7 +156,7 @@ Game.PhoneChat = (() => {
           </div>
           <div class="chat-custom-input-row">
             <textarea class="chat-custom-input" id="chat-custom-input"
-                      placeholder="输入消息...（API接入后可用）" rows="1"
+                      placeholder="输入消息..." rows="1"
                       onkeydown="Game.PhoneChat.handleInputKey(event, ${idolIndex}, '${phoneType}')"></textarea>
             <button class="chat-send-btn" onclick="Game.PhoneChat.sendCustomMessage(${idolIndex}, '${phoneType}')">
               ↑
@@ -244,7 +244,7 @@ Game.PhoneChat = (() => {
 
     // 模拟延迟后爱豆回复
     setTimeout(async () => {
-      const response = generateIdolReply(idol, reply);
+      const response = await generateIdolReply(idol, reply);
       await addMessage(idolIndex, phoneType, 'idol', response);
 
       // 刷新快捷回复
@@ -390,7 +390,7 @@ Game.PhoneChat = (() => {
   function getGreeting(idol) {
     const aff = idol.stats.affection || 0;
     if (aff >= 60) {
-      return '欧尼！💜 刚想给你发消息你就来了！我们是不是有心电感应？';
+      return Game.Actions.getHonorific(idol.gender) + '！💜 刚想给你发消息你就来了！我们是不是有心电感应？';
     } else if (aff >= 30) {
       return '啊，是你呀～最近经常看到你呢。有什么事吗？';
     } else {
@@ -399,14 +399,37 @@ Game.PhoneChat = (() => {
   }
 
   /**
-   * 根据玩家回复生成爱豆回复（预设逻辑，后续API替换）
+   * 根据玩家回复生成爱豆回复（优先AI，降级预设）
+   * @param {Object} idol - 爱豆对象
+   * @param {Object} playerReply - 玩家回复 {id, text, effectMods}
+   * @returns {Promise<string>} 爱豆回复文本
    */
-  function generateIdolReply(idol, playerReply) {
-    const aff = idol.stats.affection || 0;
-    const idolName = idol.nickname || idol.name;
+  async function generateIdolReply(idol, playerReply) {
     const text = playerReply.text || '';
 
-    // 根据好感度和玩家消息内容选择合适的回复
+    // 尝试使用AI生成回复
+    if (Game.API && Game.API.hasAnyKey()) {
+      try {
+        // 获取对话历史
+        const idolIndex = Game.state.idols.indexOf(idol);
+        const phoneType = (Game.state.player.secretPhone
+          && Game.state.player.secretPhone.idolIndex === idolIndex)
+          ? 'secret' : 'main';
+        const key = 'chat-' + phoneType + '-' + idolIndex;
+        const history = await Game.Storage.loadChatHistory(key) || [];
+
+        const aiReply = await Game.API.generateChatReply(idol, text, history);
+        if (aiReply && aiReply.trim()) {
+          return aiReply.trim();
+        }
+      } catch (e) {
+        console.log('[PhoneChat] AI回复失败，使用预设:', e.message);
+      }
+    }
+
+    // 降级：预设回复逻辑
+    const aff = idol.stats.affection || 0;
+
     if (aff >= 60) {
       const replies = [
         '我也想见你！这周末我应该有空～',
@@ -420,7 +443,7 @@ Game.PhoneChat = (() => {
       const replies = [
         '谢谢关心！练习是有点累，但有粉丝支持就很开心',
         '哈哈你也看了那个直拍！我自己回看觉得还可以更好',
-        '有好好吃饭的！经纪人欧尼管得很严ㅋㅋ',
+        '有好好吃饭的！经纪人' + Game.Actions.getHonorific(idol.gender) + '管得很严ㅋㅋ',
         '推荐的话...最近很喜欢听IU前辈的歌，你呢？',
         '你真的很温柔呢，每次聊天都让人心情很好'
       ];

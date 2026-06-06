@@ -1219,3 +1219,21 @@
   color: var(--text-secondary);
   font-style: italic;
 }
+
+/* ===== API Key 设置区域 ===== */
+.profile-api-status {
+  display: inline-block;
+  font-size: var(--font-size-sm);
+  padding: 2px 8px;
+  border-radius: var(--border-radius);
+}
+
+.profile-api-status-active {
+  color: #2e7d32;
+  background: #e8f5e9;
+}
+
+.profile-api-status-inactive {
+  color: var(--text-hint);
+  background: var(--bg-hint, #f5f5f5);
+}

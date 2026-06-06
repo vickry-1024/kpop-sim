@@ -630,10 +630,13 @@ Game.Setup = (() => {
     Game.State.autoSave();
     console.log('[Setup] 新游戏使用存档槽' + slot);
 
-    // 4. 隐藏所有覆盖层，显示游戏主界面
+    // 4. 异步分析身份（不阻塞游戏启动）
+    maybeAnalyzeIdentity();
+
+    // 5. 隐藏所有覆盖层，显示游戏主界面
     showGameUI();
 
-    // 5. 刷新各面板
+    // 6. 刷新各面板
     if (Game.Profile) {
       Game.Profile.refresh();
     }
@@ -645,6 +648,52 @@ Game.Setup = (() => {
     }
 
     console.log('[Setup] 游戏开始！玩家：' + _playerData.name + '，攻略爱豆：' + _idolsData.length + '位');
+  }
+
+  /**
+   * 异步分析玩家身份，获取数值修正（不阻塞游戏启动）
+   * AI可用时调用API分析，否则使用预设表
+   */
+  async function maybeAnalyzeIdentity() {
+    if (!Game.API) {
+      console.log('[Setup] API模块未加载，跳过身份分析');
+      return;
+    }
+
+    try {
+      const player = Game.state.player;
+      const identityText = player.identityTags.join('、')
+        + (player.identityCustom ? ' / ' + player.identityCustom : '');
+      const personalityText = player.personalityTags.join('、')
+        + (player.personalityCustom ? ' / ' + player.personalityCustom : '');
+
+      console.log('[Setup] 开始身份分析: ' + identityText);
+
+      const modifiers = await Game.API.analyzeIdentity(identityText, personalityText);
+      if (modifiers) {
+        // 初始化 identityModifiers（如果还没有）
+        if (!player.identityModifiers) {
+          player.identityModifiers = {
+            affectionBonus: 0,
+            suspicionMod: 0,
+            staminaMod: 0,
+            charmBonus: 0,
+            stressResist: 0
+          };
+        }
+        // 应用分析结果
+        player.identityModifiers.affectionBonus = modifiers.affectionBonus || 0;
+        player.identityModifiers.suspicionMod = modifiers.suspicionMod || 0;
+        player.identityModifiers.staminaMod = modifiers.staminaMod || 0;
+        player.identityModifiers.charmBonus = modifiers.charmBonus || 0;
+        player.identityModifiers.stressResist = modifiers.stressResist || 0;
+
+        Game.State.autoSave();
+        console.log('[Setup] 身份分析完成，修正值已应用:', player.identityModifiers);
+      }
+    } catch (e) {
+      console.warn('[Setup] 身份分析失败，使用默认修正值:', e.message);
+    }
   }
 
   // ===== 演示模式 =====

@@ -280,7 +280,7 @@ Game.Actions = (() => {
       },
       mid: {
         messages: [
-          { from: 'idol', text: '欧尼～怎么想起找我啦？' },
+          { from: 'idol', text: '{honorific}～怎么想起找我啦？' },
           { from: 'idol', text: '我刚结束练习，累死了ㅠㅠ 看到你的消息瞬间精神了！' },
           { from: 'idol', text: '你今天过得怎么样？' }
         ],
@@ -295,7 +295,7 @@ Game.Actions = (() => {
       },
       high: {
         messages: [
-          { from: 'idol', text: '欧尼！！💜 正在想你你就发消息来了！' },
+          { from: 'idol', text: '{honorific}！！💜 正在想你你就发消息来了！' },
           { from: 'idol', text: '今天一整天都在等你的消息呢…我是不是太粘人了？' },
           { from: 'idol', text: '好想见你…下次什么时候能见面？' }
         ],
@@ -328,7 +328,7 @@ Game.Actions = (() => {
       },
       mid: {
         messages: [
-          { from: 'idol', text: '欧尼～！（挥手）好开心你打过来！' },
+          { from: 'idol', text: '{honorific}～！（挥手）好开心你打过来！' },
           { from: 'idol', text: '我刚洗完澡，头发还是湿的…（不好意思地笑）' },
           { from: 'idol', text: '让我看看你～今天打扮得好漂亮！' }
         ],
@@ -343,7 +343,7 @@ Game.Actions = (() => {
       },
       high: {
         messages: [
-          { from: 'idol', text: '（秒接）欧尼！！我今天一直在等你的电话！' },
+          { from: 'idol', text: '（秒接）{honorific}！！我今天一直在等你的电话！' },
           { from: 'idol', text: '我把灯调暗了，室友都睡了…所以只有我能看到你。' },
           { from: 'idol', text: '（靠近镜头小声说）其实…我好想你现在就在我身边。' }
         ],
@@ -409,6 +409,16 @@ Game.Actions = (() => {
     })).filter(g => g.actions.length > 0);
   }
 
+  /**
+   * 根据爱豆性别返回正确的韩语敬称
+   * @param {string} gender - 'male' | 'female'
+   * @returns {string} '欧巴' | '欧尼'
+   */
+  function getHonorific(gender) {
+    if (gender === 'male') return '欧巴';
+    return '欧尼'; // 默认女爱豆
+  }
+
   // ===== 公开API =====
   return {
     getAction,
@@ -416,14 +426,31 @@ Game.Actions = (() => {
     getActionsByCategory,
     getGroupedActions,
     getSubChoices: (actionId) => SUB_CHOICES[actionId] || null,
-    getChatDialogue: (actionId, affection) => {
+    getChatDialogue: (actionId, affection, gender) => {
       const stage = getChatStage(affection);
       const scripts = CHAT_DIALOGUES[actionId];
-      if (scripts && scripts[stage]) return scripts[stage];
-      // 降级：返回 chat 的对应阶段；再降级到 chat.low
-      if (scripts) return scripts.low || scripts[Object.keys(scripts)[0]];
-      return CHAT_DIALOGUES.chat ? (CHAT_DIALOGUES.chat[stage] || CHAT_DIALOGUES.chat.low) : null;
+      let dialogue;
+      if (scripts && scripts[stage]) {
+        dialogue = scripts[stage];
+      } else if (scripts) {
+        dialogue = scripts.low || scripts[Object.keys(scripts)[0]];
+      } else {
+        dialogue = CHAT_DIALOGUES.chat ? (CHAT_DIALOGUES.chat[stage] || CHAT_DIALOGUES.chat.low) : null;
+      }
+      // 根据爱豆性别替换敬称占位符
+      if (dialogue && gender) {
+        dialogue = JSON.parse(JSON.stringify(dialogue)); // 深拷贝，避免修改原模板
+        const honorific = getHonorific(gender);
+        dialogue.messages.forEach(msg => {
+          msg.text = msg.text.replace(/\{honorific\}/g, honorific);
+        });
+        dialogue.replies.forEach(reply => {
+          reply.text = reply.text.replace(/\{honorific\}/g, honorific);
+        });
+      }
+      return dialogue;
     },
+    getHonorific,
     CATEGORIES
   };
 

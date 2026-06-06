@@ -485,7 +485,7 @@ Game.Turn = (() => {
 
     const idolName = idol.nickname || idol.name;
     const affection = idol.stats.affection || 0;
-    const dialogue = Game.Actions.getChatDialogue(actionId, affection);
+    const dialogue = Game.Actions.getChatDialogue(actionId, affection, idol.gender);
 
     const modal = document.getElementById('chat-modal');
     const title = document.getElementById('chat-modal-title');
@@ -538,7 +538,7 @@ Game.Turn = (() => {
     if (!action || !idol) return;
 
     const affection = idol.stats.affection || 0;
-    const dialogue = Game.Actions.getChatDialogue(actionId, affection);
+    const dialogue = Game.Actions.getChatDialogue(actionId, affection, idol.gender);
     const reply = dialogue.replies.find(r => r.id === replyId);
     if (!reply) return;
 
