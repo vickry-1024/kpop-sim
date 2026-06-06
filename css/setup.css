@@ -27,7 +27,7 @@
   display: none;
   flex: 1;
   flex-direction: column;
-  padding: var(--spacing-lg) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-md);
   overflow-y: auto;
   animation: setupStepIn 300ms ease-out;
 }
@@ -54,8 +54,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
-  min-height: 36px;
+  margin-bottom: var(--spacing-md);
+  min-height: 32px;
 }
 
 .setup-back {
@@ -155,7 +155,7 @@
 .setup-desc {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 /* ===== 输入框 ===== */
@@ -194,7 +194,7 @@
 }
 
 .setup-section {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .setup-label {
@@ -499,12 +499,12 @@
 .setup-actions {
   position: sticky;
   bottom: 0;
-  padding: var(--spacing-md) 0;
-  padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
+  padding: var(--spacing-sm) 0;
+  padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(to top, var(--bg-main) 80%, transparent);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 
 .btn-block {
