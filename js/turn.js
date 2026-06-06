@@ -156,6 +156,11 @@ Game.Turn = (() => {
         const followers = Game.state.player.social ? Game.state.player.social.followers : 0;
         const followerMult = getFollowerSuspicionMultiplier(followers);
         delta = Math.round(delta * followerMult);
+        // 检查经纪人帮助隐瞒buff（嫌疑度增幅减半）
+        if (targetIndex !== null && targetIndex !== undefined && Game.State.hasActiveBuff('suspicionRateHalved', targetIndex)) {
+          delta = Math.round(delta / 2);
+          console.log('[Turn] 经纪人buff生效：嫌疑度增幅减半（idolIndex=' + targetIndex + '）');
+        }
       }
 
       if (delta === 0) return;
@@ -289,6 +294,15 @@ Game.Turn = (() => {
 
     // 8. 随机爱豆主动发消息（fire-and-forget，不阻塞）
     _triggerProactiveMessages();
+
+    // 9. 好友主动发消息
+    _triggerFriendProactiveMessages();
+
+    // 10. 经纪人介入检查
+    _checkManagerInterventions();
+
+    // 11. 经纪人跟进消息
+    _triggerManagerFollowups();
 
     console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
   }
@@ -686,6 +700,11 @@ Game.Turn = (() => {
         const followers = Game.state.player.social ? Game.state.player.social.followers : 0;
         const followerMult = getFollowerSuspicionMultiplier(followers);
         delta = Math.round(delta * followerMult);
+        // 检查经纪人帮助隐瞒buff（嫌疑度增幅减半）
+        if (targetIndex !== null && targetIndex !== undefined && Game.State.hasActiveBuff('suspicionRateHalved', targetIndex)) {
+          delta = Math.round(delta / 2);
+          console.log('[Turn] 经纪人buff生效：嫌疑度增幅减半（idolIndex=' + targetIndex + '）');
+        }
       }
 
       if (delta === 0) return;
@@ -1068,6 +1087,187 @@ Game.Turn = (() => {
       sentCount++;
     }
   }
+
+
+  // ===== 好友主动消息 =====
+
+  /**
+   * 回合结束时随机触发好友主动发消息
+   */
+  function _triggerFriendProactiveMessages() {
+    if (!Game.PhoneChat || !Game.PhoneChat.tryFriendProactiveMessage) return;
+
+    const friends = Game.state.friends || [];
+    if (friends.length === 0) return;
+
+    // 打乱顺序
+    const shuffled = [...friends].sort(() => Math.random() - 0.5);
+    let sentCount = 0;
+    const maxPerTurn = 2;
+
+    for (const friend of shuffled) {
+      if (sentCount >= maxPerTurn) break;
+      Game.PhoneChat.tryFriendProactiveMessage(friend.id).then(sent => {
+        if (sent) console.log('[Turn] 好友' + friend.name + ' 主动发来消息');
+      }).catch(() => {});
+      sentCount++;
+    }
+  }
+
+  // ===== 经纪人介入检查 =====
+
+  /**
+   * 检查是否需要触发经纪人介入（嫌疑度>=30，每个爱豆只触发一次）
+   */
+  function _checkManagerInterventions() {
+    const idols = Game.state.idols || [];
+    const suspicion = Game.state.player.stats.suspicion;
+    const THRESHOLD = 30;
+
+    for (let i = 0; i < idols.length; i++) {
+      // 已经介入过则跳过
+      if (Game.State.hasManagerIntervened(i)) continue;
+      // 嫌疑度不足则跳过
+      if (suspicion < THRESHOLD) continue;
+      // 触发经纪人介入
+      _triggerManagerIntervention(i);
+    }
+  }
+
+  /**
+   * 触发经纪人介入事件
+   */
+  async function _triggerManagerIntervention(idolIndex) {
+    const idol = Game.state.idols[idolIndex];
+    if (!idol) return;
+
+    // 随机选择一个行动
+    const action = MANAGER_ACTIONS[Math.floor(Math.random() * MANAGER_ACTIONS.length)];
+
+    // 生成经纪人名字
+    const managerName = Game.PhoneChat.generateManagerName();
+
+    // 构建消息文本
+    const honorific = Game.Actions.getHonorific(idol.gender);
+    const idolPronoun = idol.gender === 'male' ? '他' : '她';
+    const message = action.messageTemplate
+      .replace('{honorific}', honorific)
+      .replace('{idolName}', idol.nickname || idol.name)
+      .replace(/{idolPronoun}/g, idolPronoun);
+
+    // 记录到游戏状态
+    Game.State.recordManagerIntervention(idolIndex, {
+      action: action.id,
+      managerName: managerName,
+      managerPersonality: action.personality,
+      lastMessage: message
+    });
+
+    // 添加事件日志
+    Game.State.addEventLog({
+      type: 'manager-intervention',
+      idolIndex: idolIndex,
+      idolName: idol.nickname || idol.name,
+      managerName: managerName,
+      action: action.id,
+      label: action.label,
+      message: '经纪人介入：' + managerName + '因为嫌疑度过高介入——' + action.label
+    });
+
+    // 保存经纪人消息到聊天历史
+    try {
+      const history = await Game.PhoneChat.loadManagerHistory(idolIndex);
+      history.push({ from: 'manager', text: message, time: Date.now() });
+      await Game.PhoneChat.saveManagerHistory(idolIndex, history);
+    } catch (e) { /* IndexedDB 不可用 */ }
+
+    // 增加经纪人未读计数
+    Game.PhoneChat.incrementManagerUnread(idolIndex);
+
+    // 应用效果
+    if (action.effects.suspicion) {
+      Game.State.addSuspicion(action.effects.suspicion);
+    }
+    if (action.effects.stress) {
+      Game.State.addStress(action.effects.stress);
+    }
+    if (action.effects.affection) {
+      Game.State.addAffection(idolIndex, action.effects.affection);
+    }
+    if (action.effects.suspicionRateHalved) {
+      Game.State.addBuff({
+        type: 'suspicionRateHalved',
+        idolIndex: idolIndex,
+        untilTurn: Game.state.currentTurn + (action.effects.turns || 3)
+      });
+    }
+    if (action.effects.triggerCrisis) {
+      // 触发危机事件
+      Game.State.addEventLog({
+        type: 'manager-crisis',
+        idolIndex: idolIndex,
+        message: '经纪人威胁曝光，关系面临严重危机'
+      });
+    }
+
+    console.log('[Turn] 经纪人介入！' + managerName + ' → ' + (idol.nickname || idol.name) + '（' + action.label + '）');
+  }
+
+  // ===== 经纪人跟进消息 =====
+
+  /**
+   * 回合结束时检查已介入经纪人是否发跟进消息
+   */
+  function _triggerManagerFollowups() {
+    if (!Game.PhoneChat || !Game.PhoneChat.tryManagerFollowup) return;
+
+    const idols = Game.state.idols || [];
+    for (let i = 0; i < idols.length; i++) {
+      if (Game.State.hasManagerIntervened(i)) {
+        Game.PhoneChat.tryManagerFollowup(i).catch(() => {});
+      }
+    }
+  }
+
+  // ===== 经纪人行动定义（供介入系统使用） =====
+
+  const MANAGER_ACTIONS = [
+    {
+      id: 'warn',
+      label: '警告',
+      messageTemplate: '{honorific}是{idolName}的经纪人。你们最近走得太近了，小心点。公司那边已经有人在注意了。',
+      effects: { suspicion: -5, stress: 5 },
+      personality: '严厉谨慎'
+    },
+    {
+      id: 'help',
+      label: '帮助隐瞒',
+      messageTemplate: '{honorific}是{idolName}的经纪人。说实话我理解你们的关系，但这样下去会出事的。我会帮你们打掩护，你们自己也要注意分寸。',
+      effects: { suspicionRateHalved: true, turns: 3 },
+      personality: '通情达理'
+    },
+    {
+      id: 'pressure',
+      label: '催分手',
+      messageTemplate: '{honorific}是{idolName}的经纪人。你们的事我已经知道了。为了{idolPronoun}的前途，你必须和{idolPronoun}断了。这对谁都没有好处。',
+      effects: { stress: 15, affection: -3 },
+      personality: '冷漠强硬'
+    },
+    {
+      id: 'threaten',
+      label: '威胁曝光',
+      messageTemplate: '{honorific}是{idolName}的经纪人。我已经忍了很久了。再继续下去我就直接告诉公司高层，后果你们自己承担。',
+      effects: { stress: 20, triggerCrisis: true },
+      personality: '愤怒威胁'
+    },
+    {
+      id: 'friendly',
+      label: '友善提醒',
+      messageTemplate: '{honorific}是{idolName}的经纪人。别紧张，我不是来找麻烦的。只是以过来人的身份提醒你们注意安全，别被拍到。小心驶得万年船。',
+      effects: { suspicion: -3 },
+      personality: '温和友善'
+    }
+  ];
 
   // ===== 公开API =====
   return {

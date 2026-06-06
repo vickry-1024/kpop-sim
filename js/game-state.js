@@ -187,6 +187,105 @@ Game.State = (() => {
     return map[tag] || 500;
   }
 
+  // ===== 好友管理 =====
+
+  /**
+   * 根据ID获取好友对象
+   * @param {string} friendId
+   * @returns {Object|null}
+   */
+  function getFriendById(friendId) {
+    const friends = Game.state.friends || [];
+    return friends.find(f => f.id === friendId) || null;
+  }
+
+  // ===== 经纪人介入管理 =====
+
+  /**
+   * 检查指定爱豆的经纪人是否已介入
+   * @param {number} idolIndex
+   * @returns {boolean}
+   */
+  function hasManagerIntervened(idolIndex) {
+    const interventions = Game.state.managerInterventions || {};
+    return !!(interventions[String(idolIndex)] && interventions[String(idolIndex)].triggered);
+  }
+
+  /**
+   * 记录经纪人介入
+   * @param {number} idolIndex
+   * @param {Object} data - { action, managerName, managerPersonality }
+   */
+  function recordManagerIntervention(idolIndex, data) {
+    if (!Game.state.managerInterventions) Game.state.managerInterventions = {};
+    Game.state.managerInterventions[String(idolIndex)] = {
+      triggered: true,
+      turn: Game.state.currentTurn,
+      ...data
+    };
+    autoSave();
+  }
+
+  /**
+   * 获取某爱豆的经纪人介入信息
+   * @param {number} idolIndex
+   * @returns {Object|null}
+   */
+  function getManagerIntervention(idolIndex) {
+    const interventions = Game.state.managerInterventions || {};
+    return interventions[String(idolIndex)] || null;
+  }
+
+  // ===== Buff增益管理 =====
+
+  /**
+   * 添加活跃Buff
+   * @param {Object} buff - { type: string, idolIndex: number, untilTurn: number }
+   */
+  function addBuff(buff) {
+    if (!Game.state.activeBuffs) Game.state.activeBuffs = [];
+    Game.state.activeBuffs.push(buff);
+    autoSave();
+  }
+
+  /**
+   * 检查指定类型的Buff是否活跃（自动清理过期buff）
+   * @param {string} type
+   * @param {number} idolIndex
+   * @returns {boolean}
+   */
+  function hasActiveBuff(type, idolIndex) {
+    if (!Game.state.activeBuffs) return false;
+    var currentTurn = Game.state.currentTurn || 0;
+    // 清理过期buff
+    var valid = Game.state.activeBuffs.filter(function(b) {
+      return b.untilTurn >= currentTurn;
+    });
+    if (valid.length !== Game.state.activeBuffs.length) {
+      Game.state.activeBuffs = valid;
+      autoSave();
+    }
+    return valid.some(function(b) {
+      return b.type === type && b.idolIndex === idolIndex;
+    });
+  }
+
+  // ===== 事件日志 =====
+
+  /**
+   * 添加事件日志条目
+   * @param {Object} entry - 事件数据（会自动补上 turn 和 timestamp）
+   */
+  function addEventLog(entry) {
+    if (!Game.state.eventLog) Game.state.eventLog = [];
+    Game.state.eventLog.push({
+      turn: Game.state.currentTurn,
+      timestamp: Date.now(),
+      ...entry
+    });
+    autoSave();
+  }
+
   // ===== 工具 =====
 
   function clamp(val) {
@@ -264,8 +363,16 @@ Game.State = (() => {
       idol.stats.affection = ensureNumber(idol.stats.affection, 10);
     });
 
-    // 补齐事件日志（阶段9使用）
+    // 补齐事件日志
     if (!data.eventLog) data.eventLog = [];
+
+    // 补齐好友数据
+    if (!data.friends) {
+      data.friends = [
+        { id: 'friend-bestie', name: '小美', type: 'bestie', personality: '活泼八卦', avatar: '👯', desc: '从小一起长大的闺蜜，什么话题都能聊' },
+        { id: 'friend-1', name: '知恩', type: 'friend', personality: '温柔知性', avatar: '🌸', desc: '大学同学，偶尔约饭聊八卦' }
+      ];
+    }
 
     // 补齐社交账号数据
     if (!data.player.social) {
@@ -282,6 +389,12 @@ Game.State = (() => {
 
     // 补齐对话历史摘要（阶段6使用）
     if (!data.conversationSummaries) data.conversationSummaries = [];
+
+    // 补齐经纪人介入追踪
+    if (!data.managerInterventions) data.managerInterventions = {};
+
+    // 补齐活跃增益效果
+    if (!data.activeBuffs) data.activeBuffs = [];
 
     // 更新版本号
     data.version = currentVersion;
@@ -376,7 +489,14 @@ Game.State = (() => {
     allSlotsFull,
     getCurrentSlot,
     setCurrentSlot,
-    migrate
+    migrate,
+    getFriendById,
+    hasManagerIntervened,
+    recordManagerIntervention,
+    getManagerIntervention,
+    addBuff,
+    hasActiveBuff,
+    addEventLog
   };
 
 })();

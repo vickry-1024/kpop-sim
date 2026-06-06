@@ -8,49 +8,122 @@ Game.PhoneChat = (() => {
   // 当前对话的爱豆索引
   let _currentIdolIndex = null;
 
+  // 好友类型标签和图标
+  var FRIEND_TYPE_LABELS = { bestie: '闺蜜', friend: '朋友' };
+
+  // 好友主动消息概率（比爱豆高，朋友更爱聊天）
+  var FRIEND_PROACTIVE_CHANCE = 35;
+
+  // 好友快捷回复池（日常生活话题）
+  var FRIEND_QUICK_REPLIES = [
+    { id: 'f1', label: '😊 最近怎么样', text: '最近怎么样呀？好久没聊了，有什么新鲜事吗？' },
+    { id: 'f2', label: '🍜 约饭吗', text: '最近发现一家超好吃的店！什么时候一起去？' },
+    { id: 'f3', label: '😂 分享八卦', text: '你绝对想不到我今天听到了什么八卦！关于那个...' },
+    { id: 'f4', label: '😤 吐槽一下', text: '今天遇到了一个超无语的事，必须跟你吐槽一下！' },
+    { id: 'f5', label: '🛍️ 逛街', text: '周末有空吗？想去逛街，好久没买新衣服了～' },
+    { id: 'f6', label: '🎬 聊追剧', text: '最近在追什么剧？我刚看完一部超好看的，安利给你！' },
+    { id: 'f7', label: '💬 随便聊聊', text: '好无聊啊～你在干嘛呢？有没有好玩的分享分享' },
+    { id: 'f8', label: '☕ 喝咖啡', text: '那家新开的咖啡店你去了吗？听说环境特别好' }
+  ];
+
+  // 好友预设回复池（日常对话风格）
+  var FRIEND_REPLY_POOL = [
+    '哈哈哈真的吗！展开说说，我最爱听八卦了',
+    '救命我也遇到过这种事！当时真的气死了',
+    '好啊好啊！这周末我应该有空，你来定时间～',
+    '你最近是不是瘦了？上次见你就觉得你气色特别好',
+    '我跟你讲我今天也...算了见面跟你说，太搞笑了',
+    '那个地方我知道！上次和朋友去过，确实不错',
+    '有道理诶，我怎么没想到。果然还是你聪明ㅋㅋㅋ',
+    '好羡慕你！我最近好累，一堆事堆在一起..',
+    '天哪我好想吃那个！最近减肥但已经忍了好久了ㅠㅠ',
+    '真的假的！？那后来呢？别吊我胃口啊',
+    '对对对！我看的时候也是这个感觉，导演太会拍了',
+    '我今天刚买了新衣服，下次穿给你看！',
+    '唉..我跟你说个事你别告诉别人..',
+    '你也是我最信任的朋友了～有什么都可以跟我说',
+    '哈哈你这形容太好笑了，我都能想象那个画面',
+    '最近天气好好，都不想上班了。好想出去玩',
+    '你猜我今天在街上看到谁了？不告诉你ㅋㅋ',
+    '好啊，那家店我种草好久了！一直没找到人一起去',
+    '其实我最近也在想这件事..感觉你总是说到我心坎里',
+    '你说得对！我也应该像你一样积极一点'
+  ];
+
   // ===== 联系人列表 =====
 
-  /**
-   * 渲染联系人列表
-   * @param {HTMLElement} container
-   * @param {string} phoneType - 'main' | 'secret'
-   */
   function renderContactList(container, phoneType) {
-    const idols = Game.state.idols || [];
+    var idols = Game.state.idols || [];
+    var friends = Game.state.friends || [];
 
-    if (idols.length === 0) {
-      container.innerHTML = '<div class="chat-conv-empty"><span>📭</span><span>还没有爱豆联系人</span></div>';
+    if (idols.length === 0 && friends.length === 0) {
+      container.innerHTML = '<div class="chat-conv-empty"><span>📭</span><span>还没有联系人</span></div>';
       return;
     }
 
-    container.innerHTML = `
-      <div class="chat-contacts">
-        ${idols.map((idol, i) => `
-          <button class="chat-contact-item" onclick="Game.PhoneChat.openConversation(${i}, '${phoneType}')">
-            <div class="chat-contact-avatar" id="chat-avatar-${i}">
-              <span class="chat-contact-avatar-placeholder">💜</span>
-            </div>
-            <div class="chat-contact-info">
-              <span class="chat-contact-name">${escapeHtml(idol.nickname || idol.name)}</span>
-              <span class="chat-contact-last-msg" id="chat-last-msg-${i}">
-                ${idol.stats.affection >= 60 ? '💜 关系亲密' : idol.stats.affection >= 30 ? '正在变熟...' : '新认识的爱豆'}
-              </span>
-            </div>
-            <span class="chat-contact-time" id="chat-time-${i}"></span>
-          </button>
-        `).join('')}
-      </div>
-    `;
+    var html = '<div class="chat-contacts">';
+
+    // 好友区域
+    if (friends.length > 0) {
+      html += '<div class="chat-section-label">👥 好友</div>';
+      friends.forEach(function(friend) {
+        var typeLabel = FRIEND_TYPE_LABELS[friend.type] || '好友';
+        html += '<button class="chat-contact-item chat-contact-friend" onclick="Game.PhoneChat.openFriendConversation(\'' + friend.id + '\')">' +
+          '<div class="chat-contact-avatar friend-avatar">' +
+            '<span class="chat-contact-avatar-placeholder">' + (friend.avatar || '👤') + '</span>' +
+          '</div>' +
+          '<div class="chat-contact-info">' +
+            '<span class="chat-contact-name">' + escapeHtml(friend.name) + '</span>' +
+            '<span class="chat-contact-type-badge friend-type-' + friend.type + '">' + typeLabel + '</span>' +
+            '<span class="chat-contact-last-msg" id="chat-friend-last-msg-' + friend.id + '">' + (friend.desc || '随时可以找我聊天～') + '</span>' +
+          '</div>' +
+          '<span class="chat-contact-time" id="chat-friend-time-' + friend.id + '"></span>' +
+        '</button>';
+      });
+    }
+
+    // 爱豆区域
+    if (idols.length > 0) {
+      html += '<div class="chat-section-label">💜 爱豆</div>';
+      idols.forEach(function(idol, i) {
+        // 检查经纪人是否已介入
+        var intervention = (Game.State && Game.State.getManagerIntervention) ? Game.State.getManagerIntervention(i) : null;
+        var managerRowHTML = '';
+        if (intervention && intervention.triggered) {
+          managerRowHTML = '<button class="chat-contact-item chat-contact-manager" onclick="Game.PhoneChat.openManagerConversation(' + i + ')">' +
+            '<div class="chat-contact-avatar manager-avatar">' +
+              '<span class="chat-contact-avatar-placeholder">📋</span>' +
+            '</div>' +
+            '<div class="chat-contact-info">' +
+              '<span class="chat-contact-name">' + escapeHtml(intervention.managerName || '经纪人') + '</span>' +
+              '<span class="chat-contact-type-badge manager-type-' + (intervention.action || 'warn') + '">经纪人</span>' +
+              '<span class="chat-contact-last-msg" id="chat-manager-last-msg-' + i + '">' + (intervention.lastMessage || '有新消息') + '</span>' +
+            '</div>' +
+          '</button>';
+        }
+        html += '<button class="chat-contact-item" onclick="Game.PhoneChat.openConversation(' + i + ', \'' + phoneType + '\')">' +
+          '<div class="chat-contact-avatar" id="chat-avatar-' + i + '">' +
+            '<span class="chat-contact-avatar-placeholder">💜</span>' +
+          '</div>' +
+          '<div class="chat-contact-info">' +
+            '<span class="chat-contact-name">' + escapeHtml(idol.nickname || idol.name) + '</span>' +
+            '<span class="chat-contact-last-msg" id="chat-last-msg-' + i + '">' +
+              (idol.stats.affection >= 60 ? '💜 关系亲密' : idol.stats.affection >= 30 ? '正在变熟...' : '新认识的爱豆') +
+            '</span>' +
+          '</div>' +
+          '<span class="chat-contact-time" id="chat-time-' + i + '"></span>' +
+        '</button>' +
+        managerRowHTML;
+      });
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
 
     // 异步加载头像和最近消息
     loadContactDetails(container, phoneType);
   }
 
-  /**
-   * 渲染秘密手机联系人（仅显示特定爱豆）
-   * @param {HTMLElement} container
-   * @param {number|null} idolIndex - 经纪人指定的爱豆索引
-   */
   function renderSecretContact(container, idolIndex) {
     if (idolIndex === null || idolIndex === undefined) {
       container.innerHTML = '<div class="chat-conv-empty"><span>🔐</span><span>秘密手机尚未绑定联系人</span></div>';
@@ -116,6 +189,33 @@ Game.PhoneChat = (() => {
           }
         }
       } catch (e) { /* 无历史 */ }
+    }
+
+    // 加载好友最近消息
+    var friends = Game.state.friends || [];
+    for (var fi = 0; fi < friends.length; fi++) {
+      try {
+        var fHistory = await loadFriendHistory(friends[fi].id);
+        if (fHistory && fHistory.length > 0) {
+          var fLastMsg = fHistory[fHistory.length - 1];
+          var fMsgEl = document.getElementById('chat-friend-last-msg-' + friends[fi].id);
+          var fTimeEl = document.getElementById('chat-friend-time-' + friends[fi].id);
+          if (fMsgEl) fMsgEl.textContent = (fLastMsg.from === 'me' ? '你：' : '') + fLastMsg.text;
+          if (fTimeEl && fLastMsg.time) fTimeEl.textContent = formatTime(fLastMsg.time);
+        }
+      } catch (e) { /* 无好友历史 */ }
+    }
+
+    // 加载经纪人最近消息
+    for (var mi = 0; mi < idols.length; mi++) {
+      try {
+        var mHistory = await loadManagerHistory(mi);
+        if (mHistory && mHistory.length > 0) {
+          var mLastMsg = mHistory[mHistory.length - 1];
+          var mMsgEl = document.getElementById('chat-manager-last-msg-' + mi);
+          if (mMsgEl) mMsgEl.textContent = mLastMsg.text;
+        }
+      } catch (e) { /* 无经纪人历史 */ }
     }
   }
 
@@ -649,6 +749,331 @@ Game.PhoneChat = (() => {
     return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hours + ':' + minutes;
   }
 
+  // ===== 好友对话 =====
+
+  /**
+   * 打开与好友的对话
+   */
+  function openFriendConversation(friendId) {
+    var friend = Game.State.getFriendById(friendId);
+    if (!friend) return;
+
+    var container = document.getElementById('phone-app-content');
+    if (!container) return;
+
+    // 清除未读
+    clearFriendUnread(friendId);
+
+    // 更新标题
+    var titleEl = document.getElementById('phone-app-title');
+    if (titleEl) titleEl.textContent = '👥 ' + friend.name + '（' + (FRIEND_TYPE_LABELS[friend.type] || '好友') + '）';
+
+    // 渲染对话界面
+    container.innerHTML = '<div class="chat-conversation">' +
+      '<div class="chat-conv-messages" id="chat-conv-messages">' +
+        '<div class="chat-conv-empty"><span>💬</span><span>加载消息中...</span></div>' +
+      '</div>' +
+      '<div class="chat-conv-input-area">' +
+        '<div class="chat-quick-replies" id="chat-quick-replies"></div>' +
+        '<div class="chat-custom-input-row">' +
+          '<textarea class="chat-custom-input" id="chat-custom-input" placeholder="输入消息..." rows="1"' +
+            ' onkeydown="Game.PhoneChat.handleFriendInputKey(event, \'' + friendId + '\')"></textarea>' +
+          '<button class="chat-send-btn" onclick="Game.PhoneChat.sendFriendCustomMessage(\'' + friendId + '\')">↑</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    loadFriendConversationData(friendId);
+  }
+
+  /**
+   * 加载好友对话数据（历史 + 快捷回复）
+   */
+  async function loadFriendConversationData(friendId) {
+    var friend = Game.State.getFriendById(friendId);
+    if (!friend) return;
+
+    var messagesEl = document.getElementById('chat-conv-messages');
+    var quickRepliesEl = document.getElementById('chat-quick-replies');
+
+    var history = [];
+    try { history = await loadFriendHistory(friendId); } catch (e) { /* 无历史 */ }
+
+    if (history.length === 0) {
+      var greeting = getFriendGreeting(friend);
+      history = [{ from: 'friend', text: greeting, time: Date.now() }];
+      await saveFriendHistory(friendId, history);
+    }
+
+    if (messagesEl) {
+      messagesEl.innerHTML = history.map(function(msg) {
+        return '<div class="chat-bubble ' + (msg.from === 'friend' ? 'chat-bubble-idol' : 'chat-bubble-me') + '">' +
+          '<span class="chat-bubble-text">' + escapeHtml(msg.text) + '</span>' +
+          '<span class="chat-bubble-time">' + formatTime(msg.time) + '</span>' +
+        '</div>';
+      }).join('');
+      setTimeout(function() { messagesEl.scrollTop = messagesEl.scrollHeight; }, 100);
+    }
+
+    if (quickRepliesEl) {
+      var today = new Date().toDateString();
+      var seed = today + '-' + friendId;
+      var replies = shuffleQuickReplies(FRIEND_QUICK_REPLIES, seed).slice(0, 4);
+      quickRepliesEl.innerHTML = replies.map(function(r) {
+        return '<button class="chat-quick-reply" onclick="Game.PhoneChat.sendFriendQuickReply(\'' + friendId + '\', \'' + r.id + '\')">' + r.label + '</button>';
+      }).join('');
+    }
+  }
+
+  /**
+   * 发送好友快捷回复
+   */
+  async function sendFriendQuickReply(friendId, replyId) {
+    var friend = Game.State.getFriendById(friendId);
+    if (!friend) return;
+
+    var reply = FRIEND_QUICK_REPLIES.find(function(r) { return r.id === replyId; });
+    if (!reply) return;
+
+    await addFriendMessage(friendId, 'me', reply.text);
+
+    var quickEl = document.getElementById('chat-quick-replies');
+    if (quickEl) quickEl.innerHTML = '<span style="font-size:11px;color:var(--text-hint);padding:8px;">对方正在输入...</span>';
+
+    setTimeout(async function() {
+      var response = await generateFriendReply(friend, reply);
+      await addFriendMessage(friendId, 'friend', response);
+
+      var quickEl2 = document.getElementById('chat-quick-replies');
+      if (quickEl2) {
+        var today = new Date().toDateString();
+        var seed = today + '-' + friendId;
+        var newReplies = shuffleQuickReplies(FRIEND_QUICK_REPLIES, seed).slice(0, 4);
+        quickEl2.innerHTML = newReplies.map(function(r) {
+          return '<button class="chat-quick-reply" onclick="Game.PhoneChat.sendFriendQuickReply(\'' + friendId + '\', \'' + r.id + '\')">' + r.label + '</button>';
+        }).join('');
+      }
+
+      var lastMsgEl = document.getElementById('chat-friend-last-msg-' + friendId);
+      if (lastMsgEl) lastMsgEl.textContent = response;
+    }, 800 + Math.random() * 1200);
+  }
+
+  /**
+   * 发送好友自定义消息
+   */
+  async function sendFriendCustomMessage(friendId) {
+    var input = document.getElementById('chat-custom-input');
+    if (!input) return;
+
+    var text = input.value.trim();
+    if (!text) return;
+
+    await addFriendMessage(friendId, 'me', text);
+    input.value = '';
+
+    var quickEl = document.getElementById('chat-quick-replies');
+    if (quickEl) quickEl.innerHTML = '<span style="font-size:11px;color:var(--text-hint);padding:8px;">对方正在输入...</span>';
+
+    setTimeout(async function() {
+      var friend = Game.State.getFriendById(friendId);
+      var response = await generateFriendReply(friend, { id: 'custom', text: text });
+      await addFriendMessage(friendId, 'friend', response);
+
+      var quickEl2 = document.getElementById('chat-quick-replies');
+      if (quickEl2) {
+        var today = new Date().toDateString();
+        var seed = today + '-' + friendId;
+        var newReplies = shuffleQuickReplies(FRIEND_QUICK_REPLIES, seed).slice(0, 4);
+        quickEl2.innerHTML = newReplies.map(function(r) {
+          return '<button class="chat-quick-reply" onclick="Game.PhoneChat.sendFriendQuickReply(\'' + friendId + '\', \'' + r.id + '\')">' + r.label + '</button>';
+        }).join('');
+      }
+
+      var lastMsgEl = document.getElementById('chat-friend-last-msg-' + friendId);
+      if (lastMsgEl) lastMsgEl.textContent = response;
+    }, 800 + Math.random() * 1200);
+  }
+
+  /**
+   * 处理好友输入框键盘事件
+   */
+  function handleFriendInputKey(event, friendId) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      sendFriendCustomMessage(friendId);
+    }
+  }
+
+  /**
+   * 添加好友消息到对话和存储
+   */
+  async function addFriendMessage(friendId, from, text) {
+    var messagesEl = document.getElementById('chat-conv-messages');
+    if (messagesEl) {
+      var empty = messagesEl.querySelector('.chat-conv-empty');
+      if (empty) empty.remove();
+
+      var bubble = document.createElement('div');
+      bubble.className = 'chat-bubble ' + (from === 'friend' ? 'chat-bubble-idol' : 'chat-bubble-me');
+      bubble.innerHTML = '<span class="chat-bubble-text">' + escapeHtml(text) + '</span>' +
+        '<span class="chat-bubble-time">' + formatTime(Date.now()) + '</span>';
+      messagesEl.appendChild(bubble);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    try {
+      var history = await loadFriendHistory(friendId);
+      history.push({ from: from, text: text, time: Date.now() });
+      await saveFriendHistory(friendId, history);
+    } catch (e) {
+      console.warn('[PhoneChat] 好友消息保存失败', e);
+    }
+  }
+
+  /**
+   * 生成好友回复（AI优先，降级预设）
+   */
+  async function generateFriendReply(friend, playerReply) {
+    var text = playerReply.text || '';
+
+    // 尝试AI
+    if (Game.API && Game.API.hasAnyKey()) {
+      try {
+        var prompt = '【场景】你正在用手机和朋友聊天。你收到了朋友的消息，现在回复他/她。\n' +
+          '【你的名字】' + friend.name + '\n' +
+          '【你的性格】' + (friend.personality || '友善开朗') + '\n' +
+          '【你们的关系】' + (FRIEND_TYPE_LABELS[friend.type] || '朋友') + '\n' +
+          '【朋友的消息】' + text + '\n\n' +
+          '请像真人发微信/KakaoTalk一样回复。1-3句话，语气自然随意，可以用ㅋㅋㅋ/hhh/emoji。你不是爱豆，只是个普通人。';
+        var messages = [
+          { role: 'system', content: '你是' + friend.name + '，一个普通人在和朋友聊日常。说话自然真实，像发微信/KakaoTalk。不要提到自己是AI。' },
+          { role: 'user', content: prompt }
+        ];
+        var aiReply = await Game.API.callDeepSeek(messages, { temperature: 0.85, maxTokens: 200 });
+        if (aiReply && aiReply.trim()) return aiReply.trim();
+      } catch (e) { /* 降级 */ }
+    }
+
+    // 降级预设
+    return FRIEND_REPLY_POOL[Math.floor(Math.random() * FRIEND_REPLY_POOL.length)];
+  }
+
+  /**
+   * 获取好友首次对话的开场白
+   */
+  function getFriendGreeting(friend) {
+    var greetings = [
+      '嗨！好久不见～最近过得怎么样？',
+      '哦！你来找我啦～正好想找你聊天呢',
+      '嘿～刚想给你发消息就看到你了！心有灵犀吗ㅋㅋㅋ',
+      '嗨嗨！今天怎么想起找我啦？有什么好玩的事分享吗？'
+    ];
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  }
+
+  // ===== 好友 IndexedDB 存储 =====
+
+  function getFriendHistoryKey(friendId) {
+    return 'chat-friend-' + friendId;
+  }
+
+  async function loadFriendHistory(friendId) {
+    return Game.Storage.loadChatHistory(getFriendHistoryKey(friendId));
+  }
+
+  async function saveFriendHistory(friendId, messages) {
+    return Game.Storage.saveChatHistory(getFriendHistoryKey(friendId), messages);
+  }
+
+  // ===== 好友未读消息 =====
+
+  function getFriendUnreadCount(friendId) {
+    try {
+      return parseInt(localStorage.getItem('unread-friend-' + friendId) || '0', 10);
+    } catch (e) { return 0; }
+  }
+
+  function incrementFriendUnread(friendId) {
+    try {
+      var key = 'unread-friend-' + friendId;
+      localStorage.setItem(key, String(getFriendUnreadCount(friendId) + 1));
+    } catch (e) { /* localStorage 不可用 */ }
+  }
+
+  function clearFriendUnread(friendId) {
+    try {
+      localStorage.setItem('unread-friend-' + friendId, '0');
+    } catch (e) { /* localStorage 不可用 */ }
+  }
+
+  // ===== 好友主动发消息 =====
+
+  /**
+   * 生成好友主动分享日常的消息
+   */
+  async function generateFriendProactiveMessage(friend) {
+    // 尝试AI
+    if (Game.API && Game.API.hasAnyKey()) {
+      try {
+        var prompt = '【场景】你正在用手机和朋友分享日常。你主动发了一条消息过去。\n' +
+          '【你的名字】' + friend.name + '\n' +
+          '【你的性格】' + (friend.personality || '友善开朗') + '\n' +
+          '【你们的关系】' + (FRIEND_TYPE_LABELS[friend.type] || '朋友') + '\n\n' +
+          '请分享一件你今天发生的小事，像真实朋友发消息一样。1-3句话，要有生活气息。随意自然。你不是爱豆，只是个普通人。';
+        var messages = [
+          { role: 'system', content: '你是' + friend.name + '，一个普通人在和朋友聊天。说话自然真实，像发微信/KakaoTalk。' },
+          { role: 'user', content: prompt }
+        ];
+        var reply = await Game.API.callDeepSeek(messages, { temperature: 0.9, maxTokens: 200 });
+        if (reply && reply.trim()) return reply.trim();
+      } catch (e) { /* 降级 */ }
+    }
+
+    // 预设消息池
+    var pool = [
+      '今天在地铁上看到一个超帅的小哥哥！差点跟下站了ㅋㅋㅋ',
+      '我跟你说我今天吃了一家新开的甜品店，绝了！下次带你去',
+      '今天工作好累啊..感觉身体被掏空。你在干嘛呢？',
+      '刚看到一条好好笑的视频，发给你！',
+      '周末有什么计划吗？想去逛街但是一个人好无聊～',
+      '今天下雨了忘带伞..淋成落汤鸡。你那边天气怎么样？',
+      '我最近在追一部新剧，剧荒了好久终于有好剧了！推荐给你',
+      '突然好想喝奶茶，但是已经这个点了..喝还是不喝呢🤔',
+      '你猜我今天在商场碰到谁了？提示：我们都认识',
+      '今天心情莫名好！可能是天气好也可能是..反正就是开心～分享给你',
+      '刚看到一个超可爱的猫视频，我笑了整整五分钟',
+      '我今天试了一件超好看的衣服，纠结要不要买。你来帮我参谋参谋？',
+      '你知道吗我今天终于把拖了好久的事办完了！成就感爆棚',
+      '好羡慕你自由自在的生活..我这边一堆事处理不完ㅠㅠ',
+      '突然想起我们上次一起出去玩的时候..好久没见了，找个时间聚聚吧'
+    ];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  /**
+   * 尝试让好友主动发消息（由回合系统调用）
+   */
+  async function tryFriendProactiveMessage(friendId) {
+    var friend = Game.State.getFriendById(friendId);
+    if (!friend) return false;
+
+    if (Math.random() * 100 >= FRIEND_PROACTIVE_CHANCE) return false;
+
+    try {
+      var message = await generateFriendProactiveMessage(friend);
+      if (message && message.trim()) {
+        var history = await loadFriendHistory(friendId);
+        history.push({ from: 'friend', text: message.trim(), time: Date.now() });
+        await saveFriendHistory(friendId, history);
+        incrementFriendUnread(friendId);
+        console.log('[PhoneChat] 好友' + friend.name + ' 主动发来消息');
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  }
+
   // ===== 未读消息通知 =====
 
   /**
@@ -693,6 +1118,315 @@ Game.PhoneChat = (() => {
       total += getUnreadCount(i, phoneType);
     }
     return total;
+  }
+
+  // ===== 经纪人介入系统 =====
+
+  // 经纪人行动定义
+  var MANAGER_ACTIONS = [
+    {
+      id: 'warn',
+      label: '警告',
+      messageTemplate: '{honorific}是{idolName}的经纪人。你们最近走得太近了，小心点。公司那边已经有人在注意了。',
+      effects: { suspicion: -5, stress: 5 },
+      personality: '严厉谨慎'
+    },
+    {
+      id: 'help',
+      label: '帮助隐瞒',
+      messageTemplate: '{honorific}是{idolName}的经纪人。说实话我理解你们的关系，但这样下去会出事的。我会帮你们打掩护，你们自己也要注意分寸。',
+      effects: { suspicionRateHalved: true, turns: 3 },
+      personality: '通情达理'
+    },
+    {
+      id: 'pressure',
+      label: '催分手',
+      messageTemplate: '{honorific}是{idolName}的经纪人。你们的事我已经知道了。为了{idolPronoun}的前途，你必须和{idolPronoun}断了。这对谁都没有好处。',
+      effects: { stress: 15, affection: -3 },
+      personality: '冷漠强硬'
+    },
+    {
+      id: 'threaten',
+      label: '威胁曝光',
+      messageTemplate: '{honorific}是{idolName}的经纪人。我已经忍了很久了。再继续下去我就直接告诉公司高层，后果你们自己承担。',
+      effects: { stress: 20, triggerCrisis: true },
+      personality: '愤怒威胁'
+    },
+    {
+      id: 'friendly',
+      label: '友善提醒',
+      messageTemplate: '{honorific}是{idolName}的经纪人。别紧张，我不是来找麻烦的。只是以过来人的身份提醒你们注意安全，别被拍到。小心驶得万年船。',
+      effects: { suspicion: -3 },
+      personality: '温和友善'
+    }
+  ];
+
+  var MANAGER_SURNAMES = ['朴', '金', '李', '崔', '郑', '姜', '赵', '尹', '宋', '全'];
+  var MANAGER_GIVENS = ['正洙', '美英', '泰浩', '秀贤', '恩智', '尚宇', '敏瑞', '俊昊', '允儿', '在贤'];
+
+  /**
+   * 生成经纪人名字
+   */
+  function generateManagerName() {
+    var surname = MANAGER_SURNAMES[Math.floor(Math.random() * MANAGER_SURNAMES.length)];
+    var given = MANAGER_GIVENS[Math.floor(Math.random() * MANAGER_GIVENS.length)];
+    return surname + given;
+  }
+
+  // ===== 经纪人 IndexedDB 存储 =====
+
+  function getManagerHistoryKey(idolIndex) {
+    return 'chat-manager-' + idolIndex;
+  }
+
+  async function loadManagerHistory(idolIndex) {
+    return Game.Storage.loadChatHistory(getManagerHistoryKey(idolIndex));
+  }
+
+  async function saveManagerHistory(idolIndex, messages) {
+    return Game.Storage.saveChatHistory(getManagerHistoryKey(idolIndex), messages);
+  }
+
+  // ===== 经纪人未读消息 =====
+
+  function getManagerUnreadCount(idolIndex) {
+    try {
+      return parseInt(localStorage.getItem('unread-manager-' + idolIndex) || '0', 10);
+    } catch (e) { return 0; }
+  }
+
+  function incrementManagerUnread(idolIndex) {
+    try {
+      var current = getManagerUnreadCount(idolIndex);
+      localStorage.setItem('unread-manager-' + idolIndex, String(current + 1));
+    } catch (e) { /* localStorage 不可用 */ }
+  }
+
+  function clearManagerUnread(idolIndex) {
+    try {
+      localStorage.setItem('unread-manager-' + idolIndex, '0');
+    } catch (e) { /* localStorage 不可用 */ }
+  }
+
+  // ===== 经纪人对话 =====
+
+  /**
+   * 打开经纪人对话
+   */
+  function openManagerConversation(idolIndex) {
+    var intervention = Game.State.getManagerIntervention(idolIndex);
+    if (!intervention) return;
+
+    var idol = Game.state.idols[idolIndex];
+    if (!idol) return;
+
+    var container = document.getElementById('phone-app-content');
+    if (!container) return;
+
+    // 清除未读
+    clearManagerUnread(idolIndex);
+
+    // 更新标题
+    var titleEl = document.getElementById('phone-app-title');
+    if (titleEl) titleEl.textContent = '📋 ' + (intervention.managerName || '经纪人') + '（经纪人）';
+
+    // 渲染对话界面
+    container.innerHTML = '<div class="chat-conversation">' +
+      '<div class="chat-conv-messages" id="chat-conv-messages">' +
+        '<div class="chat-conv-empty"><span>💬</span><span>加载消息中...</span></div>' +
+      '</div>' +
+      '<div class="chat-conv-input-area">' +
+        '<div class="chat-quick-replies" id="chat-quick-replies"></div>' +
+        '<div class="chat-custom-input-row">' +
+          '<textarea class="chat-custom-input" id="chat-custom-input" placeholder="回复经纪人..." rows="1"' +
+            ' onkeydown="Game.PhoneChat.handleManagerInputKey(event, ' + idolIndex + ')"></textarea>' +
+          '<button class="chat-send-btn" onclick="Game.PhoneChat.sendManagerCustomMessage(' + idolIndex + ')">↑</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    loadManagerConversationData(idolIndex);
+  }
+
+  /**
+   * 加载经纪人对话数据
+   */
+  async function loadManagerConversationData(idolIndex) {
+    var intervention = Game.State.getManagerIntervention(idolIndex);
+    if (!intervention) return;
+
+    var messagesEl = document.getElementById('chat-conv-messages');
+    var quickRepliesEl = document.getElementById('chat-quick-replies');
+
+    var history = [];
+    try { history = await loadManagerHistory(idolIndex); } catch (e) { /* 无历史 */ }
+
+    if (messagesEl) {
+      messagesEl.innerHTML = history.map(function(msg) {
+        var bubbleClass = msg.from === 'manager' ? 'chat-bubble-manager' : 'chat-bubble-me';
+        return '<div class="chat-bubble ' + bubbleClass + '">' +
+          '<span class="chat-bubble-text">' + escapeHtml(msg.text) + '</span>' +
+          '<span class="chat-bubble-time">' + formatTime(msg.time) + '</span>' +
+        '</div>';
+      }).join('');
+      setTimeout(function() { messagesEl.scrollTop = messagesEl.scrollHeight; }, 100);
+    }
+
+    if (quickRepliesEl) {
+      var replies = [
+        { id: 'm_ok', label: '我知道了', text: '我知道了。' },
+        { id: 'm_thanks', label: '谢谢提醒', text: '谢谢提醒，我会注意的。' },
+        { id: 'm_help', label: '能不能帮帮我', text: '能不能帮帮我们？我们真的...' },
+        { id: 'm_quiet', label: '保持沉默', text: '......' }
+      ];
+      quickRepliesEl.innerHTML = replies.map(function(r) {
+        return '<button class="chat-quick-reply" onclick="Game.PhoneChat.sendManagerQuickReply(' + idolIndex + ', \'' + r.id + '\')">' + r.label + '</button>';
+      }).join('');
+    }
+  }
+
+  /**
+   * 发送经纪人快捷回复
+   */
+  async function sendManagerQuickReply(idolIndex, replyId) {
+    var replies = [
+      { id: 'm_ok', label: '我知道了', text: '我知道了。' },
+      { id: 'm_thanks', label: '谢谢提醒', text: '谢谢提醒，我会注意的。' },
+      { id: 'm_help', label: '能不能帮帮我', text: '能不能帮帮我们？我们真的...' },
+      { id: 'm_quiet', label: '保持沉默', text: '......' }
+    ];
+    var reply = replies.find(function(r) { return r.id === replyId; });
+    if (!reply) return;
+
+    await addManagerMessage(idolIndex, 'me', reply.text);
+
+    var quickEl = document.getElementById('chat-quick-replies');
+    if (quickEl) quickEl.innerHTML = '<span style="font-size:11px;color:var(--text-hint);padding:8px;">...</span>';
+
+    setTimeout(async function() {
+      var intervention = Game.State.getManagerIntervention(idolIndex);
+      var response = await generateManagerReply(intervention, reply.text);
+      await addManagerMessage(idolIndex, 'manager', response);
+
+      var quickEl2 = document.getElementById('chat-quick-replies');
+      if (quickEl2) {
+        quickEl2.innerHTML = replies.map(function(r) {
+          return '<button class="chat-quick-reply" onclick="Game.PhoneChat.sendManagerQuickReply(' + idolIndex + ', \'' + r.id + '\')">' + r.label + '</button>';
+        }).join('');
+      }
+    }, 1000 + Math.random() * 1500);
+  }
+
+  /**
+   * 发送经纪人自定义消息
+   */
+  async function sendManagerCustomMessage(idolIndex) {
+    var input = document.getElementById('chat-custom-input');
+    if (!input) return;
+
+    var text = input.value.trim();
+    if (!text) return;
+
+    await addManagerMessage(idolIndex, 'me', text);
+    input.value = '';
+
+    var quickEl = document.getElementById('chat-quick-replies');
+    if (quickEl) quickEl.innerHTML = '<span style="font-size:11px;color:var(--text-hint);padding:8px;">...</span>';
+
+    setTimeout(async function() {
+      var intervention = Game.State.getManagerIntervention(idolIndex);
+      var response = await generateManagerReply(intervention, text);
+      await addManagerMessage(idolIndex, 'manager', response);
+    }, 1000 + Math.random() * 1500);
+  }
+
+  /**
+   * 处理经纪人输入框键盘事件
+   */
+  function handleManagerInputKey(event, idolIndex) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      sendManagerCustomMessage(idolIndex);
+    }
+  }
+
+  /**
+   * 添加经纪人消息
+   */
+  async function addManagerMessage(idolIndex, from, text) {
+    var messagesEl = document.getElementById('chat-conv-messages');
+    if (messagesEl) {
+      var empty = messagesEl.querySelector('.chat-conv-empty');
+      if (empty) empty.remove();
+
+      var bubble = document.createElement('div');
+      bubble.className = 'chat-bubble ' + (from === 'manager' ? 'chat-bubble-manager' : 'chat-bubble-me');
+      bubble.innerHTML = '<span class="chat-bubble-text">' + escapeHtml(text) + '</span>' +
+        '<span class="chat-bubble-time">' + formatTime(Date.now()) + '</span>';
+      messagesEl.appendChild(bubble);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    try {
+      var history = await loadManagerHistory(idolIndex);
+      history.push({ from: from, text: text, time: Date.now() });
+      await saveManagerHistory(idolIndex, history);
+    } catch (e) {
+      console.warn('[PhoneChat] 经纪人消息保存失败', e);
+    }
+  }
+
+  /**
+   * 生成经纪人回复
+   */
+  async function generateManagerReply(intervention, playerText) {
+    var actionId = intervention ? intervention.action : 'warn';
+    var curtReplies = {
+      'warn': ['嗯。记住就好。', '好自为之。别让我为难。', '希望你真的听进去了。'],
+      'help': ['不用谢。你们小心点就好。', '嗯。有什么情况我会通知你。', '注意安全，别太张扬。'],
+      'pressure': ['......', '我说到做到。尽快处理好。', '这不是商量，是警告。'],
+      'threaten': ['你没有多少时间了。', '我在等你的决定。', '后果自负。'],
+      'friendly': ['不客气。真心希望你们能好好的。', '加油。年轻人嘛，我懂的。', '好好的就行。有事找我。']
+    };
+    var pool = curtReplies[actionId] || ['知道了。'];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  /**
+   * 经纪人跟进消息（回合结束时调用）
+   */
+  async function tryManagerFollowup(idolIndex) {
+    var intervention = Game.State.getManagerIntervention(idolIndex);
+    if (!intervention || !intervention.triggered) return false;
+
+    // 20%概率每回合跟进
+    if (Math.random() * 100 >= 20) return false;
+
+    var followUps = {
+      'warn': ['别忘了我说的话。低调一点。', '最近有没有注意点？', '我这边还在帮你们盯着。'],
+      'help': ['一切还好吗？要不要我帮忙？', '最近没什么异常，继续保持。', '公司那边暂时没有怀疑。'],
+      'pressure': ['你还没有做决定吗？', '我的耐心有限。', '这是最后通牒了。'],
+      'threaten': ['时间不多了。', '我在看着你们。', '最后一次警告。'],
+      'friendly': ['最近怎么样？注意安全。', '好好的就行。有事随时找我。', '别太担心，有什么情况我会告诉你。']
+    };
+
+    var pool = followUps[intervention.action] || ['有消息我会通知你。'];
+    var message = pool[Math.floor(Math.random() * pool.length)];
+
+    var history = await loadManagerHistory(idolIndex);
+    history.push({ from: 'manager', text: message, time: Date.now() });
+    await saveManagerHistory(idolIndex, history);
+    incrementManagerUnread(idolIndex);
+
+    // 更新介入记录的lastMessage
+    var interventions = Game.state.managerInterventions || {};
+    if (interventions[String(idolIndex)]) {
+      interventions[String(idolIndex)].lastMessage = message;
+      Game.State.autoSave();
+    }
+
+    console.log('[PhoneChat] 经纪人跟进消息 → idolIndex=' + idolIndex);
+    return true;
   }
 
   // ===== 爱豆主动发消息 =====
@@ -833,7 +1567,26 @@ Game.PhoneChat = (() => {
     getTotalUnread,
     clearUnread,
     generateProactiveMessage,
-    tryProactiveMessage
+    tryProactiveMessage,
+    // 好友对话
+    openFriendConversation,
+    sendFriendQuickReply,
+    sendFriendCustomMessage,
+    handleFriendInputKey,
+    getFriendUnreadCount,
+    tryFriendProactiveMessage,
+    // 经纪人对话
+    openManagerConversation,
+    sendManagerQuickReply,
+    sendManagerCustomMessage,
+    handleManagerInputKey,
+    getManagerUnreadCount,
+    incrementManagerUnread,
+    clearManagerUnread,
+    loadManagerHistory,
+    saveManagerHistory,
+    tryManagerFollowup,
+    generateManagerName
   };
 
 })();

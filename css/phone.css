@@ -365,6 +365,88 @@
   flex-shrink: 0;
 }
 
+/* 联系人列表分区标签 */
+.chat-section-label {
+  padding: 10px var(--spacing-md) 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  letter-spacing: 0.5px;
+}
+
+/* 好友联系人 — 左侧青色边条区分 */
+.chat-contact-friend {
+  border-left: 3px solid #4ECDC4;
+}
+
+.chat-contact-friend .chat-contact-avatar {
+  background: rgba(78, 205, 196, 0.1);
+}
+
+/* 联系人类型标签 */
+.chat-contact-type-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  width: fit-content;
+}
+
+.friend-type-bestie {
+  background: #FFE0F0;
+  color: #F8A5C2;
+}
+
+.friend-type-friend {
+  background: #E0F7FA;
+  color: #4ECDC4;
+}
+
+/* 经纪人联系人 — 橙色左边条 */
+.chat-contact-manager {
+  background: rgba(255, 165, 2, 0.05);
+  border-left: 3px solid #FFA502;
+}
+
+.chat-contact-manager .chat-contact-avatar {
+  background: rgba(255, 165, 2, 0.15);
+}
+
+/* 经纪人行动标签 */
+.manager-type-warn,
+.manager-type-pressure,
+.manager-type-threaten {
+  background: #FFE0E3;
+  color: var(--color-danger);
+}
+
+.manager-type-help,
+.manager-type-friendly {
+  background: #E8F8EF;
+  color: #4CD964;
+}
+
+/* 经纪人/系统消息气泡 — 居中灰色样式 */
+.chat-bubble-manager {
+  align-self: center !important;
+  max-width: 85% !important;
+  background: #E8E8ED !important;
+  color: #3A3A3C !important;
+  border-radius: 12px !important;
+  text-align: center;
+  font-style: italic;
+  box-shadow: none;
+  padding: 10px 16px;
+}
+
+.chat-bubble-manager .chat-bubble-time {
+  color: #8E8E93 !important;
+  text-align: center !important;
+}
+
 /* ===== 聊天APP — 对话界面 ===== */
 .chat-conversation {
   display: flex;
@@ -1162,4 +1244,24 @@
 .phone-app-view.secret-theme .chat-contact-name,
 .phone-app-view.secret-theme .call-contact-name {
   color: var(--secret-text);
+}
+
+/* 秘密手机主题 — 好友/经纪人适配 */
+.phone-app-view.secret-theme .chat-section-label {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.5);
+}
+
+.phone-app-view.secret-theme .chat-contact-friend {
+  border-left-color: rgba(78, 205, 196, 0.4);
+}
+
+.phone-app-view.secret-theme .chat-contact-manager {
+  background: rgba(255, 165, 2, 0.08);
+  border-left-color: rgba(255, 165, 2, 0.5);
+}
+
+.phone-app-view.secret-theme .chat-bubble-manager {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
 }

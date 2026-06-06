@@ -624,6 +624,24 @@ Game.Setup = (() => {
     Game.state.currentTurn = 0;
     Game.state.initialized = true;
 
+    // 初始化好友数据
+    Game.state.friends = [
+      { id: 'friend-bestie', name: '小美', type: 'bestie', personality: '活泼八卦', avatar: '👯', desc: '从小一起长大的闺蜜，什么话题都能聊' },
+      { id: 'friend-1', name: '知恩', type: 'friend', personality: '温柔知性', avatar: '🌸', desc: '大学同学，偶尔约饭聊八卦' }
+    ];
+
+    // 初始化经纪人介入追踪
+    Game.state.managerInterventions = {};
+
+    // 初始化活跃增益效果
+    Game.state.activeBuffs = [];
+
+    // 初始化事件日志
+    Game.state.eventLog = [];
+
+    // 初始化对话历史摘要
+    Game.state.conversationSummaries = [];
+
     // 3. 选择空存档槽并保存
     const slot = Game.State.findEmptySlot();
     Game.State.setCurrentSlot(slot);
