@@ -100,10 +100,10 @@ Game.Router = (() => {
       pagesContainer.scrollTop = 0;
     }
 
-    // 未来可以在这里添加：
-    // - 页面进入时的数据刷新
-    // - 页面离开时的保存
-    // - 页面切换动画
+    // 派发自定义事件，供其他模块（如Profile）监听
+    window.dispatchEvent(new CustomEvent('pageChanged', {
+      detail: { from, to }
+    }));
   }
 
   // 公开API

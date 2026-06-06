@@ -12,7 +12,7 @@ window.Game = {
   version: '0.1.0',
 
   // 当前开发阶段
-  phase: '阶段1：项目初始化与静态框架',
+  phase: '阶段2：角色设定系统',
 
   // 全局状态（简易，正式版由 game-state.js 管理）
   state: {
@@ -31,6 +31,11 @@ function initApp() {
   // 初始化路由（选项卡切换）
   if (Game.Router) {
     Game.Router.init();
+  }
+
+  // 初始化个人面板
+  if (Game.Profile) {
+    Game.Profile.init();
   }
 
   // 标记初始化完成

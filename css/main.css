@@ -255,3 +255,138 @@
     max-width: 480px; /* 网页版保持手机比例，后续可调整 */
   }
 }
+
+/* ===== "我的"页面 — 个人面板 ===== */
+
+/* 玩家信息卡片 */
+.profile-card {
+  background: linear-gradient(135deg, var(--color-primary-light), #FFF0F5);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.profile-card-header {
+  background: var(--color-primary);
+  padding: var(--spacing-lg) var(--spacing-md);
+  text-align: center;
+}
+
+.profile-avatar-text {
+  font-size: var(--font-size-xxl);
+  font-weight: 800;
+  color: #FFF;
+  letter-spacing: 2px;
+}
+
+.profile-card-body {
+  padding: var(--spacing-md);
+}
+
+.profile-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.profile-info-row:last-child {
+  border-bottom: none;
+}
+
+.profile-info-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.profile-info-value {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+  max-width: 65%;
+}
+
+/* 分区 */
+.profile-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-card);
+}
+
+.profile-section-title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.profile-section-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+  margin-bottom: var(--spacing-md);
+}
+
+/* 数值面板 */
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.stat-item {
+  /* 每个数值一行 */
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.stat-value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-bar-bg {
+  height: 8px;
+  border-radius: 4px;
+  background: #F0F0F0;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width var(--transition-slow);
+}
+
+/* 照片管理 */
+.photo-manage-item {
+  padding: var(--spacing-sm) 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.photo-manage-item:first-child {
+  border-top: none;
+}
+
+.photo-manage-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}

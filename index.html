@@ -238,13 +238,52 @@
       <section id="page-profile" class="page">
         <div class="page-header">
           <h1 class="page-title">👤 我的</h1>
-          <p class="page-subtitle">个人属性面板</p>
+          <p class="page-subtitle">个人属性与设置</p>
         </div>
         <div class="page-content">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">💎</div>
-            <p class="placeholder-text">角色属性系统</p>
-            <p class="placeholder-hint">将在阶段2-3实现</p>
+          <!-- 玩家信息卡片 -->
+          <div class="profile-card" id="profile-player-card">
+            <div class="profile-card-header">
+              <span class="profile-avatar-text" id="profile-player-name-display">——</span>
+            </div>
+            <div class="profile-card-body" id="profile-player-info">
+              <!-- 动态填充 -->
+            </div>
+          </div>
+
+          <!-- 数值面板 -->
+          <div class="profile-section">
+            <h3 class="profile-section-title">📊 当前状态</h3>
+            <div class="stats-grid" id="profile-stats">
+              <!-- 动态填充 -->
+            </div>
+          </div>
+
+          <!-- 照片管理 -->
+          <div class="profile-section">
+            <h3 class="profile-section-title">📷 照片管理</h3>
+            <p class="profile-section-desc">修改聊天头像或手机壁纸</p>
+
+            <!-- 壁纸 -->
+            <div class="photo-manage-item">
+              <span class="photo-manage-label">📱 手机壁纸</span>
+              <div class="photo-upload-row">
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('profile-input-wallpaper').click()">
+                  🖼️ 更换壁纸
+                </button>
+                <span class="photo-name" id="profile-wallpaper-name">当前未设置</span>
+                <input type="file" id="profile-input-wallpaper" accept="image/*" style="display:none" onchange="Game.Profile.handleWallpaperChange(this)">
+              </div>
+              <div id="profile-wallpaper-preview" class="photo-preview" style="display:none">
+                <img id="profile-wallpaper-preview-img" src="" alt="壁纸预览">
+                <button class="photo-remove" onclick="Game.Profile.removeWallpaper()">✕</button>
+              </div>
+            </div>
+
+            <!-- 各爱豆头像 -->
+            <div id="profile-avatars-container">
+              <!-- 动态填充 -->
+            </div>
           </div>
         </div>
       </section>
@@ -309,6 +348,7 @@
   <script src="js/app.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/character.js"></script>
+  <script src="js/profile.js"></script>
   <script src="js/router.js"></script>
 </body>
 </html>

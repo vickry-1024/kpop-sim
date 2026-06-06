@@ -258,9 +258,10 @@ Game.Setup = (() => {
                       onclick="Game.Setup.setIdolGender(${i}, 'female', this)">♀ 女</button>
             </div>
           </div>
+          <label class="setup-label" style="margin-top:4px;">🎵 所属团体</label>
           <input type="text"
                  class="setup-input"
-                 placeholder="所属团体"
+                 placeholder="例如：NOVA、BTS、BLACKPINK..."
                  value="${_escapeHtml(idol.group)}"
                  data-idol="${i}"
                  data-field="group"
