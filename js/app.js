@@ -88,9 +88,42 @@ Game.confirmDeleteSave = function(slot) {
 };
 
 /**
+ * 返回标题画面（保存当前进度后返回）
+ */
+Game.returnToTitle = function() {
+  // 先保存当前进度
+  Game.State.autoSave();
+
+  const titleScreen = document.getElementById('title-screen');
+  const app = document.getElementById('app');
+
+  if (app) {
+    app.style.opacity = '0';
+    app.style.transition = 'opacity 200ms ease-out';
+    setTimeout(() => {
+      app.style.display = 'none';
+      if (titleScreen) {
+        titleScreen.style.display = 'flex';
+        titleScreen.style.opacity = '1';
+      }
+      Game.renderTitleScreen();
+    }, 200);
+  }
+
+  console.log('[App] 返回标题画面，进度已保存（槽' + Game.State.getCurrentSlot() + '）');
+};
+
+/**
  * 开始新游戏：显示设定向导
  */
 Game.startNewGame = function() {
+  // 检查是否所有存档槽已满
+  if (Game.State.allSlotsFull()) {
+    if (!confirm('所有存档槽（1-3）都已满。开始新游戏将覆盖最早的存档，确定继续吗？\n\n建议：先在标题画面删除不需要的存档。')) {
+      return;
+    }
+  }
+
   const titleScreen = document.getElementById('title-screen');
   const setupScreen = document.getElementById('setup-screen');
 

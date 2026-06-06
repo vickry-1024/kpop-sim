@@ -115,14 +115,6 @@ Game.Relations = (() => {
     }
   }
 
-  // ===== 工具函数 =====
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
-  }
-
   // ===== 初始化 =====
 
   function init() {

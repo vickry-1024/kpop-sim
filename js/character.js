@@ -247,7 +247,7 @@ Game.Setup = (() => {
             <input type="text"
                    class="setup-input"
                    placeholder="姓名"
-                   value="${_escapeHtml(idol.name)}"
+                   value="${escapeHtml(idol.name)}"
                    data-idol="${i}"
                    data-field="name"
                    onchange="Game.Setup.updateIdolField(${i}, 'name', this.value)">
@@ -262,7 +262,7 @@ Game.Setup = (() => {
           <input type="text"
                  class="setup-input"
                  placeholder="例如：NOVA、BTS、BLACKPINK..."
-                 value="${_escapeHtml(idol.group)}"
+                 value="${escapeHtml(idol.group)}"
                  data-idol="${i}"
                  data-field="group"
                  onchange="Game.Setup.updateIdolField(${i}, 'group', this.value)">
@@ -277,7 +277,7 @@ Game.Setup = (() => {
           <input type="text"
                  class="setup-input setup-input-sm"
                  placeholder="或自行输入性格描述..."
-                 value="${_escapeHtml(idol.personalityCustom)}"
+                 value="${escapeHtml(idol.personalityCustom)}"
                  data-idol="${i}"
                  data-field="personalityCustom"
                  onchange="Game.Setup.updateIdolField(${i}, 'personalityCustom', this.value)">
@@ -374,7 +374,7 @@ Game.Setup = (() => {
           <input type="text"
                  class="setup-input setup-input-sm"
                  placeholder="设置备注/爱称（可选）"
-                 value="${_escapeHtml(idol.nickname)}"
+                 value="${escapeHtml(idol.nickname)}"
                  onchange="Game.Setup.updateIdolField(${i}, 'nickname', this.value)">
         </div>
       </div>
@@ -485,22 +485,22 @@ Game.Setup = (() => {
       <!-- 女主设定 -->
       <div class="confirm-section">
         <div class="confirm-section-title">👤 你的设定</div>
-        <div class="confirm-row"><span class="label">姓名</span><span class="value">${_escapeHtml(_playerData.name)}</span></div>
-        <div class="confirm-row"><span class="label">身份</span><span class="value">${_escapeHtml(identityDisplay)}</span></div>
-        <div class="confirm-row"><span class="label">性格</span><span class="value">${_escapeHtml(personalityDisplay)}</span></div>
+        <div class="confirm-row"><span class="label">姓名</span><span class="value">${escapeHtml(_playerData.name)}</span></div>
+        <div class="confirm-row"><span class="label">身份</span><span class="value">${escapeHtml(identityDisplay)}</span></div>
+        <div class="confirm-row"><span class="label">性格</span><span class="value">${escapeHtml(personalityDisplay)}</span></div>
       </div>
 
       <!-- 爱豆设定 -->
       ${_idolsData.map((idol, i) => `
         <div class="confirm-section">
           <div class="confirm-section-title">💜 ${idol.name || '爱豆 ' + (i + 1)}</div>
-          <div class="confirm-row"><span class="label">姓名</span><span class="value">${_escapeHtml(idol.name)}</span></div>
+          <div class="confirm-row"><span class="label">姓名</span><span class="value">${escapeHtml(idol.name)}</span></div>
           <div class="confirm-row"><span class="label">性别</span><span class="value">${idol.gender === 'male' ? '♂ 男' : '♀ 女'}</span></div>
-          <div class="confirm-row"><span class="label">团体</span><span class="value">${_escapeHtml(idol.group)}</span></div>
-          <div class="confirm-row"><span class="label">备注</span><span class="value">${idol.nickname ? _escapeHtml(idol.nickname) : '（未设置）'}</span></div>
+          <div class="confirm-row"><span class="label">团体</span><span class="value">${escapeHtml(idol.group)}</span></div>
+          <div class="confirm-row"><span class="label">备注</span><span class="value">${idol.nickname ? escapeHtml(idol.nickname) : '（未设置）'}</span></div>
           <div class="confirm-tags">
             ${idol.personalityTags.map(t => `<span class="mini-tag">${t}</span>`).join('')}
-            ${idol.personalityCustom ? `<span class="mini-tag">${_escapeHtml(idol.personalityCustom)}</span>` : ''}
+            ${idol.personalityCustom ? `<span class="mini-tag">${escapeHtml(idol.personalityCustom)}</span>` : ''}
           </div>
           ${idol.avatarFile ? '<div style="margin-top:8px;font-size:12px;color:var(--color-safe);">📷 头像已上传</div>' : ''}
         </div>
@@ -614,8 +614,11 @@ Game.Setup = (() => {
     Game.state.currentTurn = 0;
     Game.state.initialized = true;
 
-    // 3. 保存存档（自动保存到槽1）
-    Game.Storage.saveGame(1, Game.state);
+    // 3. 选择空存档槽并保存
+    const slot = Game.State.findEmptySlot();
+    Game.State.setCurrentSlot(slot);
+    Game.State.autoSave();
+    console.log('[Setup] 新游戏使用存档槽' + slot);
 
     // 4. 隐藏所有覆盖层，显示游戏主界面
     showGameUI();
@@ -655,12 +658,6 @@ Game.Setup = (() => {
     startGame();
   }
 
-  // ===== HTML工具函数 =====
-  function _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 
   // ===== 全局初始化 =====
   function initAllListeners() {

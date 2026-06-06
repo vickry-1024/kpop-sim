@@ -111,10 +111,8 @@ Game.Profile = (() => {
       </div>
     `).join('');
 
-    // 异步加载每个头像的预览
-    for (let i = 0; i < idols.length; i++) {
-      await renderAvatarPreview(i);
-    }
+    // 并行加载所有头像预览
+    await Promise.all(idols.map((_, i) => renderAvatarPreview(i).catch(() => {})));
   }
 
   /**
@@ -231,7 +229,7 @@ Game.Profile = (() => {
       if (nameEl) nameEl.textContent = '✓ ' + file.name;
 
       // 自动存档
-      Game.Storage.saveGame(1, Game.state);
+      Game.State.autoSave();
     } catch (e) {
       console.error('[Profile] 头像更新失败', e);
       alert('头像更新失败，请重试');
@@ -265,15 +263,7 @@ Game.Profile = (() => {
     if (nameEl) nameEl.textContent = '未上传';
 
     // 自动存档
-    Game.Storage.saveGame(1, Game.state);
-  }
-
-  // ===== 工具函数 =====
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
+    Game.State.autoSave();
   }
 
   // ===== 初始化 =====

@@ -32,6 +32,7 @@
 
   /* ===== 数值色 ===== */
   --color-affection: #F8A5C2;   /* 好感度-粉 */
+  --color-affection-light: #FCD5E4; /* 好感度-浅粉 */
   --color-stress: #A0A0A0;      /* 压力-灰 */
   --color-suspicion: #FF6B6B;   /* 嫌疑度-红 */
   --color-stamina: #4ECDC4;     /* 体力-青 */
