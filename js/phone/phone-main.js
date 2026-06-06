@@ -91,14 +91,26 @@ Game.Phone = (() => {
     // 渲染APP图标
     const apps = APPS[_phoneType] || APPS.main;
     if (appGrid) {
-      appGrid.innerHTML = apps.map(app => `
+      appGrid.innerHTML = apps.map(app => {
+        // 检查聊天APP的未读消息数
+        let badgeHTML = '';
+        if ((app.id === 'chat' || app.id === 'secret-chat') && Game.PhoneChat) {
+          const phoneTypeForBadge = app.id === 'secret-chat' ? 'secret' : 'main';
+          const unread = Game.PhoneChat.getTotalUnread(phoneTypeForBadge);
+          if (unread > 0) {
+            badgeHTML = `<span class="phone-app-badge">${unread > 99 ? '99+' : unread}</span>`;
+          }
+        }
+        return `
         <button class="phone-app-icon" onclick="Game.Phone.openApp('${app.id}')">
           <span class="phone-app-icon-bg" style="background:${app.color}20; color:${app.color};">
             ${app.icon}
+            ${badgeHTML}
           </span>
           <span class="phone-app-icon-name">${app.name}</span>
         </button>
-      `).join('');
+      `;
+      }).join('');
     }
 
     // 切换按钮区域

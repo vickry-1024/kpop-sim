@@ -287,6 +287,9 @@ Game.Turn = (() => {
     if (Game.Relations) Game.Relations.refresh();
     if (Game.Profile) Game.Profile.refresh();
 
+    // 8. 随机爱豆主动发消息（fire-and-forget，不阻塞）
+    _triggerProactiveMessages();
+
     console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
   }
 
@@ -1021,6 +1024,49 @@ Game.Turn = (() => {
       </button>
       <p class="turn-end-hint">结束回合后体力回满，压力-3</p>
     `;
+  }
+
+  // ===== 爱豆主动消息 =====
+
+  /**
+   * 回合结束时随机触发爱豆主动发消息
+   * 每个爱豆独立判断概率，好感度越高越可能主动联系
+   * fire-and-forget：不阻塞回合结束流程
+   */
+  function _triggerProactiveMessages() {
+    if (!Game.PhoneChat || !Game.PhoneChat.tryProactiveMessage) return;
+
+    const idols = Game.state.idols || [];
+    if (idols.length === 0) return;
+
+    // 打乱顺序，避免总是第一个爱豆发消息
+    const indices = idols.map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    // 最多2个爱豆在同一回合发消息（避免轰炸）
+    let sentCount = 0;
+    const maxPerTurn = 2;
+
+    for (const idx of indices) {
+      if (sentCount >= maxPerTurn) break;
+
+      // 同时检查主手机和秘密手机
+      const sp = Game.State.getSecretPhone();
+      const isSecretContact = sp && sp.unlocked && sp.idolIndex === idx;
+      const phoneType = isSecretContact ? 'secret' : 'main';
+
+      // fire-and-forget
+      Game.PhoneChat.tryProactiveMessage(idx, phoneType).then(sent => {
+        if (sent) {
+          console.log('[Turn] ' + (idols[idx].nickname || idols[idx].name) + ' 主动发来消息（' + phoneType + '）');
+        }
+      }).catch(() => {});
+
+      sentCount++;
+    }
   }
 
   // ===== 公开API =====

@@ -137,6 +137,9 @@ Game.PhoneChat = (() => {
 
     const idolName = idol.nickname || idol.name;
 
+    // 清除该联系人的未读消息
+    clearUnread(idolIndex, phoneType);
+
     // 更新标题
     const titleEl = document.getElementById('phone-app-title');
     if (titleEl) titleEl.textContent = '💬 ' + idolName;
@@ -646,6 +649,177 @@ Game.PhoneChat = (() => {
     return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hours + ':' + minutes;
   }
 
+  // ===== 未读消息通知 =====
+
+  /**
+   * 获取未读消息数
+   */
+  function getUnreadCount(idolIndex, phoneType) {
+    try {
+      const key = 'unread-' + phoneType + '-' + idolIndex;
+      const val = localStorage.getItem(key);
+      return val ? parseInt(val, 10) : 0;
+    } catch (e) { return 0; }
+  }
+
+  /**
+   * 增加未读消息数
+   */
+  function incrementUnread(idolIndex, phoneType) {
+    try {
+      const key = 'unread-' + phoneType + '-' + idolIndex;
+      const current = getUnreadCount(idolIndex, phoneType);
+      localStorage.setItem(key, String(current + 1));
+    } catch (e) { /* localStorage 不可用 */ }
+  }
+
+  /**
+   * 清除未读消息数
+   */
+  function clearUnread(idolIndex, phoneType) {
+    try {
+      const key = 'unread-' + phoneType + '-' + idolIndex;
+      localStorage.setItem(key, '0');
+    } catch (e) { /* localStorage 不可用 */ }
+  }
+
+  /**
+   * 获取所有联系人的总未读数（用于主屏幕角标）
+   */
+  function getTotalUnread(phoneType) {
+    const idols = Game.state.idols || [];
+    let total = 0;
+    for (let i = 0; i < idols.length; i++) {
+      total += getUnreadCount(i, phoneType);
+    }
+    return total;
+  }
+
+  // ===== 爱豆主动发消息 =====
+
+  /**
+   * 生成爱豆主动分享日常的消息
+   * @param {Object} idol - 爱豆对象
+   * @returns {Promise<string>} 消息文本
+   */
+  async function generateProactiveMessage(idol) {
+    const aff = idol.stats.affection || 0;
+    const honorific = Game.Actions.getHonorific(idol.gender);
+
+    // 尝试AI生成
+    if (Game.API && Game.API.hasAnyKey()) {
+      try {
+        const player = Game.state.player;
+        const prompt = `【场景】你正在用手机和朋友分享日常。你主动发了一条消息过去，分享你今天发生的事。这不是回复，是你主动开启的话题。
+
+【你的性格】${(idol.personalityTags || []).join('、')}${idol.personalityCustom ? ' / ' + idol.personalityCustom : ''}
+【好感度】${aff}/100
+【对方称呼】${honorific}
+
+请分享一件你今天发生的小事，像真实朋友发消息一样。1-3句话，要有生活气息。`;
+
+        const messages = [
+          { role: 'system', content: '你是一个Kpop爱豆，正在和朋友分享日常。说话自然真实，像发微信/KakaoTalk。' },
+          { role: 'user', content: prompt }
+        ];
+        const reply = await Game.API.callDeepSeek(messages, { temperature: 0.9, maxTokens: 200 });
+        if (reply && reply.trim()) return reply.trim();
+      } catch (e) {
+        console.log('[PhoneChat] AI主动消息生成失败，使用预设');
+      }
+    }
+
+    // 预设消息池
+    if (aff >= 60) {
+      const msgs = [
+        '今天练习好累啊..但是一想到能见到你就觉得都值得了💜',
+        honorific + '～我刚吃到了一个超好吃的甜品！下次给你带一份',
+        '今天被经纪人说了ㅠㅠ 因为练习的时候偷偷看手机..（其实是在等你的消息）',
+        '啊刚录完音出来！嗓子有点哑但是录音老师说效果很好～开心',
+        '今天成员说我最近总是傻笑..都怪你！ㅋㅋㅋ',
+        '下雨了☔ 这种天气最适合窝在被子里和你聊天了～',
+        '刚才在便利店碰到粉丝了！有点紧张但是她们都好温柔',
+        '今天学了一个超难的新编舞，腿已经不是我的了..但是跳出来的时候超有成就感！',
+        '突然好想去海边啊～你愿意陪我去吗？就我们两个',
+        '看到一句话觉得好适合你：「遇见你是我最美丽的意外」✨',
+        honorific + '我今天自拍了好多张，但是一张都不满意..你觉得我哪张最好看？',
+        '练习间隙偷偷给你发消息～被发现就完了ㅋㅋㅋ',
+        '今天心情莫名很好！可能是..因为昨天晚上梦到你了？',
+        '刚和成员们聊到理想型..我描述的那个人好像你',
+        '你知道吗，我今天在台上看到观众席有个人很像你，差点忘记动作了'
+      ];
+      return msgs[Math.floor(Math.random() * msgs.length)];
+    } else if (aff >= 30) {
+      const msgs = [
+        '刚练习完！今天学了一首新歌的编舞，好难但是好有意思',
+        '今天午饭吃了超好吃的拌饭！你们那边有什么好吃的推荐吗？',
+        '下雨了..你那边呢？记得带伞！',
+        '今天被舞蹈老师夸了！！虽然只是说"有进步"但我也好开心ㅋㅋ',
+        '成员今天在练习室摔了一跤，笑了我们整整十分钟🤣',
+        '刚看到一个超好笑的综艺片段，等下分享给你！',
+        '今天好冷啊🥶 你多穿点别感冒了',
+        '在听歌..突然好奇你平时喜欢听什么类型的歌？',
+        '今天公司来了新的练习生，看到他们就想起自己以前的样子..时间好快',
+        '明天有打歌舞台，有点紧张..给我加油吧！',
+        '刚洗完澡出来～今天流了好多汗但是感觉很充实',
+        '突然想吃炸鸡但是经纪人说要控制饮食ㅠㅠ 好想吃..',
+        '今天天气真好！适合出去玩～你有什么计划吗？',
+        '录了新歌的demo！还不能给你们听但是真的超好听',
+        '你知道吗今天我在街上看到一只猫，长得好像我们团的忙内ㅋㅋㅋ'
+      ];
+      return msgs[Math.floor(Math.random() * msgs.length)];
+    } else {
+      const msgs = [
+        '今天练习好累啊～不过想到有粉丝的支持就觉得很有动力！',
+        '刚看到粉丝们送的应援礼物，真的好感动ㅠㅠ',
+        '最近在准备新的舞台，希望大家会喜欢！',
+        '今天天气真好～心情也跟着变好了',
+        '练舞的时候突然想到，有这么多人喜欢我们真的太好了',
+        '刚吃了一顿超好吃的饭！充电完毕，继续练习去',
+        '今天的天空好漂亮，拍了一张照片想分享给你',
+        '最近在写日记，记录每天练习的进步，回头看应该会很有趣吧',
+        '有点困..但是还要再练一会才能休息。大家工作/学习也辛苦了吧？',
+        '突然想到我们团的应援色，每次看到都好感动'
+      ];
+      return msgs[Math.floor(Math.random() * msgs.length)];
+    }
+  }
+
+  /**
+   * 尝试让爱豆主动发消息（由回合系统调用）
+   * @param {number} idolIndex
+   * @param {string} phoneType
+   * @returns {Promise<boolean>} 是否发了消息
+   */
+  async function tryProactiveMessage(idolIndex, phoneType) {
+    const idol = Game.state.idols[idolIndex];
+    if (!idol) return false;
+
+    const aff = idol.stats.affection || 0;
+    // 概率：20%基础 + 每10好感+3%，最高55%
+    const chance = Math.min(20 + Math.floor(aff / 10) * 3, 55);
+    if (Math.random() * 100 >= chance) return false;
+
+    try {
+      const message = await generateProactiveMessage(idol);
+      if (message && message.trim()) {
+        // 保存到聊天历史
+        const history = await loadHistory(idolIndex, phoneType);
+        history.push({ from: 'idol', text: message.trim(), time: Date.now() });
+        await saveHistory(idolIndex, phoneType, history);
+
+        // 增加未读计数
+        incrementUnread(idolIndex, phoneType);
+
+        console.log('[PhoneChat] ' + (idol.nickname || idol.name) + ' 主动发来消息: ' + message.trim().substring(0, 30) + '...');
+        return true;
+      }
+    } catch (e) {
+      console.warn('[PhoneChat] 主动消息失败:', e.message);
+    }
+    return false;
+  }
+
   // ===== 公开API =====
 
   return {
@@ -654,7 +828,12 @@ Game.PhoneChat = (() => {
     openConversation,
     sendQuickReply,
     sendCustomMessage,
-    handleInputKey
+    handleInputKey,
+    getUnreadCount,
+    getTotalUnread,
+    clearUnread,
+    generateProactiveMessage,
+    tryProactiveMessage
   };
 
 })();
