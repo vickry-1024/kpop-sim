@@ -85,7 +85,7 @@ Game.Relations = (() => {
           <!-- 阶段标记线 -->
           <div class="affection-markers">
             <span class="affection-marker" style="left:33%;" title="恋爱门槛">💕</span>
-            <span class="affection-marker" style="left:66%;" title="结婚门槛">💍</span>
+            <span class="affection-marker" style="left:90%;" title="结婚门槛">💍</span>
           </div>
         </div>
 
