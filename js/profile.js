@@ -281,7 +281,7 @@ Game.Profile = (() => {
   function init() {
     // 监听选项卡切换，切换到"我的"时自动刷新
     document.addEventListener('pageChanged', (e) => {
-      if (e.detail && e.detail.page === 'profile') {
+      if (e.detail && e.detail.to === 'profile') {
         refresh();
       }
     });

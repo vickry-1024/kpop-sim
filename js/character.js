@@ -517,6 +517,40 @@ Game.Setup = (() => {
     `;
   }
 
+  // ===== 显示游戏主界面 =====
+
+  /**
+   * 隐藏所有覆盖层，显示游戏App主界面
+   */
+  function showGameUI() {
+    // 隐藏标题画面
+    const titleScreen = document.getElementById('title-screen');
+    if (titleScreen) {
+      titleScreen.style.display = 'none';
+    }
+
+    // 隐藏设定向导
+    const setupScreen = document.getElementById('setup-screen');
+    if (setupScreen) {
+      setupScreen.style.opacity = '0';
+      setupScreen.style.transition = 'opacity 300ms ease-out';
+      setTimeout(() => {
+        setupScreen.style.display = 'none';
+      }, 300);
+    }
+
+    // 显示App主界面
+    const app = document.getElementById('app');
+    if (app) {
+      app.style.display = 'flex';
+      app.style.opacity = '0';
+      app.style.transition = 'opacity 300ms ease-out';
+      requestAnimationFrame(() => {
+        app.style.opacity = '1';
+      });
+    }
+  }
+
   // ===== 开始游戏 =====
 
   async function startGame() {
@@ -583,30 +617,15 @@ Game.Setup = (() => {
     // 3. 保存存档（自动保存到槽1）
     Game.Storage.saveGame(1, Game.state);
 
-    // 4. 隐藏设定覆盖层，显示游戏主界面
-    const setupScreen = document.getElementById('setup-screen');
-    const app = document.getElementById('app');
+    // 4. 隐藏所有覆盖层，显示游戏主界面
+    showGameUI();
 
-    if (setupScreen) {
-      setupScreen.style.opacity = '0';
-      setupScreen.style.transition = 'opacity 300ms ease-out';
-      setTimeout(() => {
-        setupScreen.style.display = 'none';
-      }, 300);
-    }
-
-    if (app) {
-      app.style.display = 'flex';
-      app.style.opacity = '0';
-      app.style.transition = 'opacity 300ms ease-out';
-      requestAnimationFrame(() => {
-        app.style.opacity = '1';
-      });
-    }
-
-    // 5. 刷新"我的"面板
+    // 5. 刷新各面板
     if (Game.Profile) {
       Game.Profile.refresh();
+    }
+    if (Game.Relations) {
+      Game.Relations.refresh();
     }
 
     console.log('[Setup] 游戏开始！玩家：' + _playerData.name + '，攻略爱豆：' + _idolsData.length + '位');

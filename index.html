@@ -15,6 +15,32 @@
   <link rel="stylesheet" href="css/setup.css">
 </head>
 <body>
+  <!-- ===== 标题画面（有存档时显示） ===== -->
+  <div id="title-screen" class="setup-overlay" style="display:none;">
+    <div class="setup-container">
+      <div class="setup-welcome">
+        <div class="setup-logo">💜</div>
+        <h1 class="setup-game-title">Kpop嫂子模拟器</h1>
+        <p class="setup-game-desc">一段属于你的Kpop恋爱故事</p>
+      </div>
+
+      <!-- 存档列表 -->
+      <div class="title-save-section" id="title-save-section">
+        <h3 class="title-section-label">📂 继续游戏</h3>
+        <div id="title-save-list" class="title-save-list">
+          <!-- 动态填充存档卡片 -->
+        </div>
+      </div>
+
+      <!-- 底部按钮 -->
+      <div class="setup-actions" style="padding: var(--spacing-md);">
+        <button class="btn btn-primary btn-block btn-lg" onclick="Game.startNewGame()">
+          ✨ 开始新游戏
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 设定向导（新玩家首次进入） ===== -->
   <div id="setup-screen" class="setup-overlay">
     <div class="setup-container">
@@ -294,12 +320,8 @@
           <h1 class="page-title">💜 关系</h1>
           <p class="page-subtitle">查看你与爱豆的关系</p>
         </div>
-        <div class="page-content">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">💜</div>
-            <p class="placeholder-text">关系面板</p>
-            <p class="placeholder-hint">将在阶段3实现</p>
-          </div>
+        <div class="page-content" id="relations-container">
+          <!-- 动态填充爱豆关系卡片 -->
         </div>
       </section>
 
@@ -347,8 +369,10 @@
   <!-- JavaScript -->
   <script src="js/app.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/game-state.js"></script>
   <script src="js/character.js"></script>
   <script src="js/profile.js"></script>
+  <script src="js/relations.js"></script>
   <script src="js/router.js"></script>
 </body>
 </html>
