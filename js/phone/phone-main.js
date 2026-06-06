@@ -1,6 +1,6 @@
 /**
  * 手机主屏幕模块 — 手机系统的入口
- * 负责：APP图标网格、主屏幕↔APP内页导航、主手机↔秘密手机切换
+ * 负责：APP图标网格、主屏幕↔APP内页导航、主手机↔秘密手机切换（条件解锁）
  */
 
 Game.Phone = (() => {
@@ -34,10 +34,26 @@ Game.Phone = (() => {
     document.addEventListener('pageChanged', (e) => {
       if (e.detail && e.detail.to === 'phone') {
         _currentApp = null;
+        // 如果当前在秘密手机但已失效，切回主手机
+        if (_phoneType === 'secret' && !isSecretPhoneUnlocked()) {
+          _phoneType = 'main';
+        }
         renderHomeScreen();
       }
     });
     console.log('[Phone] 手机系统初始化完成');
+  }
+
+  // ===== 秘密手机状态 =====
+
+  function isSecretPhoneUnlocked() {
+    const sp = Game.State.getSecretPhone();
+    return sp && sp.unlocked;
+  }
+
+  function getSecretPhoneIdolIndex() {
+    const sp = Game.State.getSecretPhone();
+    return sp ? sp.idolIndex : null;
   }
 
   // ===== 渲染主屏幕 =====
@@ -50,8 +66,7 @@ Game.Phone = (() => {
     const appView = document.getElementById('phone-app-view');
     const statusTime = document.getElementById('phone-status-time');
     const appGrid = document.getElementById('phone-app-grid');
-    const switchBtn = document.getElementById('phone-switch-btn');
-    const switchHint = document.getElementById('phone-switch-hint');
+    const switchArea = document.getElementById('phone-switch-area');
 
     if (!home || !appView) return;
 
@@ -86,17 +101,40 @@ Game.Phone = (() => {
       `).join('');
     }
 
-    // 切换按钮
-    if (switchBtn) {
-      const isSecret = _phoneType === 'secret';
-      switchBtn.textContent = isSecret ? '🔒 秘密手机' : '📱 主手机';
-      switchBtn.className = 'phone-switch-btn' + (isSecret ? ' secret-mode' : '');
-    }
+    // 切换按钮区域
+    if (switchArea) {
+      const unlocked = isSecretPhoneUnlocked();
+      if (unlocked) {
+        // 秘密手机已解锁 → 显示切换按钮
+        const idolIndex = getSecretPhoneIdolIndex();
+        const idol = (idolIndex !== null && Game.state.idols[idolIndex])
+          ? Game.state.idols[idolIndex] : null;
+        const idolName = idol ? (idol.nickname || idol.name) : '';
 
-    if (switchHint) {
-      switchHint.textContent = _phoneType === 'main'
-        ? '点击切换 → 秘密手机（加密通讯）'
-        : '点击切换 → 回到主手机';
+        switchArea.style.display = 'block';
+        const isSecret = _phoneType === 'secret';
+        switchArea.innerHTML = `
+          <button class="phone-switch-btn${isSecret ? ' secret-mode' : ''}"
+                  id="phone-switch-btn" onclick="Game.Phone.switchPhone()">
+            ${isSecret ? '🔒 秘密手机' : '📱 主手机'}
+          </button>
+          <p class="phone-switch-hint" id="phone-switch-hint">
+            ${isSecret
+              ? '← 点击回到主手机'
+              : (idolName ? '→ 切换到 ' + escapeHtml(idolName) + ' 经纪人给的秘密手机' : '→ 切换到秘密手机')}
+          </p>
+        `;
+      } else {
+        // 秘密手机未解锁 → 显示锁定提示
+        switchArea.style.display = 'block';
+        switchArea.innerHTML = `
+          <div class="phone-switch-locked">
+            <span class="phone-switch-locked-icon">🔐</span>
+            <span class="phone-switch-locked-text">秘密手机尚未获得</span>
+            <span class="phone-switch-locked-hint">或许有经纪人会悄悄给你一部...</span>
+          </div>
+        `;
+      }
     }
   }
 
@@ -104,7 +142,6 @@ Game.Phone = (() => {
 
   /**
    * 打开一个APP
-   * @param {string} appId - APP标识
    */
   function openApp(appId) {
     _currentApp = appId;
@@ -153,8 +190,14 @@ Game.Phone = (() => {
   function renderAppContent(appId, container) {
     switch (appId) {
       case 'chat':
+        if (Game.PhoneChat) Game.PhoneChat.renderContactList(container, 'main');
+        break;
       case 'secret-chat':
-        if (Game.PhoneChat) Game.PhoneChat.renderContactList(container, _phoneType);
+        if (Game.PhoneChat) {
+          // 秘密手机只显示特定爱豆
+          const idolIndex = getSecretPhoneIdolIndex();
+          Game.PhoneChat.renderSecretContact(container, idolIndex);
+        }
         break;
       case 'sns':
         if (Game.PhoneSNS) Game.PhoneSNS.renderFeed(container);
@@ -180,17 +223,18 @@ Game.Phone = (() => {
    * 切换主手机 ↔ 秘密手机
    */
   function switchPhone() {
+    if (_phoneType === 'main' && !isSecretPhoneUnlocked()) {
+      console.warn('[Phone] 秘密手机尚未解锁');
+      return;
+    }
     _phoneType = _phoneType === 'main' ? 'secret' : 'main';
     _currentApp = null;
     renderHomeScreen();
     console.log('[Phone] 切换到：' + (_phoneType === 'main' ? '主手机' : '秘密手机'));
   }
 
-  // ===== 相册（简单版） =====
+  // ===== 相册 =====
 
-  /**
-   * 渲染相册（显示壁纸 + 爱豆头像）
-   */
   async function renderGallery(container) {
     container.innerHTML = '<div class="gallery-grid" id="gallery-grid">加载中...</div>';
     const grid = document.getElementById('gallery-grid');
@@ -198,15 +242,13 @@ Game.Phone = (() => {
 
     const items = [];
 
-    // 壁纸
     try {
       const wallpaper = await Game.Storage.getPhoto('wallpaper');
       if (wallpaper) {
         items.push({ id: 'wallpaper', label: '📱', blob: wallpaper.blob });
       }
-    } catch (e) { /* 无壁纸则跳过 */ }
+    } catch (e) { /* 无壁纸 */ }
 
-    // 各爱豆头像
     const idols = Game.state.idols || [];
     for (const idol of idols) {
       try {
@@ -216,7 +258,7 @@ Game.Phone = (() => {
             items.push({ id: idol.avatarId, label: '💜', blob: photo.blob });
           }
         }
-      } catch (e) { /* 无头像则跳过 */ }
+      } catch (e) { /* 无头像 */ }
     }
 
     if (items.length === 0) {
@@ -239,7 +281,8 @@ Game.Phone = (() => {
     closeApp,
     switchPhone,
     renderHomeScreen,
-    getPhoneType: () => _phoneType
+    getPhoneType: () => _phoneType,
+    isSecretPhoneUnlocked
   };
 
 })();

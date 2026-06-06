@@ -596,6 +596,11 @@ Game.Setup = (() => {
       social: {
         followers: Game.State.getStartingFollowers(_playerData.identityTags),
         posts: 0
+      },
+      // 秘密手机（默认未解锁，需随机事件触发）
+      secretPhone: {
+        unlocked: false,
+        idolIndex: null
       }
     };
 

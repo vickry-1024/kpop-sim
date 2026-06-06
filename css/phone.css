@@ -120,6 +120,33 @@
   margin-top: 6px;
 }
 
+/* 秘密手机未解锁状态 */
+.phone-switch-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--spacing-md);
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  border: 1.5px dashed var(--border-color);
+}
+
+.phone-switch-locked-icon {
+  font-size: 24px;
+}
+
+.phone-switch-locked-text {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.phone-switch-locked-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+}
+
 /* ===== APP内页通用 ===== */
 .phone-app-view {
   position: absolute;
@@ -590,6 +617,92 @@
   font-size: var(--font-size-xs);
   color: var(--text-hint);
   text-align: center;
+}
+
+/* 发帖风格选择 */
+.sns-style-select {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.sns-style-hint {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.sns-style-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-left-width: 4px;
+  transition: all var(--transition-fast);
+  text-align: left;
+  width: 100%;
+}
+
+.sns-style-option:active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  transform: scale(0.98);
+}
+
+.sns-style-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sns-style-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sns-style-label {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sns-style-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.sns-style-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: var(--font-size-xs);
+}
+
+.sns-style-effects .effect-positive {
+  color: var(--color-safe);
+  font-weight: 600;
+}
+
+.sns-style-effects .effect-negative {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.sns-style-arrow {
+  font-size: var(--font-size-lg);
+  color: var(--text-hint);
+  flex-shrink: 0;
+  margin-top: 8px;
 }
 
 .sns-new-post-btn {

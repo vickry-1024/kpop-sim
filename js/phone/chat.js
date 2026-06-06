@@ -47,6 +47,44 @@ Game.PhoneChat = (() => {
   }
 
   /**
+   * 渲染秘密手机联系人（仅显示特定爱豆）
+   * @param {HTMLElement} container
+   * @param {number|null} idolIndex - 经纪人指定的爱豆索引
+   */
+  function renderSecretContact(container, idolIndex) {
+    if (idolIndex === null || idolIndex === undefined) {
+      container.innerHTML = '<div class="chat-conv-empty"><span>🔐</span><span>秘密手机尚未绑定联系人</span></div>';
+      return;
+    }
+
+    const idol = Game.state.idols[idolIndex];
+    if (!idol) {
+      container.innerHTML = '<div class="chat-conv-empty"><span>🔐</span><span>联系人数据异常</span></div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="chat-contacts">
+        <button class="chat-contact-item" onclick="Game.PhoneChat.openConversation(${idolIndex}, 'secret')">
+          <div class="chat-contact-avatar" id="chat-avatar-${idolIndex}">
+            <span class="chat-contact-avatar-placeholder">🔒</span>
+          </div>
+          <div class="chat-contact-info">
+            <span class="chat-contact-name">${escapeHtml(idol.nickname || idol.name)}</span>
+            <span class="chat-contact-last-msg" id="chat-last-msg-${idolIndex}">
+              ${idol.stats.affection >= 60 ? '💜 加密通讯中' : '🔐 秘密联系人'}
+            </span>
+          </div>
+          <span class="chat-contact-badge" style="background:var(--secret-accent);">秘密</span>
+        </button>
+      </div>
+    `;
+
+    // 异步加载头像和最近消息
+    loadContactDetails(container, 'secret');
+  }
+
+  /**
    * 异步加载联系人头像和最后消息
    */
   async function loadContactDetails(container, phoneType) {
@@ -401,18 +439,20 @@ Game.PhoneChat = (() => {
 
   /**
    * 应用聊天对数值的影响
-   * 秘密手机嫌疑度增幅减半
+   * 秘密手机大幅降低嫌疑度增幅（加密通讯）
    */
   function applyChatEffects(phoneType) {
     // 手机聊天不消耗体力（和日程行动的区别）
-    // 但会影响好感度（微量）和嫌疑度
-    const suspicionGain = phoneType === 'secret' ? [0, 1] : [0, 2];
+    // 主手机聊天：微量嫌疑度风险
+    // 秘密手机聊天：几乎零风险（加密通道）
+    const suspicionGain = phoneType === 'secret' ? [0, 0] : [0, 2];
     const delta = suspicionGain[0] + Math.floor(Math.random() * (suspicionGain[1] - suspicionGain[0] + 1));
     if (delta > 0) {
       Game.State.addSuspicion(delta);
     }
-    // 压力略微下降
-    Game.State.addStress(-1);
+    // 压力略微下降（秘密手机聊天更放松）
+    const stressDrop = phoneType === 'secret' ? -3 : -1;
+    Game.State.addStress(stressDrop);
   }
 
   // ===== IndexedDB 历史管理 =====
@@ -460,6 +500,7 @@ Game.PhoneChat = (() => {
 
   return {
     renderContactList,
+    renderSecretContact,
     openConversation,
     sendQuickReply,
     sendCustomMessage,

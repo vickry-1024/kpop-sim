@@ -123,6 +123,9 @@ Game.Turn = (() => {
     if (Game.Relations) Game.Relations.refresh();
     if (Game.Profile) Game.Profile.refresh();
 
+    // 随机事件：秘密手机解锁检测
+    _checkSecretPhoneEvent(action, targetIndex);
+
     console.log('[Turn] 行动完成：' + action.name + (targetName ? ' → ' + targetName : ''));
     return true;
   }
@@ -654,6 +657,9 @@ Game.Turn = (() => {
     if (Game.Relations) Game.Relations.refresh();
     if (Game.Profile) Game.Profile.refresh();
 
+    // 随机事件：秘密手机解锁检测
+    _checkSecretPhoneEvent(action, targetIndex);
+
     console.log('[Turn] 行动完成：' + action.name + (subLabel ? ' · ' + subLabel : '') + (targetName ? ' → ' + targetName : ''));
     return true;
   }
@@ -789,6 +795,86 @@ Game.Turn = (() => {
 
     // 无子选项 → 直接执行
     executeAction(actionId, null);
+  }
+
+  /**
+   * 检测秘密手机解锁随机事件
+   * 触发条件：探班/送咖啡车/送礼物行动，好感度≥20，秘密手机未解锁
+   * 基础15%概率，每10点好感度+1%
+   */
+  function _checkSecretPhoneEvent(action, targetIndex) {
+    // 只对特定行动类型检测
+    const triggerActions = ['visit', 'coffee-truck', 'gift'];
+    if (!triggerActions.includes(action.id)) return;
+
+    // 需要目标爱豆
+    if (targetIndex === null || targetIndex === undefined) return;
+
+    // 检查秘密手机是否已解锁
+    const sp = Game.State.getSecretPhone();
+    if (sp && sp.unlocked) return;
+
+    // 检查好感度门槛
+    const idol = Game.state.idols[targetIndex];
+    if (!idol || idol.stats.affection < 20) return;
+
+    // 计算触发概率：15% + 每10好感度+1%，最高40%
+    const baseChance = 15;
+    const bonusChance = Math.floor(idol.stats.affection / 10);
+    const totalChance = Math.min(baseChance + bonusChance, 40);
+
+    const roll = Math.floor(Math.random() * 100);
+    if (roll >= totalChance) return;
+
+    // 触发！解锁秘密手机
+    Game.State.unlockSecretPhone(targetIndex);
+    const idolName = idol.nickname || idol.name;
+    console.log('[Turn] 🎉 秘密手机事件触发！' + idolName + '的经纪人悄悄递来一部手机...');
+
+    // 显示提示
+    _showSecretPhoneNotification(idolName);
+  }
+
+  /**
+   * 显示秘密手机解锁通知
+   */
+  function _showSecretPhoneNotification(idolName) {
+    // 在日程页显示浮动通知
+    const logContainer = document.getElementById('schedule-action-log');
+    if (!logContainer) return;
+
+    const notice = document.createElement('div');
+    notice.style.cssText = `
+      background: linear-gradient(135deg, #1A1A2E, #16213E);
+      color: #E0E0E0;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      animation: chatBubbleIn 0.5s ease-out;
+      border: 1px solid rgba(187,134,252,0.4);
+    `;
+    notice.innerHTML = `
+      <div style="font-size:20px;margin-bottom:6px;">📱🔒</div>
+      <div style="font-weight:700;margin-bottom:4px;">${escapeHtml(idolName)}的经纪人悄悄找到你...</div>
+      <div style="color:#BB86FC;font-size:12px;">"这是加密手机，用这个联系更安全。别让其他人知道。"</div>
+      <div style="margin-top:8px;font-size:11px;color:#8E8E93;">📱 手机页面已解锁「秘密手机」— 加密通讯，嫌疑度风险大幅降低</div>
+    `;
+
+    // 插入到日志区域最前面
+    if (logContainer.firstChild) {
+      logContainer.insertBefore(notice, logContainer.firstChild);
+    } else {
+      logContainer.appendChild(notice);
+    }
+
+    // 8秒后自动消失
+    setTimeout(() => {
+      notice.style.transition = 'opacity 0.5s';
+      notice.style.opacity = '0';
+      setTimeout(() => notice.remove(), 500);
+    }, 8000);
   }
 
   function shakeElement(el) {

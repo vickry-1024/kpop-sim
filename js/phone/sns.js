@@ -1,21 +1,83 @@
 /**
  * SNS APP模块 — 社交动态应用
- * 负责：动态流展示、发布动态、涨粉机制
+ * 负责：动态流展示、发布动态（含风格选择）、涨粉机制
  */
 
 Game.PhoneSNS = (() => {
 
-  // 当前视图状态：'feed' | 'compose'
+  // 当前视图状态：'feed' | 'style-select' | 'compose'
   let _view = 'feed';
+
+  // 当前选中的发帖风格（null=自定义）
+  let _selectedStyle = null;
+
+  // ===== 发帖风格定义 =====
+  const POST_STYLES = [
+    {
+      id: 'lovestagram',
+      label: '暗戳戳秀恩爱',
+      icon: '💕',
+      desc: '发一张只有你们懂的暗示照，粉丝会疯狂解码。嫌疑度风险高但刺激。',
+      effectMods: { followers: [50, 200], suspicion: [3, 8], stress: [-5, -2] },
+      color: '#FF6B9D'
+    },
+    {
+      id: 'fan-support',
+      label: '粉丝视角应援',
+      icon: '📣',
+      desc: '晒专辑、刷话题、宣传新歌。阳光正面，涨粉最多最安全。',
+      effectMods: { followers: [200, 500], charm: [2, 5], suspicion: [-1, 0] },
+      color: '#4ECDC4'
+    },
+    {
+      id: 'daily-life',
+      label: '晒日常美照',
+      icon: '🌸',
+      desc: '发自拍和生活碎片，自然经营社交形象。稳妥涨粉。',
+      effectMods: { followers: [100, 300], charm: [3, 6], suspicion: [0, 2] },
+      color: '#A78BFA'
+    },
+    {
+      id: 'custom',
+      label: '自定义发文',
+      icon: '✏️',
+      desc: '自己写想发的内容，自由发挥。效果根据内容而定。',
+      effectMods: { followers: [50, 200], charm: [1, 3], suspicion: [0, 2] },
+      color: '#8E8E93'
+    }
+  ];
+
+  // 每种风格的预设文案池
+  const STYLE_TEXTS = {
+    'lovestagram': [
+      '今天的风景真美...和你一起看的每一个瞬间都值得珍藏 💕',
+      '有些秘密只属于我们俩 🤫✨ #lucky',
+      '深夜的歌单暴露了心情 🎵 你懂吗？',
+      '两个人的世界，不需要第三个人懂 🌙',
+      '最近好喜欢"偶然"遇见某人呢...☕'
+    ],
+    'fan-support': [
+      '新歌循环播放中！！太好听了ㅠㅠ 大家快去听 🎧',
+      '永远支持你们！每一步都算数 💪✨ #Fighting',
+      '今天也认真投票了！粉丝的爱是认真的 💜',
+      '专辑买到手软但幸福！！每一版都要收藏 📀',
+      '为爱豆学了新技能！追星使我进步 📚✨'
+    ],
+    'daily-life': [
+      '今日份自拍 ☀️ 天气好心情也好～',
+      '在咖啡店发呆的下午 ☕ 一个人的时间也很珍贵',
+      '新买的小物件让生活充满仪式感 🌸 #日常',
+      '今天的OOTD！感觉还不错 👗✨',
+      '下班路上的夕阳太美了 🌇 忍不住拍了一张'
+    ]
+  };
 
   // ===== 预设动态数据 =====
 
-  // 爱豆的官方动态（根据已设定的爱豆动态替换名字）
   function getFeedPosts() {
     const idols = Game.state.idols || [];
     const idolNames = idols.map(i => i.nickname || i.name);
 
-    // 基础动态模板
     const templates = [
       {
         userType: 'idol',
@@ -107,7 +169,6 @@ Game.PhoneSNS = (() => {
       }
     ];
 
-    // 如果有爱豆，替换OFFCIAL的username
     if (idolNames.length > 0) {
       return templates.map(t => {
         if (t.userType === 'idol') {
@@ -132,7 +193,7 @@ Game.PhoneSNS = (() => {
 
     container.innerHTML = `
       <div class="sns-feed" id="sns-feed-list">
-        ${posts.map((post, i) => `
+        ${posts.map(post => `
           <div class="sns-post-card">
             <div class="sns-post-header">
               <div class="sns-post-avatar">${post.userIcon}</div>
@@ -158,7 +219,7 @@ Game.PhoneSNS = (() => {
         `).join('')}
 
         <!-- 发帖入口 -->
-        <button class="sns-new-post-btn" onclick="Game.PhoneSNS.renderCompose()">
+        <button class="sns-new-post-btn" onclick="Game.PhoneSNS.renderStyleSelect()">
           ✏️ 分享你的动态...
         </button>
       </div>
@@ -166,23 +227,91 @@ Game.PhoneSNS = (() => {
   }
 
   /**
-   * 渲染发帖编辑界面
+   * 渲染发帖风格选择界面
+   */
+  function renderStyleSelect() {
+    const container = document.getElementById('phone-app-content');
+    if (!container) return;
+
+    _view = 'style-select';
+    _selectedStyle = null;
+
+    const titleEl = document.getElementById('phone-app-title');
+    if (titleEl) titleEl.textContent = '📱 发新动态';
+
+    const headerActions = document.getElementById('phone-app-header-actions');
+    if (headerActions) headerActions.innerHTML = '';
+
+    container.innerHTML = `
+      <div class="sns-style-select">
+        <p class="sns-style-hint">选择发帖风格</p>
+        ${POST_STYLES.map(style => `
+          <button class="sns-style-option" onclick="Game.PhoneSNS.selectStyle('${style.id}')"
+                  style="border-left: 4px solid ${style.color};">
+            <span class="sns-style-icon">${style.icon}</span>
+            <div class="sns-style-info">
+              <span class="sns-style-label">${style.label}</span>
+              <span class="sns-style-desc">${style.desc}</span>
+              <span class="sns-style-effects">
+                ${Object.entries(style.effectMods).map(([key, range]) => {
+                  const labels = { followers: '粉丝', charm: '魅力', suspicion: '嫌疑度', stress: '压力' };
+                  const sign0 = range[0] >= 0 ? '+' : '';
+                  const sign1 = range[1] >= 0 ? '+' : '';
+                  const cls = key === 'suspicion' && range[1] > 0 ? 'effect-negative' : 'effect-positive';
+                  return `<span class="${cls}">${labels[key] || key} ${sign0}${range[0]}~${sign1}${range[1]}</span>`;
+                }).join(' ')}
+              </span>
+            </div>
+            <span class="sns-style-arrow">→</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  /**
+   * 选择发帖风格
+   */
+  function selectStyle(styleId) {
+    if (styleId === 'custom') {
+      // 自定义 → 打开文字输入界面
+      renderCompose();
+      return;
+    }
+
+    // 预设风格 → 直接发布
+    const style = POST_STYLES.find(s => s.id === styleId);
+    if (!style) return;
+
+    _selectedStyle = style;
+
+    // 从文案池随机选一条
+    const texts = STYLE_TEXTS[styleId] || [];
+    const text = texts.length > 0
+      ? texts[Math.floor(Math.random() * texts.length)]
+      : '今天也是美好的一天～';
+
+    // 发布
+    publishWithStyle(style, text);
+  }
+
+  /**
+   * 渲染自定义发帖编辑界面
    */
   function renderCompose() {
     const container = document.getElementById('phone-app-content');
     if (!container) return;
 
     _view = 'compose';
+    _selectedStyle = POST_STYLES.find(s => s.id === 'custom');
 
-    // 更新标题
     const titleEl = document.getElementById('phone-app-title');
-    if (titleEl) titleEl.textContent = '📱 发新动态';
+    if (titleEl) titleEl.textContent = '📱 自定义发文';
 
-    // 添加发送按钮到header
     const headerActions = document.getElementById('phone-app-header-actions');
     if (headerActions) {
       headerActions.innerHTML = `
-        <button class="phone-app-header-btn" onclick="Game.PhoneSNS.publishPost()">发布</button>
+        <button class="phone-app-header-btn" onclick="Game.PhoneSNS.publishCustomPost()">发布</button>
       `;
     }
 
@@ -192,10 +321,10 @@ Game.PhoneSNS = (() => {
                   placeholder="想发什么动态？&#10;&#10;可以是日常碎碎念、暗戳戳秀恩爱、或者纯粹的追星日常..."
                   maxlength="500"></textarea>
         <p class="sns-compose-hint">
-          💡 提示：发帖会吸引粉丝关注，但也可能增加嫌疑度。目前预设文案，API接入后可AI生成。
+          💡 提示：发帖会吸引粉丝关注，但也可能增加嫌疑度。
         </p>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary btn-block" onclick="Game.PhoneSNS.publishPost()">
+          <button class="btn btn-primary btn-block" onclick="Game.PhoneSNS.publishCustomPost()">
             📮 发布动态
           </button>
           <button class="btn btn-secondary" onclick="Game.PhoneSNS.cancelCompose()">
@@ -205,7 +334,6 @@ Game.PhoneSNS = (() => {
       </div>
     `;
 
-    // 聚焦输入框
     setTimeout(() => {
       const textarea = document.getElementById('sns-compose-textarea');
       if (textarea) textarea.focus();
@@ -213,7 +341,25 @@ Game.PhoneSNS = (() => {
   }
 
   /**
-   * 取消发帖，返回动态流
+   * 发布自定义内容
+   */
+  function publishCustomPost() {
+    const textarea = document.getElementById('sns-compose-textarea');
+    const text = textarea ? textarea.value.trim() : '';
+
+    if (!text) {
+      // 空内容 → 用日常风格的随机文案
+      const dailyTexts = STYLE_TEXTS['daily-life'] || [];
+      const fallback = dailyTexts[Math.floor(Math.random() * dailyTexts.length)] || '今天也是美好的一天～';
+      publishWithStyle(POST_STYLES.find(s => s.id === 'custom'), fallback);
+      return;
+    }
+
+    publishWithStyle(POST_STYLES.find(s => s.id === 'custom'), text);
+  }
+
+  /**
+   * 取消发帖
    */
   function cancelCompose() {
     const container = document.getElementById('phone-app-content');
@@ -227,20 +373,11 @@ Game.PhoneSNS = (() => {
   }
 
   /**
-   * 发布动态
+   * 用指定风格发布
    */
-  function publishPost() {
-    const textarea = document.getElementById('sns-compose-textarea');
-    const text = textarea ? textarea.value.trim() : '';
-
-    if (!text) {
-      // 随机生成一条预设动态
-      publishRandomPost();
-      return;
-    }
-
-    // 应用数值效果
-    applyPostEffects(text);
+  function publishWithStyle(style, text) {
+    // 应用风格特定的数值效果
+    applyStyleEffects(style);
 
     // 返回动态流
     const container = document.getElementById('phone-app-content');
@@ -252,13 +389,16 @@ Game.PhoneSNS = (() => {
 
     if (container) {
       renderFeed(container);
-      // 滚动到顶部显示提示
+      // 显示提示
       setTimeout(() => {
         const feed = document.getElementById('sns-feed-list');
         if (feed) {
           const toast = document.createElement('div');
           toast.style.cssText = 'background:var(--color-safe-light);color:var(--color-safe);padding:12px;text-align:center;font-size:13px;font-weight:600;border-radius:8px;margin-bottom:8px;';
-          toast.textContent = '✅ 动态已发布！粉丝数 +' + (50 + Math.floor(Math.random() * 200));
+          const followersGain = style.effectMods.followers
+            ? style.effectMods.followers[0] + Math.floor(Math.random() * (style.effectMods.followers[1] - style.effectMods.followers[0] + 1))
+            : 100;
+          toast.textContent = '✅ ' + style.label + ' · 已发布！粉丝数 +' + followersGain;
           feed.insertBefore(toast, feed.firstChild);
           setTimeout(() => toast.remove(), 3000);
         }
@@ -267,71 +407,44 @@ Game.PhoneSNS = (() => {
   }
 
   /**
-   * 生成并发布随机预设动态
+   * 应用风格的数值效果
    */
-  function publishRandomPost() {
-    const idols = Game.state.idols || [];
-    const idolName = idols.length > 0 ? (idols[0].nickname || idols[0].name) : '本命';
+  function applyStyleEffects(style) {
+    if (!style || !style.effectMods) return;
 
-    const presets = [
-      '今天也是元气满满的一天！☀️ 加油加油～',
-      '深夜突然想听歌...有人推荐吗？🎧',
-      '刚刷到' + idolName + '的新物料，太绝了ㅠㅠ',
-      '买到了限定周边！！太幸福了💜 #追星快乐',
-      '今天的天气也太适合出门约会了吧～🌸',
-      '最近在学韩语，为了能听懂' + idolName + '说的每一句话！📚',
-      '谁懂啊...看到爱豆对我这个方向挥手的那一刻，感觉一切都值了🥹',
-      '深夜失眠中...脑子里全是编舞动作😵',
-      '新入坑的姐妹在哪里？来互粉呀！💕',
-      '今天的咖啡也好好喝☕ 一个人坐在窗边发呆也挺好的'
-    ];
-
-    const text = presets[Math.floor(Math.random() * presets.length)];
-    applyPostEffects(text);
-
-    const container = document.getElementById('phone-app-content');
-    const titleEl = document.getElementById('phone-app-title');
-    const headerActions = document.getElementById('phone-app-header-actions');
-
-    if (titleEl) titleEl.textContent = '📱 SNS';
-    if (headerActions) headerActions.innerHTML = '';
-
-    if (container) {
-      renderFeed(container);
-      setTimeout(() => {
-        const feed = document.getElementById('sns-feed-list');
-        if (feed) {
-          const toast = document.createElement('div');
-          toast.style.cssText = 'background:var(--color-safe-light);color:var(--color-safe);padding:12px;text-align:center;font-size:13px;font-weight:600;border-radius:8px;margin-bottom:8px;';
-          toast.textContent = '✅ 动态已发布！粉丝数 +' + (50 + Math.floor(Math.random() * 200));
-          feed.insertBefore(toast, feed.firstChild);
-          setTimeout(() => toast.remove(), 3000);
-        }
-      }, 100);
-    }
-  }
-
-  /**
-   * 应用发帖的数值效果
-   */
-  function applyPostEffects(text) {
     // 涨粉
-    const followerGain = 50 + Math.floor(Math.random() * 200);
-    Game.State.addFollowers(followerGain);
+    if (style.effectMods.followers) {
+      const range = style.effectMods.followers;
+      const gain = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
+      Game.State.addFollowers(gain);
+    }
 
     // 发帖计数
     Game.State.incrementPosts();
 
-    // 魅力微增
-    Game.State.addCharm(1);
+    // 魅力
+    if (style.effectMods.charm) {
+      const range = style.effectMods.charm;
+      const gain = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
+      Game.State.addCharm(gain);
+    }
 
-    // 嫌疑度微增（公开社交活动有暴露风险）
-    Game.State.addSuspicion(Math.floor(Math.random() * 2));
+    // 嫌疑度
+    if (style.effectMods.suspicion) {
+      const range = style.effectMods.suspicion;
+      const gain = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
+      Game.State.addSuspicion(gain);
+    }
 
-    // 自动存档
+    // 压力
+    if (style.effectMods.stress) {
+      const range = style.effectMods.stress;
+      const gain = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
+      Game.State.addStress(gain);
+    }
+
+    // 自动存档 + 刷新面板
     Game.State.autoSave();
-
-    // 刷新个人面板
     if (Game.Profile) Game.Profile.refresh();
   }
 
@@ -347,8 +460,10 @@ Game.PhoneSNS = (() => {
 
   return {
     renderFeed,
+    renderStyleSelect,
+    selectStyle,
     renderCompose,
-    publishPost,
+    publishCustomPost,
     cancelCompose
   };
 

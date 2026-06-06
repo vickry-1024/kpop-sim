@@ -137,6 +137,31 @@ Game.State = (() => {
     return s ? { followers: s.followers || 0, posts: s.posts || 0 } : { followers: 0, posts: 0 };
   }
 
+  // ===== 秘密手机管理 =====
+
+  /**
+   * 解锁秘密手机（随机事件触发）
+   * @param {number} idolIndex - 哪个爱豆的经纪人给的手机
+   */
+  function unlockSecretPhone(idolIndex) {
+    if (!Game.state.player.secretPhone) {
+      Game.state.player.secretPhone = { unlocked: false, idolIndex: null };
+    }
+    Game.state.player.secretPhone.unlocked = true;
+    Game.state.player.secretPhone.idolIndex = idolIndex;
+    autoSave();
+    console.log('[State] 秘密手机已解锁！爱豆索引：' + idolIndex);
+  }
+
+  /**
+   * 获取秘密手机状态
+   * @returns {{ unlocked: boolean, idolIndex: number|null }}
+   */
+  function getSecretPhone() {
+    const sp = Game.state.player.secretPhone;
+    return sp || { unlocked: false, idolIndex: null };
+  }
+
   /**
    * 根据身份标签计算起始粉丝数
    * @param {string[]} identityTags - 身份标签数组
@@ -250,6 +275,11 @@ Game.State = (() => {
       };
     }
 
+    // 补齐秘密手机数据
+    if (!data.player.secretPhone) {
+      data.player.secretPhone = { unlocked: false, idolIndex: null };
+    }
+
     // 补齐对话历史摘要（阶段6使用）
     if (!data.conversationSummaries) data.conversationSummaries = [];
 
@@ -336,6 +366,8 @@ Game.State = (() => {
     incrementPosts,
     getSocialData,
     getStartingFollowers,
+    unlockSecretPhone,
+    getSecretPhone,
     getSaveSummaries,
     loadGame,
     deleteSave,
