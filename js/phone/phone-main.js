@@ -125,9 +125,13 @@ Game.Phone = (() => {
           </p>
         `;
       } else {
-        // 秘密手机未解锁 → 显示锁定提示
+        // 秘密手机未解锁 → 显示主手机标识 + 锁定提示
         switchArea.style.display = 'block';
         switchArea.innerHTML = `
+          <div class="phone-current-label">
+            <span class="phone-current-icon">📱</span>
+            <span class="phone-current-text">主手机</span>
+          </div>
           <div class="phone-switch-locked">
             <span class="phone-switch-locked-icon">🔐</span>
             <span class="phone-switch-locked-text">秘密手机尚未获得</span>
