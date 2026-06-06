@@ -101,8 +101,9 @@ Game.Router = (() => {
     }
 
     // 派发自定义事件，供其他模块（如Profile）监听
-    window.dispatchEvent(new CustomEvent('pageChanged', {
-      detail: { from, to }
+    document.dispatchEvent(new CustomEvent('pageChanged', {
+      detail: { from, to },
+      bubbles: true
     }));
   }
 
