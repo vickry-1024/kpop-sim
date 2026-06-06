@@ -1112,10 +1112,22 @@ Game.PhoneChat = (() => {
    * 获取所有联系人的总未读数（用于主屏幕角标）
    */
   function getTotalUnread(phoneType) {
-    const idols = Game.state.idols || [];
-    let total = 0;
-    for (let i = 0; i < idols.length; i++) {
+    var total = 0;
+    // 爱豆未读
+    var idols = Game.state.idols || [];
+    for (var i = 0; i < idols.length; i++) {
       total += getUnreadCount(i, phoneType);
+    }
+    // 好友未读（仅主手机）
+    if (phoneType === 'main') {
+      var friends = Game.state.friends || [];
+      for (var fi = 0; fi < friends.length; fi++) {
+        total += getFriendUnreadCount(friends[fi].id);
+      }
+      // 经纪人未读
+      for (var mi = 0; mi < idols.length; mi++) {
+        total += getManagerUnreadCount(mi);
+      }
     }
     return total;
   }
@@ -1263,7 +1275,7 @@ Game.PhoneChat = (() => {
 
     if (messagesEl) {
       messagesEl.innerHTML = history.map(function(msg) {
-        var bubbleClass = msg.from === 'manager' ? 'chat-bubble-manager' : 'chat-bubble-me';
+        var bubbleClass = msg.from === 'manager' ? 'chat-bubble-idol' : 'chat-bubble-me';
         return '<div class="chat-bubble ' + bubbleClass + '">' +
           '<span class="chat-bubble-text">' + escapeHtml(msg.text) + '</span>' +
           '<span class="chat-bubble-time">' + formatTime(msg.time) + '</span>' +
@@ -1360,7 +1372,7 @@ Game.PhoneChat = (() => {
       if (empty) empty.remove();
 
       var bubble = document.createElement('div');
-      bubble.className = 'chat-bubble ' + (from === 'manager' ? 'chat-bubble-manager' : 'chat-bubble-me');
+      bubble.className = 'chat-bubble ' + (from === 'manager' ? 'chat-bubble-idol' : 'chat-bubble-me');
       bubble.innerHTML = '<span class="chat-bubble-text">' + escapeHtml(text) + '</span>' +
         '<span class="chat-bubble-time">' + formatTime(Date.now()) + '</span>';
       messagesEl.appendChild(bubble);

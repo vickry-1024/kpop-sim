@@ -429,22 +429,9 @@
   color: #4CD964;
 }
 
-/* 经纪人/系统消息气泡 — 居中灰色样式 */
+/* 经纪人/系统消息气泡 — 与普通气泡风格统一 */
 .chat-bubble-manager {
-  align-self: center !important;
-  max-width: 85% !important;
-  background: #E8E8ED !important;
-  color: #3A3A3C !important;
-  border-radius: 12px !important;
-  text-align: center;
-  font-style: italic;
-  box-shadow: none;
-  padding: 10px 16px;
-}
-
-.chat-bubble-manager .chat-bubble-time {
-  color: #8E8E93 !important;
-  text-align: center !important;
+  /* 保持与 chat-bubble-idol 一致的风格 */
 }
 
 /* ===== 聊天APP — 对话界面 ===== */
@@ -1261,7 +1248,4 @@
   border-left-color: rgba(255, 165, 2, 0.5);
 }
 
-.phone-app-view.secret-theme .chat-bubble-manager {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.8) !important;
-}
+/* 秘密手机主题 — 经纪人消息气泡保持与爱豆气泡一致 */
