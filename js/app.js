@@ -181,6 +181,11 @@ function initApp() {
     Game.Relations.init();
   }
 
+  // 初始化关系阶段系统
+  if (Game.Relationship) {
+    Game.Relationship.init();
+  }
+
   // 初始化回合系统
   if (Game.Turn) {
     Game.Turn.init();

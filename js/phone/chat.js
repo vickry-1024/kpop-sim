@@ -459,14 +459,16 @@ Game.PhoneChat = (() => {
     const idol = Game.state.idols[idolIndex];
     if (!idol) return [];
     const aff = idol.stats.affection || 0;
+    const stage = idol.relationshipStage || 'pursuit';
+    const isPartner = (Game.state.datingIdolId === idolIndex) || (Game.state.marriedIdolId === idolIndex);
 
     // 使用idolIndex + 当前日期作为随机种子，让每次打开的选项有所变化
     const today = new Date().toDateString();
     const seed = today + '-' + idolIndex;
 
     if (aff >= 60) {
-      // 高好感度 — 亲密对话（8个候选，随机展示4个）
-      const all = [
+      // 高好感度 — 亲密对话
+      var all = [
         { id: 'h1', label: '💜 想你了', text: '今天特别想你🥺 在干嘛呢？有没有想我？' },
         { id: 'h2', label: '😴 睡了吗', text: '这么晚了还没睡～是不是又在偷偷想我？ㅋㅋ' },
         { id: 'h3', label: '🍜 一起吃饭', text: '最近发现一家超好吃的店！什么时候我们偷偷去？就我们两个～' },
@@ -476,6 +478,20 @@ Game.PhoneChat = (() => {
         { id: 'h7', label: '🌟 夸夸你', text: '今天看到你的新舞台了，你怎么又进步了！太耀眼了✨' },
         { id: 'h8', label: '📱 随手分享', text: '刚路过一家店看到你喜欢的牌子的衣服，第一反应就是想到你～' }
       ];
+      // 关系阶段专属回复：恋爱中或已婚的亲密内容
+      if (isPartner && stage === 'married') {
+        all.push(
+          { id: 'mrd1', label: '🏠 回家', text: '老公～今天什么时候回家？我做了你爱吃的菜等你哦' },
+          { id: 'mrd2', label: '💑 未来计划', text: '我们明年要不要一起去旅行？就我们两个人，远离所有镜头' },
+          { id: 'mrd3', label: '🛏️ 早安', text: '早上醒来第一眼看到你....这种感觉真好。今天也要加油哦' }
+        );
+      } else if (isPartner && stage === 'dating') {
+        all.push(
+          { id: 'dt1', label: '💕 约会', text: '这个周末真的不能见面吗？我都快一周没看到你了ㅠㅠ' },
+          { id: 'dt2', label: '🤫 偷偷见面', text: '我们去老地方见面吧～我让经纪人帮我瞒过去了嘿嘿' },
+          { id: 'dt3', label: '💌 甜蜜消息', text: '刚看到一个情侣对戒...虽然知道你现在不能戴但还是想买给你' }
+        );
+      }
       return shuffleQuickReplies(all, seed).slice(0, 4);
     } else if (aff >= 30) {
       // 中好感度 — 朋友对话（8个候选，随机展示4个）
@@ -530,6 +546,30 @@ Game.PhoneChat = (() => {
   function getGreeting(idol) {
     const aff = idol.stats.affection || 0;
     const honorific = Game.Actions.getHonorific(idol.gender);
+    const stage = idol.relationshipStage || 'pursuit';
+    const isPartner = (Game.state.datingIdolId === Game.state.idols.indexOf(idol)) || (Game.state.marriedIdolId === Game.state.idols.indexOf(idol));
+
+    // 关系阶段专属开场白：已婚
+    if (stage === 'married' && isPartner) {
+      var greetings = [
+        '老公～回来啦！今天想吃什么？我让阿姨准备了～💍',
+        '亲爱的！我今天看了一个超好看的剧，晚上我们一起看吧？',
+        honorific + '～今天工作累不累？来抱抱🫂',
+        '你终于回来啦！我今天一个人在家好无聊哦～想你了'
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    }
+
+    // 关系阶段专属开场白：恋爱中
+    if (stage === 'dating' && isPartner) {
+      var greetings = [
+        honorific + '！💕 你终于来了～我等了好久！',
+        '啊你来了！我刚刚还在想你呢就有消息了～好神奇',
+        honorific + '～今天有没有想我？反正我是想你了嘿嘿',
+        '亲爱的！你猜我今天遇到什么好玩的事了？迫不及待想告诉你～'
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    }
 
     if (aff >= 80) {
       const greetings = [

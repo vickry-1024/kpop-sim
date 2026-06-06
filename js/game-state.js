@@ -286,6 +286,118 @@ Game.State = (() => {
     autoSave();
   }
 
+  // ===== 关系阶段系统（阶段7） =====
+
+  /**
+   * 设置专属恋爱对象
+   * @param {number} idolIndex
+   */
+  function setDatingIdol(idolIndex) {
+    Game.state.datingIdolId = idolIndex;
+    autoSave();
+  }
+
+  /**
+   * 清除恋爱对象（分手）
+   */
+  function clearDatingIdol() {
+    Game.state.datingIdolId = null;
+    autoSave();
+  }
+
+  /**
+   * 设置结婚对象及类型
+   * @param {number} idolIndex
+   * @param {'public'|'secret'} marriageType
+   */
+  function setMarriedIdol(idolIndex, marriageType) {
+    Game.state.marriedIdolId = idolIndex;
+    Game.state.marriageType = marriageType;
+    autoSave();
+  }
+
+  /**
+   * 清除结婚对象（离婚）
+   */
+  function clearMarriedIdol() {
+    Game.state.marriedIdolId = null;
+    Game.state.marriageType = null;
+    autoSave();
+  }
+
+  /**
+   * 获取当前独占伴侣（已婚优先于恋爱）
+   * @returns {{ idolIndex: number|null, type: 'dating'|'married'|null }}
+   */
+  function getExclusivePartner() {
+    if (Game.state.marriedIdolId !== null && Game.state.marriedIdolId !== undefined) {
+      return { idolIndex: Game.state.marriedIdolId, type: 'married' };
+    }
+    if (Game.state.datingIdolId !== null && Game.state.datingIdolId !== undefined) {
+      return { idolIndex: Game.state.datingIdolId, type: 'dating' };
+    }
+    return { idolIndex: null, type: null };
+  }
+
+  /**
+   * 判断与某爱豆互动是否算出轨
+   * @param {number} targetIdolIndex
+   * @returns {boolean}
+   */
+  function isCheating(targetIdolIndex) {
+    var partner = getExclusivePartner();
+    if (partner.idolIndex === null) return false;
+    return targetIdolIndex !== partner.idolIndex;
+  }
+
+  /**
+   * 增加出轨嫌疑度（0-100截断）
+   * @param {number} idolIndex
+   * @param {number} amount
+   */
+  function addCheatingSuspicion(idolIndex, amount) {
+    if (!Game.state.cheatingSuspicion) Game.state.cheatingSuspicion = {};
+    var key = String(idolIndex);
+    Game.state.cheatingSuspicion[key] = clamp((Game.state.cheatingSuspicion[key] || 0) + amount);
+    autoSave();
+  }
+
+  /**
+   * 查询出轨嫌疑度
+   * @param {number} idolIndex
+   * @returns {number}
+   */
+  function getCheatingSuspicion(idolIndex) {
+    if (!Game.state.cheatingSuspicion) return 0;
+    return Game.state.cheatingSuspicion[String(idolIndex)] || 0;
+  }
+
+  /**
+   * 标记阶段事件已确认（防止重复触发）
+   * @param {number} idolIndex
+   * @param {'dating'|'proposal'} eventType
+   */
+  function confirmStageEvent(idolIndex, eventType) {
+    if (!Game.state.confirmedStages) Game.state.confirmedStages = {};
+    var key = String(idolIndex);
+    if (!Game.state.confirmedStages[key]) Game.state.confirmedStages[key] = {};
+    Game.state.confirmedStages[key][eventType === 'dating' ? 'datingConfirmed' : 'proposed'] = true;
+    autoSave();
+  }
+
+  /**
+   * 检查阶段事件是否已确认
+   * @param {number} idolIndex
+   * @param {'dating'|'proposal'} eventType
+   * @returns {boolean}
+   */
+  function isStageEventConfirmed(idolIndex, eventType) {
+    if (!Game.state.confirmedStages) return false;
+    var entry = Game.state.confirmedStages[String(idolIndex)];
+    if (!entry) return false;
+    return eventType === 'dating' ? !!entry.datingConfirmed : !!entry.proposed;
+  }
+
   // ===== 工具 =====
 
   function clamp(val) {
@@ -396,6 +508,13 @@ Game.State = (() => {
     // 补齐活跃增益效果
     if (!data.activeBuffs) data.activeBuffs = [];
 
+    // 补齐关系阶段系统字段（阶段7）
+    if (data.datingIdolId === undefined) data.datingIdolId = null;
+    if (data.marriedIdolId === undefined) data.marriedIdolId = null;
+    if (data.marriageType === undefined) data.marriageType = null;
+    if (!data.cheatingSuspicion) data.cheatingSuspicion = {};
+    if (!data.confirmedStages) data.confirmedStages = {};
+
     // 更新版本号
     data.version = currentVersion;
 
@@ -496,7 +615,17 @@ Game.State = (() => {
     getManagerIntervention,
     addBuff,
     hasActiveBuff,
-    addEventLog
+    addEventLog,
+    setDatingIdol,
+    clearDatingIdol,
+    setMarriedIdol,
+    clearMarriedIdol,
+    getExclusivePartner,
+    isCheating,
+    addCheatingSuspicion,
+    getCheatingSuspicion,
+    confirmStageEvent,
+    isStageEventConfirmed
   };
 
 })();

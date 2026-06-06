@@ -172,6 +172,10 @@ Game.Turn = (() => {
             Game.State.addAffection(targetIndex, delta);
             const idolName = Game.state.idols[targetIndex].nickname || Game.state.idols[targetIndex].name;
             log.push({ label: idolName + ' 好感度', delta: delta });
+            // 出轨检测：如果玩家在排他关系中与非伴侣爱豆互动
+            if (delta > 0 && Game.Relationship) {
+              Game.Relationship.checkCheatingOnAction(targetIndex, delta);
+            }
           }
           break;
         case 'stress':
@@ -303,6 +307,11 @@ Game.Turn = (() => {
 
     // 11. 经纪人跟进消息
     _triggerManagerFollowups();
+
+    // 12. 关系阶段推进检测
+    if (Game.Relationship) {
+      Game.Relationship.checkAllStageTransitions();
+    }
 
     console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
   }
@@ -715,6 +724,10 @@ Game.Turn = (() => {
             Game.State.addAffection(targetIndex, delta);
             const idolName = Game.state.idols[targetIndex].nickname || Game.state.idols[targetIndex].name;
             log.push({ label: idolName + ' 好感度', delta: delta });
+            // 出轨检测：如果玩家在排他关系中与非伴侣爱豆互动
+            if (delta > 0 && Game.Relationship) {
+              Game.Relationship.checkCheatingOnAction(targetIndex, delta);
+            }
           }
           break;
         case 'stress':

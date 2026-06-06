@@ -51,6 +51,22 @@ Game.Relations = (() => {
     const affection = idol.stats.affection || 0;
     const genderIcon = idol.gender === 'male' ? '♂' : '♀';
 
+    // 检查是否为当前伴侣
+    var isPartner = (Game.state.datingIdolId === index) || (Game.state.marriedIdolId === index);
+    var isMarriedSecret = (Game.state.marriedIdolId === index && Game.state.marriageType === 'secret');
+
+    // 阶段标签文本（秘密结婚特殊处理）
+    var stageLabel = stage.label;
+    if (isMarriedSecret) stageLabel = '秘密结婚';
+
+    // 伴侣徽章
+    var partnerBadge = '';
+    if (Game.state.marriedIdolId === index) {
+      partnerBadge = '<span class="relation-partner-badge" style="background:#FFD700;color:#333;">💍 配偶</span>';
+    } else if (isPartner) {
+      partnerBadge = '<span class="relation-partner-badge">💜 恋人</span>';
+    }
+
     return `
       <div class="relation-card">
         <div class="relation-card-top">
@@ -69,8 +85,9 @@ Game.Relations = (() => {
           </div>
           <!-- 阶段徽章 -->
           <div class="relation-stage" style="background:${stage.color}20; color:${stage.color}; border-color:${stage.color}">
-            ${stage.icon} ${stage.label}
+            ${stage.icon} ${stageLabel}
           </div>
+          ${partnerBadge}
         </div>
 
         <!-- 好感度条 -->

@@ -38,6 +38,22 @@ Game.Profile = (() => {
       ? player.personalityTags.join('、') + (player.personalityCustom ? ' / ' + player.personalityCustom : '')
       : player.personalityCustom || '未设置';
 
+    // 获取感情状态
+    var relationshipStatus = '';
+    var partner = (Game.State && Game.State.getExclusivePartner) ? Game.State.getExclusivePartner() : { idolIndex: null, type: null };
+    if (partner.type === 'married') {
+      var partnerIdol = Game.state.idols[partner.idolIndex];
+      var partnerName = partnerIdol ? (partnerIdol.nickname || partnerIdol.name) : '未知';
+      var isSecret = Game.state.marriageType === 'secret' ? '（秘密）' : '（公开）';
+      relationshipStatus = '<span style="color:#FFD700;">💍 已婚 — ' + escapeHtml(partnerName) + isSecret + '</span>';
+    } else if (partner.type === 'dating') {
+      var partnerIdol = Game.state.idols[partner.idolIndex];
+      var partnerName = partnerIdol ? (partnerIdol.nickname || partnerIdol.name) : '未知';
+      relationshipStatus = '<span style="color:#F8A5C2;">💕 恋爱中 — ' + escapeHtml(partnerName) + '</span>';
+    } else {
+      relationshipStatus = '<span style="color:#7EC8E3;">💫 单身（攻略期）</span>';
+    }
+
     infoEl.innerHTML = `
       <div class="profile-info-row">
         <span class="profile-info-label">🎭 身份</span>
@@ -46,6 +62,10 @@ Game.Profile = (() => {
       <div class="profile-info-row">
         <span class="profile-info-label">💬 性格</span>
         <span class="profile-info-value">${escapeHtml(personalityText)}</span>
+      </div>
+      <div class="profile-info-row">
+        <span class="profile-info-label">💜 感情</span>
+        <span class="profile-info-value">${relationshipStatus}</span>
       </div>
     `;
   }

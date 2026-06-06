@@ -642,6 +642,13 @@ Game.Setup = (() => {
     // 初始化对话历史摘要
     Game.state.conversationSummaries = [];
 
+    // 初始化关系阶段系统字段（阶段7）
+    Game.state.datingIdolId = null;
+    Game.state.marriedIdolId = null;
+    Game.state.marriageType = null;
+    Game.state.cheatingSuspicion = {};
+    Game.state.confirmedStages = {};
+
     // 3. 选择空存档槽并保存
     const slot = Game.State.findEmptySlot();
     Game.State.setCurrentSlot(slot);

@@ -1237,3 +1237,141 @@
   color: var(--text-hint);
   background: var(--bg-hint, #f5f5f5);
 }
+
+/* ===== 关系阶段系统 — 告白/求婚事件弹窗（阶段7） ===== */
+
+.confession-scene,
+.proposal-scene {
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.confession-text,
+.proposal-text {
+  font-size: var(--font-size-sm);
+  line-height: 1.8;
+  color: var(--text-primary);
+  text-align: left;
+  background: linear-gradient(135deg, #FFF0F5, #FDE8F0);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.proposal-text {
+  background: linear-gradient(135deg, #FFF8E7, #FFF0D0);
+  border-left: 3px solid #FFD700;
+}
+
+.confession-question,
+.proposal-question {
+  display: block;
+  text-align: center;
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-primary-dark, #C0392B);
+  margin-top: var(--spacing-sm);
+}
+
+.proposal-question {
+  color: #B8860B;
+}
+
+.confession-warning {
+  background: #FFF0F0;
+  color: #C0392B;
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-sm);
+  text-align: center;
+  border: 1px solid #F5C6CB;
+}
+
+.proposal-choice-section {
+  margin-top: var(--spacing-md);
+}
+
+.proposal-choice-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.confession-accept,
+.proposal-accept-public,
+.proposal-accept-secret {
+  margin-bottom: var(--spacing-xs);
+}
+
+/* ===== 庆祝/分手 Toast ===== */
+
+.celebration-toast {
+  background: linear-gradient(135deg, #FFF0F5, #FDE8F0);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  animation: celebrationIn 0.5s ease-out;
+}
+
+.celebration-emoji {
+  font-size: 32px;
+  animation: celebrationBounce 0.6s ease infinite alternate;
+}
+
+.celebration-text {
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.breakup-toast {
+  background: linear-gradient(135deg, #2D2D2D, #1A1A1A);
+  border: 1px solid #444;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  animation: celebrationIn 0.5s ease-out;
+}
+
+.breakup-icon {
+  font-size: 28px;
+}
+
+.breakup-text {
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: #CCC;
+}
+
+@keyframes celebrationIn {
+  from { opacity: 0; transform: scale(0.8) translateY(-20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes celebrationBounce {
+  from { transform: scale(1); }
+  to   { transform: scale(1.2); }
+}
+
+/* ===== 关系面板伴侣徽章 ===== */
+
+.relation-partner-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: var(--radius-xl);
+  background: var(--color-primary);
+  color: #FFF;
+  margin-left: 4px;
+  font-weight: 700;
+  vertical-align: middle;
+}
