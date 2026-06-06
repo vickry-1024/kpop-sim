@@ -12,7 +12,7 @@ window.Game = {
   version: '0.1.0',
 
   // 当前开发阶段
-  phase: '阶段5：手机系统',
+  phase: '阶段5 ✅ → 准备阶段6：DeepSeek API接入',
 
   // 全局状态
   state: {
