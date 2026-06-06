@@ -631,3 +631,320 @@
   background: #FFF3CD;
   color: #856404;
 }
+
+/* ===== 日程页 — 回合系统 ===== */
+
+/* 回合信息 */
+.schedule-turn-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+}
+
+.turn-label {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.turn-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+}
+
+/* 体力条 */
+.schedule-stamina-section {
+  margin-top: var(--spacing-sm);
+}
+
+.stamina-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.stamina-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stamina-value {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--color-stamina);
+}
+
+.stamina-bar-bg {
+  height: 10px;
+  border-radius: 5px;
+  background: #F0F0F0;
+  overflow: hidden;
+}
+
+.stamina-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width var(--transition-normal);
+}
+
+/* 行动分类区 */
+.action-category {
+  margin-bottom: var(--spacing-md);
+}
+
+.action-category-header {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.5px;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+/* 行动卡片 */
+.action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+  text-align: center;
+}
+
+.action-card:active {
+  transform: scale(0.95);
+}
+
+.action-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.action-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.action-cost {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+  font-weight: 500;
+}
+
+/* 行动分类配色（左边框强调色） */
+.action-card.category-idol   { border-left: 3px solid #F8A5C2; }
+.action-card.category-self   { border-left: 3px solid #A78BFA; }
+.action-card.category-social { border-left: 3px solid #4ECDC4; }
+.action-card.category-work   { border-left: 3px solid #FFA502; }
+.action-card.category-gift   { border-left: 3px solid #FF6B6B; }
+.action-card.category-intel  { border-left: 3px solid #7EC8E3; }
+.action-card.category-rest   { border-left: 3px solid #2ED573; }
+
+/* 不可用状态 */
+.action-card.action-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.action-card.action-disabled:active {
+  transform: none;
+}
+
+/* 行动日志 */
+#schedule-action-log {
+  margin-top: var(--spacing-sm);
+}
+
+.action-log-header {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.action-log-empty {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-hint);
+  font-size: var(--font-size-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.action-log-hint {
+  font-size: var(--font-size-xs);
+}
+
+.action-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.action-log-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: #FAFAFA;
+  font-size: var(--font-size-sm);
+}
+
+.action-log-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.action-log-desc {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.action-log-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+}
+
+.effect-positive {
+  color: var(--color-safe);
+  font-weight: 600;
+}
+
+.effect-negative {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* 结束回合按钮区 */
+#schedule-end-turn {
+  margin-top: var(--spacing-md);
+  text-align: center;
+}
+
+.turn-end-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+  margin-top: var(--spacing-xs);
+}
+
+/* ===== 目标选择弹窗 ===== */
+
+.target-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: modalFadeIn 200ms ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.target-modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--spacing-lg);
+  padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
+  animation: modalSlideUp 250ms ease-out;
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.target-modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.target-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.target-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: #FAFAFA;
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast);
+  text-align: left;
+  width: 100%;
+}
+
+.target-option:active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.target-option-icon {
+  font-size: 28px;
+}
+
+.target-option-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.target-option-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.target-option-affection {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.target-option-arrow {
+  font-size: var(--font-size-lg);
+  color: var(--text-hint);
+}
+
+.target-modal-cancel {
+  width: 100%;
+  padding: 12px;
+  font-size: var(--font-size-md);
+}

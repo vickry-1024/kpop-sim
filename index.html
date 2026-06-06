@@ -233,14 +233,38 @@
       <!-- 日程页 -->
       <section id="page-schedule" class="page active">
         <div class="page-header">
-          <h1 class="page-title">📅 日程</h1>
-          <p class="page-subtitle">安排你的行程</p>
+          <div id="schedule-turn-info" class="schedule-turn-header">
+            <!-- 动态填充：回合数 -->
+          </div>
+          <div id="schedule-stamina-bar" class="schedule-stamina-section">
+            <!-- 动态填充：体力条 -->
+          </div>
         </div>
         <div class="page-content">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">📋</div>
-            <p class="placeholder-text">回合制行程系统</p>
-            <p class="placeholder-hint">将在阶段4实现</p>
+          <!-- 行动分类网格 -->
+          <div id="schedule-action-grid">
+            <!-- 动态填充 -->
+          </div>
+
+          <!-- 本回合行动日志 -->
+          <div id="schedule-action-log">
+            <!-- 动态填充 -->
+          </div>
+
+          <!-- 结束回合按钮 -->
+          <div id="schedule-end-turn">
+            <!-- 动态填充 -->
+          </div>
+        </div>
+
+        <!-- 目标选择弹窗（默认隐藏） -->
+        <div id="target-modal" class="target-modal-overlay" style="display:none;">
+          <div class="target-modal-card">
+            <h3 id="target-modal-title" class="target-modal-title">选择互动对象</h3>
+            <div id="target-modal-list" class="target-modal-list">
+              <!-- 动态填充爱豆列表 -->
+            </div>
+            <button class="btn btn-text target-modal-cancel" onclick="Game.Turn.cancelTarget()">取消</button>
           </div>
         </div>
       </section>
@@ -378,6 +402,8 @@
   <script src="js/app.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/game-state.js"></script>
+  <script src="js/actions.js"></script>
+  <script src="js/turn.js"></script>
   <script src="js/character.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/relations.js"></script>

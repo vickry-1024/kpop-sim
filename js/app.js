@@ -12,7 +12,7 @@ window.Game = {
   version: '0.1.0',
 
   // 当前开发阶段
-  phase: '阶段3：核心数值系统与存档',
+  phase: '阶段4：回合制核心循环',
 
   // 全局状态
   state: {
@@ -156,6 +156,7 @@ function showAppScreen() {
   // 刷新各面板
   if (Game.Profile) Game.Profile.refresh();
   if (Game.Relations) Game.Relations.refresh();
+  if (Game.Turn) Game.Turn.refreshUI();
 
   console.log('[App] 游戏主界面已显示');
 }
@@ -178,6 +179,11 @@ function initApp() {
   // 初始化关系面板
   if (Game.Relations) {
     Game.Relations.init();
+  }
+
+  // 初始化回合系统
+  if (Game.Turn) {
+    Game.Turn.init();
   }
 
   // 决定显示哪个画面：有存档→标题画面，无存档→设定向导

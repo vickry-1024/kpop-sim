@@ -630,6 +630,9 @@ Game.Setup = (() => {
     if (Game.Relations) {
       Game.Relations.refresh();
     }
+    if (Game.Turn) {
+      Game.Turn.refreshUI();
+    }
 
     console.log('[Setup] 游戏开始！玩家：' + _playerData.name + '，攻略爱豆：' + _idolsData.length + '位');
   }
