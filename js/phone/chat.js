@@ -288,7 +288,7 @@ Game.PhoneChat = (() => {
     // 模拟爱豆回复（后续接入API后替换）
     setTimeout(async () => {
       const idol = Game.state.idols[idolIndex];
-      const response = generateIdolReply(idol, { id: 'custom', text: text, effectMods: {} });
+      const response = await generateIdolReply(idol, { id: 'custom', text: text, effectMods: {} });
       await addMessage(idolIndex, phoneType, 'idol', response);
 
       // 刷新快捷回复
