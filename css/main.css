@@ -948,3 +948,232 @@
   padding: 12px;
   font-size: var(--font-size-md);
 }
+
+/* ===== 子选项弹窗 ===== */
+
+.sub-choice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: #FAFAFA;
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast);
+  text-align: left;
+  width: 100%;
+}
+
+.sub-choice-option:active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.sub-choice-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sub-choice-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sub-choice-label {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sub-choice-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.sub-choice-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: var(--font-size-xs);
+}
+
+.sub-choice-effects .effect-positive {
+  color: var(--color-safe);
+  font-weight: 600;
+}
+
+.sub-choice-effects .effect-negative {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.sub-choice-arrow {
+  font-size: var(--font-size-lg);
+  color: var(--text-hint);
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+
+/* ===== 聊天对话弹窗 ===== */
+
+.chat-modal-card {
+  width: 100%;
+  max-width: 480px;
+  height: 85vh;
+  max-height: 600px;
+  background: #EDEDED;  /* iOS 信息.app 背景色 */
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideUp 250ms ease-out;
+}
+
+.chat-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--spacing-md);
+  background: #F7F7F7;
+  border-bottom: 1px solid #D1D1D6;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+}
+
+.chat-modal-back {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: #E5E5EA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.chat-modal-back:active {
+  background: #D1D1D6;
+}
+
+.chat-modal-title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.chat-modal-spacer {
+  width: 32px;
+}
+
+/* 气泡区域 */
+.chat-bubbles-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 聊天气泡 */
+.chat-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  animation: chatBubbleIn 0.35s ease-out both;
+  word-break: break-word;
+}
+
+.chat-bubble-idol {
+  align-self: flex-start;
+  background: #FFF;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.chat-bubble-me {
+  align-self: flex-end;
+  background: #34C759;  /* iMessage 绿色气泡 */
+  color: #FFF;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble-sender {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: #8E8E93;
+  margin-bottom: 2px;
+}
+
+.chat-bubble-me .chat-bubble-sender {
+  color: rgba(255,255,255,0.8);
+}
+
+.chat-bubble-text {
+  display: block;
+}
+
+@keyframes chatBubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 回复选项区域 */
+.chat-replies-area {
+  padding: var(--spacing-sm) var(--spacing-md);
+  padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
+  background: #F7F7F7;
+  border-top: 1px solid #D1D1D6;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.chat-reply-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: #FFF;
+  border: 1.5px solid #E5E5EA;
+  text-align: left;
+  width: 100%;
+  transition: all var(--transition-fast);
+}
+
+.chat-reply-option:active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  transform: scale(0.98);
+}
+
+.chat-reply-label {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.chat-reply-text {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-style: italic;
+}

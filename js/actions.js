@@ -26,6 +26,7 @@ Game.Actions = (() => {
       staminaCost: 10,
       effects: { affection: [5, 10], stress: [-5, 0] },
       needsTarget: true,
+      subType: 'chat',  // 弹出聊天对话界面
       desc: '和爱豆发消息聊聊天，轻松愉快'
     },
     {
@@ -33,6 +34,7 @@ Game.Actions = (() => {
       staminaCost: 20,
       effects: { affection: [10, 18], stress: [-10, -3], charm: [1, 3] },
       needsTarget: true,
+      subType: 'select',  // 弹出子选项（约会地点）
       desc: '约爱豆出来见面，需要精心打扮'
     },
     {
@@ -40,6 +42,7 @@ Game.Actions = (() => {
       staminaCost: 15,
       effects: { affection: [7, 14], stress: [-3, 3], suspicion: [0, 5] },
       needsTarget: true,
+      subType: 'select',  // 弹出子选项（探班方式）
       desc: '去公司/片场探班，可能被工作人员看到'
     },
     {
@@ -86,6 +89,7 @@ Game.Actions = (() => {
       staminaCost: 8,
       effects: { charm: [1, 3], suspicion: [0, 3], stress: [-3, 1] },
       needsTarget: false,
+      subType: 'select',  // 弹出子选项（发帖风格）
       desc: '在社交媒体上发动态，经营形象'
     },
     {
@@ -168,6 +172,107 @@ Game.Actions = (() => {
     }
   ];
 
+  // ===== 行动子选项定义 =====
+  // 当行动的 subType 为 'select' 时，从这里取子选项列表
+  const SUB_CHOICES = {
+    date: [
+      { id: 'date-cafe', label: '咖啡厅约会', icon: '☕',
+        desc: '安静的咖啡厅角落，私密又舒适，不容易被认出来',
+        effectMods: { affection: [2, 4], suspicion: [-3, 0] } },
+      { id: 'date-cinema', label: '电影院', icon: '🎬',
+        desc: '黑暗中独处，谁也看不清谁，心跳加速',
+        effectMods: { affection: [3, 6], suspicion: [-2, 1], stress: [-3, 0] } },
+      { id: 'date-restaurant', label: '高级餐厅', icon: '🍽️',
+        desc: '体面又浪漫，但人多眼杂，可能被粉丝认出',
+        effectMods: { affection: [1, 3], suspicion: [3, 8], charm: [2, 4] } },
+      { id: 'date-park', label: '深夜汉江公园', icon: '🌙',
+        desc: '夜晚的江边，浪漫又刺激，但要小心被跟拍',
+        effectMods: { affection: [5, 10], suspicion: [5, 12], stress: [-5, -2] } }
+    ],
+    visit: [
+      { id: 'visit-fan', label: '以粉丝身份应援', icon: '🎭',
+        desc: '混在粉丝群里送咖啡，安全但不够特别',
+        effectMods: { affection: [2, 4], suspicion: [0, 2] } },
+      { id: 'visit-friend', label: '以朋友身份探班', icon: '🤝',
+        desc: '大大方方说是圈外朋友，自然得体',
+        effectMods: { affection: [4, 7], suspicion: [1, 4] } },
+      { id: 'visit-secret', label: '悄悄溜进去', icon: '🤫',
+        desc: '趁工作人员不注意溜进休息室，刺激又亲密',
+        effectMods: { affection: [5, 9], suspicion: [-2, 1], stress: [-3, 0] } }
+    ],
+    'sns-post': [
+      { id: 'sns-lovestagram', label: '暗戳戳秀恩爱', icon: '💕',
+        desc: '发一张只有你们懂的暗示照，粉丝会疯狂解码',
+        effectMods: { suspicion: [3, 8], stress: [-5, -2] } },
+      { id: 'sns-fan', label: '以粉丝视角应援', icon: '📣',
+        desc: '晒专辑、刷话题、宣传新歌，阳光正面',
+        effectMods: { charm: [2, 5], suspicion: [-1, 0] } },
+      { id: 'sns-daily', label: '晒日常美照', icon: '🌸',
+        desc: '发自拍和生活碎片，自然经营社交形象',
+        effectMods: { charm: [3, 6], suspicion: [0, 2] } }
+    ]
+  };
+
+  // ===== 聊天对话剧本 =====
+  // 根据好感度阶段选择不同对话
+  const CHAT_DIALOGUES = {
+    low: {  // 好感度 < 30
+      messages: [
+        { from: 'idol', text: '嗯？突然找我有什么事吗？' },
+        { from: 'idol', text: '哦…就是想聊天啊。好吧，最近确实有点忙。' }
+      ],
+      replies: [
+        { id: 'chat-warm', label: '💜 温暖问候', text: '辛苦了～就是想问问你最近好不好',
+          effectMods: { affection: [1, 3], stress: [-3, 0] } },
+        { id: 'chat-funny', label: '😄 轻松闲聊', text: '就想找你聊聊天，没什么特别的事～',
+          effectMods: { affection: [2, 4], stress: [-5, -2] } },
+        { id: 'chat-cool', label: '😐 简短收尾', text: '嗯，确认你还好就行。先忙吧。',
+          effectMods: { affection: [-1, 1], stress: [0, 3] } }
+      ]
+    },
+    mid: {  // 好感度 30-60
+      messages: [
+        { from: 'idol', text: '欧尼～怎么想起找我啦？' },
+        { from: 'idol', text: '我刚结束练习，累死了ㅠㅠ 看到你的消息瞬间精神了！' },
+        { from: 'idol', text: '你今天过得怎么样？' }
+      ],
+      replies: [
+        { id: 'chat-warm', label: '💜 温柔关心', text: '这么累啊，要多休息！我给你点了外卖～',
+          effectMods: { affection: [3, 5], stress: [-5, -2] } },
+        { id: 'chat-flirty', label: '😏 撩一下', text: '想你当然就找你啦，还需要理由吗？',
+          effectMods: { affection: [4, 7], stress: [-3, 0] } },
+        { id: 'chat-casual', label: '😊 日常分享', text: '我今天也不错～看了你昨天的舞台，超棒的！',
+          effectMods: { affection: [2, 4], stress: [-4, -1], charm: [0, 1] } }
+      ]
+    },
+    high: {  // 好感度 > 60
+      messages: [
+        { from: 'idol', text: '欧尼！！💜 正在想你你就发消息来了！' },
+        { from: 'idol', text: '今天一整天都在等你的消息呢…我是不是太粘人了？' },
+        { from: 'idol', text: '好想见你…下次什么时候能见面？' }
+      ],
+      replies: [
+        { id: 'chat-sweet', label: '💜 甜蜜回应', text: '我也好想你～很快就能见面了，等我！',
+          effectMods: { affection: [5, 8], stress: [-8, -3] } },
+        { id: 'chat-spicy', label: '🔥 更近一步', text: '这么想我？那今晚视频吧，想看你。',
+          effectMods: { affection: [6, 10], stress: [-5, 0] } },
+        { id: 'chat-plan', label: '📅 直接约下次', text: '那就这周末见面吧！我去找你～',
+          effectMods: { affection: [4, 7], stress: [-3, 0], charm: [1, 2] } }
+      ]
+    }
+  };
+
+  /**
+   * 根据好感度获取聊天对话阶段
+   * @param {number} affection - 好感度值
+   * @returns {string} 'low' | 'mid' | 'high'
+   */
+  function getChatStage(affection) {
+    if (affection >= 60) return 'high';
+    if (affection >= 30) return 'mid';
+    return 'low';
+  }
+
   // ===== 查询方法 =====
 
   /**
@@ -213,6 +318,8 @@ Game.Actions = (() => {
     getAll,
     getActionsByCategory,
     getGroupedActions,
+    getSubChoices: (actionId) => SUB_CHOICES[actionId] || null,
+    getChatDialogue: (affection) => CHAT_DIALOGUES[getChatStage(affection)] || CHAT_DIALOGUES.low,
     CATEGORIES
   };
 

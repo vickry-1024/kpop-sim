@@ -267,6 +267,34 @@
             <button class="btn btn-text target-modal-cancel" onclick="Game.Turn.cancelTarget()">取消</button>
           </div>
         </div>
+
+        <!-- 子选项弹窗（约会地点/探班方式/发帖风格 等） -->
+        <div id="sub-choice-modal" class="target-modal-overlay" style="display:none;" onclick="if(event.target===this) Game.Turn.cancelSubChoice()">
+          <div class="target-modal-card">
+            <h3 id="sub-choice-title" class="target-modal-title">选择方式</h3>
+            <div id="sub-choice-list" class="target-modal-list">
+              <!-- 动态填充子选项 -->
+            </div>
+            <button class="btn btn-text target-modal-cancel" onclick="Game.Turn.cancelSubChoice()">取消</button>
+          </div>
+        </div>
+
+        <!-- 聊天对话弹窗 -->
+        <div id="chat-modal" class="target-modal-overlay" style="display:none;">
+          <div class="chat-modal-card">
+            <div class="chat-modal-header">
+              <button class="chat-modal-back" onclick="Game.Turn.cancelChat()">✕</button>
+              <h3 id="chat-modal-title" class="chat-modal-title">💬 聊天</h3>
+              <span class="chat-modal-spacer"></span>
+            </div>
+            <div id="chat-bubbles" class="chat-bubbles-area">
+              <!-- 动态填充对话气泡 -->
+            </div>
+            <div id="chat-replies" class="chat-replies-area">
+              <!-- 动态填充回复选项 -->
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- 手机页 -->
