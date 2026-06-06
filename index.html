@@ -12,10 +12,195 @@
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/setup.css">
 </head>
 <body>
+  <!-- ===== 设定向导（新玩家首次进入） ===== -->
+  <div id="setup-screen" class="setup-overlay">
+    <div class="setup-container">
+
+      <!-- 步骤1：欢迎页 -->
+      <div id="setup-step-welcome" class="setup-step active">
+        <div class="setup-welcome">
+          <div class="setup-logo">💜</div>
+          <h1 class="setup-game-title">Kpop嫂子模拟器</h1>
+          <p class="setup-game-desc">一段属于你的Kpop恋爱故事</p>
+          <div class="setup-features">
+            <span>🎭 自由人设</span>
+            <span>💬 AI对话</span>
+            <span>🔀 多结局</span>
+          </div>
+        </div>
+        <div class="setup-actions">
+          <button class="btn btn-primary btn-block" onclick="Game.Setup.next()">
+            开始设定 ✨
+          </button>
+          <button class="btn btn-text" onclick="Game.Setup.loadDemo()">
+            或先体验演示
+          </button>
+        </div>
+      </div>
+
+      <!-- 步骤2：女主姓名 -->
+      <div id="setup-step-player-name" class="setup-step">
+        <div class="setup-header">
+          <button class="setup-back" onclick="Game.Setup.prev()">← 返回</button>
+          <div class="setup-progress"><span class="setup-step-dot active"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span></div>
+        </div>
+        <h2 class="setup-title">你叫什么名字？</h2>
+        <p class="setup-desc">输入你在游戏中的名字</p>
+        <div class="setup-form">
+          <input type="text" id="input-player-name" class="setup-input" placeholder="输入你的名字..." maxlength="20" autocomplete="off">
+          <p class="setup-input-hint" id="player-name-hint"></p>
+        </div>
+        <div class="setup-actions">
+          <button class="btn btn-primary btn-block" id="btn-player-name-next" onclick="Game.Setup.savePlayerName()" disabled>
+            下一步 →
+          </button>
+        </div>
+      </div>
+
+      <!-- 步骤3：女主身份+性格 -->
+      <div id="setup-step-player-tags" class="setup-step">
+        <div class="setup-header">
+          <button class="setup-back" onclick="Game.Setup.prev()">← 返回</button>
+          <div class="setup-progress"><span class="setup-step-dot"></span><span class="setup-step-dot active"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span></div>
+        </div>
+        <h2 class="setup-title">你的人设是什么？</h2>
+        <p class="setup-desc">选择身份和性格标签（可多选+自定义）</p>
+
+        <!-- 身份标签 -->
+        <div class="setup-section">
+          <label class="setup-label">🎭 身份</label>
+          <div class="tag-grid" id="tag-identity">
+            <button class="tag-item" data-value="素人粉丝">素人粉丝</button>
+            <button class="tag-item" data-value="练习生">练习生</button>
+            <button class="tag-item" data-value="造型师">造型师</button>
+            <button class="tag-item" data-value="记者">记者</button>
+            <button class="tag-item" data-value="翻译">翻译</button>
+            <button class="tag-item" data-value="站姐">站姐</button>
+            <button class="tag-item" data-value="综艺PD">综艺PD</button>
+            <button class="tag-item" data-value="青梅竹马">青梅竹马</button>
+            <button class="tag-item" data-value="学生">学生</button>
+            <button class="tag-item" data-value="化妆师">化妆师</button>
+            <button class="tag-item" data-value="运动教练">运动教练</button>
+            <button class="tag-item" data-value="名门社交好友">名门社交好友</button>
+          </div>
+          <input type="text" id="input-identity-custom" class="setup-input setup-input-sm" placeholder="或自行输入身份...">
+        </div>
+
+        <!-- 性格标签 -->
+        <div class="setup-section">
+          <label class="setup-label">💬 性格</label>
+          <div class="tag-grid" id="tag-personality">
+            <button class="tag-item" data-value="直球勇敢">直球勇敢</button>
+            <button class="tag-item" data-value="温柔体贴">温柔体贴</button>
+            <button class="tag-item" data-value="傲娇高冷">傲娇高冷</button>
+            <button class="tag-item" data-value="腹黑心机">腹黑心机</button>
+            <button class="tag-item" data-value="社恐慢热">社恐慢热</button>
+          </div>
+          <input type="text" id="input-personality-custom" class="setup-input setup-input-sm" placeholder="或自行输入性格...">
+        </div>
+
+        <div class="setup-actions">
+          <button class="btn btn-primary btn-block" onclick="Game.Setup.savePlayerTags()">
+            下一步 →
+          </button>
+        </div>
+      </div>
+
+      <!-- 步骤4：爱豆设定 -->
+      <div id="setup-step-idols" class="setup-step">
+        <div class="setup-header">
+          <button class="setup-back" onclick="Game.Setup.prev()">← 返回</button>
+          <div class="setup-progress"><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot active"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span></div>
+        </div>
+        <h2 class="setup-title">设定你的爱豆</h2>
+        <p class="setup-desc">你希望攻略几位爱豆？</p>
+
+        <!-- 爱豆数量 -->
+        <div class="idol-count-selector" id="idol-count-selector">
+          <button class="count-btn" data-count="1">1位</button>
+          <button class="count-btn active" data-count="2">2位</button>
+          <button class="count-btn" data-count="3">3位</button>
+          <button class="count-btn" data-count="4">4位</button>
+          <button class="count-btn" data-count="5">5位</button>
+        </div>
+
+        <!-- 爱豆卡片列表（动态生成） -->
+        <div id="idol-cards-container" class="idol-cards"></div>
+
+        <div class="setup-actions">
+          <button class="btn btn-primary btn-block" id="btn-idols-next" onclick="Game.Setup.saveIdols()">
+            下一步 →
+          </button>
+        </div>
+      </div>
+
+      <!-- 步骤5：照片与额外设置 -->
+      <div id="setup-step-extras" class="setup-step">
+        <div class="setup-header">
+          <button class="setup-back" onclick="Game.Setup.prev()">← 返回</button>
+          <div class="setup-progress"><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot active"></span><span class="setup-step-dot"></span></div>
+        </div>
+        <h2 class="setup-title">个性化设置</h2>
+        <p class="setup-desc">可选——不上传也可以开始游戏</p>
+
+        <div id="extras-list" class="extras-list">
+          <!-- 动态生成每个爱豆的照片/备注设置 -->
+        </div>
+
+        <!-- 手机壁纸 -->
+        <div class="setup-section">
+          <label class="setup-label">📱 手机壁纸（可选）</label>
+          <div class="photo-upload-row">
+            <button class="btn btn-secondary btn-sm" id="btn-wallpaper-upload" onclick="document.getElementById('input-wallpaper').click()">
+              🖼️ 选择壁纸
+            </button>
+            <span class="photo-name" id="wallpaper-name">未选择</span>
+            <input type="file" id="input-wallpaper" accept="image/*" style="display:none" onchange="Game.Setup.handleWallpaperUpload(this)">
+          </div>
+          <div id="wallpaper-preview" class="photo-preview" style="display:none">
+            <img id="wallpaper-preview-img" src="" alt="壁纸预览">
+            <button class="photo-remove" onclick="Game.Setup.removeWallpaper()">✕</button>
+          </div>
+        </div>
+
+        <div class="setup-actions">
+          <button class="btn btn-primary btn-block" onclick="Game.Setup.goToConfirm()">
+            下一步 →
+          </button>
+          <button class="btn btn-text" onclick="Game.Setup.goToConfirm()">
+            跳过，直接完成 →
+          </button>
+        </div>
+      </div>
+
+      <!-- 步骤6：确认并开始 -->
+      <div id="setup-step-confirm" class="setup-step">
+        <div class="setup-header">
+          <button class="setup-back" onclick="Game.Setup.prev()">← 返回</button>
+          <div class="setup-progress"><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot"></span><span class="setup-step-dot active"></span></div>
+        </div>
+        <h2 class="setup-title">确认你的设定</h2>
+        <p class="setup-desc">检查一下，没问题就开始游戏吧</p>
+
+        <div id="confirm-content" class="confirm-content">
+          <!-- 动态生成确认内容 -->
+        </div>
+
+        <div class="setup-actions">
+          <button class="btn btn-primary btn-block btn-lg" onclick="Game.Setup.startGame()">
+            🎮 开始游戏
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- 应用容器 -->
-  <div id="app" class="app-container">
+  <div id="app" class="app-container" style="display:none;">
 
     <!-- 页面内容区 -->
     <main id="pages" class="pages-container">
@@ -122,6 +307,8 @@
 
   <!-- JavaScript -->
   <script src="js/app.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/character.js"></script>
   <script src="js/router.js"></script>
 </body>
 </html>

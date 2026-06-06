@@ -1,0 +1,542 @@
+/* 设定向导样式 — 新玩家首次进入的角色创建流程 */
+
+/* ===== 设定覆盖层 ===== */
+.setup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.setup-container {
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ===== 设定步骤 ===== */
+.setup-step {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  padding: var(--spacing-lg) var(--spacing-md);
+  overflow-y: auto;
+  animation: setupStepIn 300ms ease-out;
+}
+
+.setup-step.active {
+  display: flex;
+}
+
+@keyframes setupStepIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-6px); }
+  80%      { transform: translateX(6px); }
+}
+
+/* ===== 顶部导航（返回+进度点） ===== */
+.setup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+  min-height: 36px;
+}
+
+.setup-back {
+  font-size: var(--font-size-md);
+  color: var(--color-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.setup-back:active {
+  background: var(--color-primary-light);
+}
+
+.setup-progress {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.setup-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: #E0E0E0;
+  transition: all var(--transition-normal);
+}
+
+.setup-step-dot.active {
+  background: var(--color-primary);
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 6px rgba(248,165,194,0.5);
+}
+
+/* ===== 欢迎页 ===== */
+.setup-welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+}
+
+.setup-logo {
+  font-size: 72px;
+  margin-bottom: var(--spacing-lg);
+  animation: logoPulse 2s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+.setup-game-title {
+  font-size: var(--font-size-xxl);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.setup-game-desc {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.setup-features {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.setup-features span {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  padding: 6px 14px;
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+/* ===== 标题和描述 ===== */
+.setup-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+  letter-spacing: -0.5px;
+}
+
+.setup-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ===== 输入框 ===== */
+.setup-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.setup-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.setup-input-sm {
+  font-size: var(--font-size-md);
+  padding: 10px 14px;
+  margin-top: var(--spacing-sm);
+}
+
+.setup-input-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+  margin-top: var(--spacing-xs);
+  min-height: 18px;
+}
+
+/* ===== 表单区域 ===== */
+.setup-form {
+  flex: 1;
+}
+
+.setup-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.setup-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* ===== 标签网格 ===== */
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-item {
+  padding: 8px 16px;
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+}
+
+.tag-item:active {
+  transform: scale(0.95);
+}
+
+.tag-item.selected {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+/* ===== 爱豆数量选择 ===== */
+.idol-count-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.count-btn {
+  flex: 1;
+  padding: 10px 4px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.count-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+/* ===== 爱豆卡片 ===== */
+.idol-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+.idol-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-card);
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+
+.idol-card.active-edit {
+  border-color: var(--color-primary);
+}
+
+.idol-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.idol-card-number {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #FFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.idol-card-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.idol-card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.idol-field-row {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.idol-field-row .setup-input {
+  flex: 1;
+}
+
+/* 性别选择按钮组 */
+.gender-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+}
+
+.gender-btn {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.gender-btn.selected {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+/* 爱豆性格标签（在卡片内） */
+.idol-tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--spacing-xs);
+}
+
+.idol-tag-grid .tag-item {
+  font-size: var(--font-size-xs);
+  padding: 5px 10px;
+}
+
+/* ===== 额外设置列表 ===== */
+.extras-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+.extra-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.extra-card-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.extra-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* ===== 照片上传 ===== */
+.photo-upload-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.photo-name {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-preview {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: var(--spacing-sm);
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: rgba(0,0,0,0.6);
+  color: #FFF;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== 确认页 ===== */
+.confirm-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+.confirm-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.confirm-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: var(--font-size-sm);
+}
+
+.confirm-row .label {
+  color: var(--text-secondary);
+}
+
+.confirm-row .value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.confirm-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--spacing-xs);
+}
+
+.confirm-tags .mini-tag {
+  font-size: var(--font-size-xs);
+  padding: 3px 10px;
+  border-radius: var(--radius-xl);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+/* ===== 操作按钮区 ===== */
+.setup-actions {
+  position: sticky;
+  bottom: 0;
+  padding: var(--spacing-md) 0;
+  padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--bg-main) 80%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-lg {
+  padding: 16px 24px;
+  font-size: var(--font-size-lg);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: var(--font-size-sm);
+  min-height: 36px;
+}
+
+.btn-text {
+  color: var(--text-hint);
+  font-size: var(--font-size-sm);
+  padding: 8px;
+}
+
+.btn-text:active {
+  color: var(--text-secondary);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn:disabled:active {
+  transform: none;
+}
