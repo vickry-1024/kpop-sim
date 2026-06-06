@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/setup.css">
+  <link rel="stylesheet" href="css/phone.css">
 </head>
 <body>
   <!-- ===== 标题画面（有存档时显示） ===== -->
@@ -299,15 +300,32 @@
 
       <!-- 手机页 -->
       <section id="page-phone" class="page">
-        <div class="page-header">
-          <h1 class="page-title">📱 手机</h1>
-          <p class="page-subtitle">你的社交中心</p>
+        <!-- 手机主屏幕 -->
+        <div id="phone-home" class="phone-home">
+          <div class="phone-status-bar">
+            <span class="phone-status-time" id="phone-status-time">9:41</span>
+            <span class="phone-status-icons">📶 📡 🔋</span>
+          </div>
+          <div class="phone-app-grid" id="phone-app-grid">
+            <!-- 动态渲染APP图标 -->
+          </div>
+          <div class="phone-switch-area">
+            <button class="phone-switch-btn" id="phone-switch-btn" onclick="Game.Phone.switchPhone()">
+              📱 主手机
+            </button>
+            <p class="phone-switch-hint" id="phone-switch-hint">点击切换 → 秘密手机（加密通讯）</p>
+          </div>
         </div>
-        <div class="page-content">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">📱</div>
-            <p class="placeholder-text">智能手机系统</p>
-            <p class="placeholder-hint">将在阶段5实现</p>
+
+        <!-- APP内页容器 -->
+        <div id="phone-app-view" class="phone-app-view" style="display:none;">
+          <div class="phone-app-header">
+            <button class="phone-app-back" onclick="Game.Phone.closeApp()">← 返回</button>
+            <span class="phone-app-title" id="phone-app-title">APP名称</span>
+            <span class="phone-app-header-actions" id="phone-app-header-actions"></span>
+          </div>
+          <div class="phone-app-content" id="phone-app-content">
+            <!-- 动态渲染APP内容 -->
           </div>
         </div>
       </section>
@@ -439,6 +457,11 @@
   <script src="js/character.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/relations.js"></script>
+  <script src="js/phone/phone-main.js"></script>
+  <script src="js/phone/chat.js"></script>
+  <script src="js/phone/sns.js"></script>
+  <script src="js/phone/news.js"></script>
+  <script src="js/phone/call.js"></script>
   <script src="js/router.js"></script>
 </body>
 </html>

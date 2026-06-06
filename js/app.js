@@ -12,7 +12,7 @@ window.Game = {
   version: '0.1.0',
 
   // 当前开发阶段
-  phase: '阶段4：回合制核心循环',
+  phase: '阶段5：手机系统',
 
   // 全局状态
   state: {
@@ -184,6 +184,11 @@ function initApp() {
   // 初始化回合系统
   if (Game.Turn) {
     Game.Turn.init();
+  }
+
+  // 初始化手机系统
+  if (Game.Phone) {
+    Game.Phone.init();
   }
 
   // 决定显示哪个画面：有存档→标题画面，无存档→设定向导

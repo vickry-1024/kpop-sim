@@ -208,6 +208,43 @@ Game.Storage = (() => {
     try { return JSON.parse(raw); } catch { return {}; }
   }
 
+  // ===== 聊天历史存储（IndexedDB） =====
+
+  /**
+   * 保存聊天历史
+   * @param {string} key - 聊天记录ID（如 'chat-main-0'）
+   * @param {Array} messages - 消息数组
+   */
+  async function saveChatHistory(key, messages) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('chatHistory', 'readwrite');
+      const store = tx.objectStore('chatHistory');
+      store.put({ id: key, messages });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  /**
+   * 加载聊天历史
+   * @param {string} key - 聊天记录ID
+   * @returns {Promise<Array>}
+   */
+  async function loadChatHistory(key) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('chatHistory', 'readonly');
+      const store = tx.objectStore('chatHistory');
+      const request = store.get(key);
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result ? result.messages || [] : []);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   /**
    * 清除所有游戏数据
    */
@@ -243,6 +280,9 @@ Game.Storage = (() => {
     loadGame,
     deleteGame,
     getAllSaves,
+    // 聊天历史
+    saveChatHistory,
+    loadChatHistory,
     // API
     saveApiKey,
     getApiKey,
