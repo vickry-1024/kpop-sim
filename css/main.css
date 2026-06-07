@@ -1415,3 +1415,198 @@
   flex-direction: column;
   gap: var(--spacing-sm);
 }
+
+/* ===== 查岗弹窗（阶段8） ===== */
+
+.checkin-modal-card {
+  max-width: 360px;
+}
+
+.checkin-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-soft, #f9f0f5);
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.checkin-message-avatar {
+  font-size: 2rem;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  border-radius: 50%;
+}
+
+.checkin-message-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  padding-top: 8px;
+}
+
+.checkin-option-honest {
+  background: linear-gradient(135deg, #4ecdc4, #44b9b1) !important;
+  color: #fff !important;
+}
+
+.checkin-option-evade {
+  background: linear-gradient(135deg, #ffa502, #e69500) !important;
+  color: #fff !important;
+}
+
+.checkin-option-deflect {
+  background: linear-gradient(135deg, #f8a5c2, #e88bab) !important;
+  color: #fff !important;
+}
+
+.checkin-option-icon {
+  font-size: 1.1rem;
+}
+
+/* ===== 媒体事件弹窗（阶段8） ===== */
+
+.media-event-modal-card {
+  max-width: 380px;
+}
+
+.media-event-scene {
+  padding: 12px 0;
+  margin-bottom: 12px;
+}
+
+.media-event-scene p {
+  margin: 0 0 8px 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.media-event-scene strong {
+  color: var(--accent-color, #e74c3c);
+}
+
+.media-event-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #856404;
+  margin-bottom: 16px;
+}
+
+.media-option-safe {
+  background: linear-gradient(135deg, #4ecdc4, #44b9b1) !important;
+  color: #fff !important;
+  text-align: left !important;
+  line-height: 1.4 !important;
+}
+
+.media-option-safe small,
+.media-option-risk small,
+.media-option-pay small {
+  opacity: 0.85;
+  font-size: 0.78rem;
+}
+
+.media-option-risk {
+  background: linear-gradient(135deg, #ffa502, #e69500) !important;
+  color: #fff !important;
+  text-align: left !important;
+  line-height: 1.4 !important;
+}
+
+.media-option-pay {
+  background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+  color: #fff !important;
+  text-align: left !important;
+  line-height: 1.4 !important;
+}
+
+/* ===== 通用Toast通知（阶段8：名场面 + 日常细节） ===== */
+
+.reality-toast {
+  background: #fff;
+  border: 1px solid var(--border, #e0d5d0);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.reality-toast-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reality-toast-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-soft, #f9f0f5);
+  border-radius: 10px;
+}
+
+.reality-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.reality-toast-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.reality-toast-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.reality-toast-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.reality-toast-effect {
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.reality-toast-effect.effect-positive {
+  background: #d4edda;
+  color: #155724;
+}
+
+.reality-toast-effect.effect-negative {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.reality-toast-effect.effect-mixed {
+  background: #fff3cd;
+  color: #856404;
+}

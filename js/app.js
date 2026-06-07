@@ -9,10 +9,10 @@
  */
 window.Game = {
   // 版本号
-  version: '0.9.0',
+  version: '0.10.0',
 
   // 当前开发阶段
-  phase: '阶段9 ✅ → 准备阶段10：结局系统',
+  phase: '阶段9 ✅ → 阶段8：现实元素系统（查岗/媒体/名场面/日常细节）',
 
   // 全局状态
   state: {
@@ -199,6 +199,11 @@ function initApp() {
   // 邂逅系统（被动触发，无需主动初始化）
   if (Game.Encounter) {
     console.log('[App] 邂逅系统就绪');
+  }
+
+  // 现实元素系统（阶段8）
+  if (Game.Reality) {
+    Game.Reality.init();
   }
 
   // 决定显示哪个画面：有存档→标题画面，无存档→设定向导

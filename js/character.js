@@ -649,6 +649,15 @@ Game.Setup = (() => {
     Game.state.cheatingSuspicion = {};
     Game.state.confirmedStages = {};
 
+    // 初始化现实元素系统字段（阶段8）
+    Game.state.partnerCheckIns = {};
+    Game.state.mediaEventFlags = {};
+    Game.state.datingActionLock = null;
+    Game.state.anniversaryTurns = {};
+    Game.state.locationSharing = {};
+    Game.state.checkInCooldowns = {};
+    Game.state.lastFamousSceneTurn = 0;
+
     // 3. 选择空存档槽并保存
     const slot = Game.State.findEmptySlot();
     Game.State.setCurrentSlot(slot);

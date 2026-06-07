@@ -522,6 +522,140 @@ Game.State = (() => {
     }
   }
 
+  // ===== 现实元素系统（阶段8） =====
+
+  /**
+   * 记录伴侣查岗事件
+   * @param {number} idolIndex
+   * @param {Object} data - { turn, type, choice, outcome }
+   */
+  function recordPartnerCheckIn(idolIndex, data) {
+    if (!Game.state.partnerCheckIns) Game.state.partnerCheckIns = {};
+    var key = String(idolIndex);
+    if (!Game.state.partnerCheckIns[key]) Game.state.partnerCheckIns[key] = { lastTurn: 0, history: [] };
+    Game.state.partnerCheckIns[key].lastTurn = data.turn || Game.state.currentTurn;
+    Game.state.partnerCheckIns[key].history.push(data);
+    // 保持最近10条记录
+    if (Game.state.partnerCheckIns[key].history.length > 10) {
+      Game.state.partnerCheckIns[key].history.shift();
+    }
+    autoSave();
+  }
+
+  /**
+   * 获取上次查岗回合
+   */
+  function getLastCheckInTurn(idolIndex) {
+    var ci = Game.state.partnerCheckIns || {};
+    var entry = ci[String(idolIndex)];
+    return entry ? entry.lastTurn : 0;
+  }
+
+  /**
+   * 设置媒体事件标记
+   */
+  function setMediaEventFlag(idolIndex, flagType) {
+    if (!Game.state.mediaEventFlags) Game.state.mediaEventFlags = {};
+    var key = String(idolIndex);
+    if (!Game.state.mediaEventFlags[key]) Game.state.mediaEventFlags[key] = {};
+    Game.state.mediaEventFlags[key][flagType] = true;
+    autoSave();
+  }
+
+  /**
+   * 检查媒体事件标记
+   */
+  function hasMediaEventFlag(idolIndex, flagType) {
+    var flags = Game.state.mediaEventFlags || {};
+    var entry = flags[String(idolIndex)];
+    return entry ? !!entry[flagType] : false;
+  }
+
+  /**
+   * 锁定约会行动N回合
+   */
+  function setDatingActionLock(idolIndex, turns) {
+    Game.state.datingActionLock = {
+      idolIndex: idolIndex,
+      untilTurn: Game.state.currentTurn + turns
+    };
+    autoSave();
+  }
+
+  /**
+   * 检查约会行动是否锁定（自动清除过期）
+   */
+  function isDatingActionLocked(idolIndex) {
+    var lock = Game.state.datingActionLock;
+    if (!lock) return false;
+    // 自动清除过期锁定
+    if (Game.state.currentTurn > lock.untilTurn) {
+      Game.state.datingActionLock = null;
+      autoSave();
+      return false;
+    }
+    return lock.idolIndex === idolIndex;
+  }
+
+  /**
+   * 强制清除约会锁定
+   */
+  function clearDatingActionLock() {
+    Game.state.datingActionLock = null;
+    autoSave();
+  }
+
+  /**
+   * 设置纪念日回合
+   */
+  function setAnniversaryTurn(idolIndex, type, turn) {
+    if (!Game.state.anniversaryTurns) Game.state.anniversaryTurns = {};
+    var key = String(idolIndex);
+    if (!Game.state.anniversaryTurns[key]) Game.state.anniversaryTurns[key] = {};
+    Game.state.anniversaryTurns[key][type] = turn;
+    autoSave();
+  }
+
+  /**
+   * 获取纪念日回合
+   */
+  function getAnniversaryTurn(idolIndex, type) {
+    var at = Game.state.anniversaryTurns || {};
+    var entry = at[String(idolIndex)];
+    return entry ? (entry[type] || 0) : 0;
+  }
+
+  /**
+   * 设置定位共享状态
+   */
+  function setLocationSharing(idolIndex, enabled) {
+    if (!Game.state.locationSharing) Game.state.locationSharing = {};
+    Game.state.locationSharing[String(idolIndex)] = enabled;
+    autoSave();
+  }
+
+  /**
+   * 检查定位共享状态
+   */
+  function hasLocationSharing(idolIndex) {
+    var ls = Game.state.locationSharing || {};
+    return !!ls[String(idolIndex)];
+  }
+
+  /**
+   * 获取/设置查岗冷却
+   */
+  function setCheckInCooldown(idolIndex, turn) {
+    if (!Game.state.checkInCooldowns) Game.state.checkInCooldowns = {};
+    Game.state.checkInCooldowns[String(idolIndex)] = turn;
+    autoSave();
+  }
+
+  function getCheckInCooldown(idolIndex) {
+    var cd = Game.state.checkInCooldowns || {};
+    return cd[String(idolIndex)] || 0;
+  }
+
   // ===== 工具 =====
 
   function clamp(val) {
@@ -655,6 +789,30 @@ Game.State = (() => {
       }
     }
 
+    // 补齐现实元素系统字段（阶段8）
+    if (!data.partnerCheckIns) data.partnerCheckIns = {};
+    if (!data.mediaEventFlags) data.mediaEventFlags = {};
+    if (data.datingActionLock === undefined) data.datingActionLock = null;
+    if (!data.anniversaryTurns) data.anniversaryTurns = {};
+    if (!data.locationSharing) data.locationSharing = {};
+    if (!data.checkInCooldowns) data.checkInCooldowns = {};
+    if (data.lastFamousSceneTurn === undefined) data.lastFamousSceneTurn = 0;
+    // 补填已有恋爱/已婚关系纪念日（估算值，避免立即触发）
+    (data.idols || []).forEach(function(idol, i) {
+      var key = String(i);
+      if (!data.anniversaryTurns[key]) data.anniversaryTurns[key] = {};
+      if (idol.relationshipStage === 'dating' || idol.relationshipStage === 'married') {
+        if (!data.anniversaryTurns[key].datingStart) {
+          data.anniversaryTurns[key].datingStart = Math.max(1, currentTurn - 5);
+        }
+      }
+      if (idol.relationshipStage === 'married') {
+        if (!data.anniversaryTurns[key].marriedStart) {
+          data.anniversaryTurns[key].marriedStart = Math.max(1, currentTurn - 2);
+        }
+      }
+    });
+
     // 更新版本号
     data.version = currentVersion;
 
@@ -774,7 +932,21 @@ Game.State = (() => {
     addPlayerPost,
     getPlayerPosts,
     addPlayerPostLike,
-    addPlayerPostComment
+    addPlayerPostComment,
+    // 现实元素系统（阶段8）
+    recordPartnerCheckIn,
+    getLastCheckInTurn,
+    setMediaEventFlag,
+    hasMediaEventFlag,
+    setDatingActionLock,
+    isDatingActionLocked,
+    clearDatingActionLock,
+    setAnniversaryTurn,
+    getAnniversaryTurn,
+    setLocationSharing,
+    hasLocationSharing,
+    setCheckInCooldown,
+    getCheckInCooldown
   };
 
 })();

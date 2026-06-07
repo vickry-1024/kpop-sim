@@ -166,6 +166,14 @@ Game.Actions = (() => {
       subType: 'select',  // 弹出子选项（消息来源）
       desc: '通过人脉打听爱豆行程，有风险'
     },
+    {
+      id: 'checkin', category: 'intel', name: '查岗', icon: '📞',
+      staminaCost: 5,
+      effects: { stress: [-3, 1], suspicion: [0, 2] },
+      needsTarget: true,
+      subType: 'chat',  // 弹出聊天对话界面（爱豆回应查岗）
+      desc: '打电话查岗，看看爱豆在干什么'
+    },
 
     // ---- 休息恢复 ----
     {
@@ -313,6 +321,47 @@ Game.Actions = (() => {
             effectMods: { affection: [5, 7], stress: [-5, 0] } },
           { id: 'chat-plan', label: '📅 直接约下次', text: '那就这周末见面吧！我去找你～',
             effectMods: { affection: [3, 5], stress: [-3, 0], charm: [1, 2] } }
+        ]
+      }
+    },
+    // 查岗
+    checkin: {
+      low: {
+        messages: [
+          { from: 'idol', text: '嗯？突然打电话来...有什么事吗？我刚好在休息。' },
+          { from: 'idol', text: '（声音有点意外）你在担心什么吗？我就在这里啊。' }
+        ],
+        replies: [
+          { id: 'checkin-trust', label: '✅ 相信ta', text: '没什么事～就是想你了，听到你声音就安心了',
+            effectMods: { affection: [1, 2], stress: [-3, 0] } },
+          { id: 'checkin-question', label: '❓ 追问细节', text: '是吗？那你旁边都有谁？描述一下你现在在干嘛？',
+            effectMods: { affection: [-1, 1], stress: [0, 3], suspicion: [0, 2] } }
+        ]
+      },
+      mid: {
+        messages: [
+          { from: 'idol', text: '{honorific}～怎么突然打电话？是不是想我了？' },
+          { from: 'idol', text: '我在练习呢，刚刚结束一段舞蹈。成员们都在旁边，你要跟他们打个招呼吗？' },
+          { from: 'idol', text: '（背景传来嘻嘻哈哈的声音）' }
+        ],
+        replies: [
+          { id: 'checkin-trust', label: '💜 甜蜜信任', text: '就是想知道你在干嘛～练习辛苦啦，要好好休息！',
+            effectMods: { affection: [2, 3], stress: [-3, -1] } },
+          { id: 'checkin-test', label: '🤔 试探一下', text: '哦？让我跟成员打个招呼吧，我也想听听他们的声音',
+            effectMods: { affection: [0, 2], stress: [0, 2], suspicion: [0, 1] } }
+        ]
+      },
+      high: {
+        messages: [
+          { from: 'idol', text: '{honorific}！！💜 你终于打电话来了！我一直在等你的电话～' },
+          { from: 'idol', text: '练习好累...但是听到你的声音瞬间满血复活了！' },
+          { from: 'idol', text: '你在哪？要现在见面吗？我这边快结束了～' }
+        ],
+        replies: [
+          { id: 'checkin-sweet', label: '💕 温柔查岗', text: '就是来查岗的～想确认我家{honorific}有没有乖乖的',
+            effectMods: { affection: [3, 5], stress: [-5, -2] } },
+          { id: 'checkin-meet', label: '🥂 直接约见面', text: '那你结束后来找我吧！我们去吃好吃的～',
+            effectMods: { affection: [2, 4], stress: [-3, -1], charm: [1, 2] } }
         ]
       }
     },

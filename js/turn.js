@@ -196,6 +196,16 @@ Game.Turn = (() => {
             if (delta > 0 && Game.Relationship) {
               Game.Relationship.checkCheatingOnAction(targetIndex, delta);
             }
+            // 被拍风险：高嫌疑度下约会行动有8%额外触发
+            if (delta > 0 && Game.Reality && Game.state.player.stats.suspicion >= 70) {
+              var idol = Game.state.idols[targetIndex];
+              var stage = idol ? (idol.relationshipStage || 'pursuit') : 'pursuit';
+              if ((stage === 'dating' || stage === 'married') && !Game.Reality.hasMediaFlag(targetIndex, 'caughtOnCamera')) {
+                if (Math.random() * 100 < 8) {
+                  setTimeout(function() { Game.Reality.checkCaughtOnCamera(targetIndex); }, 800);
+                }
+              }
+            }
           }
           break;
         case 'stress':
@@ -338,6 +348,27 @@ Game.Turn = (() => {
 
     // 13. 随机邂逅检测
     _checkRandomEncounters();
+
+    // 14. 查岗系统（阶段8）
+    if (Game.Reality) {
+      Game.Reality.triggerPartnerCheckIns();
+      Game.Reality.triggerCompanyCheckIn();
+    }
+
+    // 15. 私生/媒体事件检测（阶段8）
+    if (Game.Reality) {
+      _checkMediaEvents();
+    }
+
+    // 16. 名场面随机事件（阶段8）
+    if (Game.Reality) {
+      Game.Reality.checkFamousScene();
+    }
+
+    // 17. 日常细节检测（阶段8）
+    if (Game.Reality) {
+      _checkDailyDetails();
+    }
 
     console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
   }
@@ -773,6 +804,16 @@ Game.Turn = (() => {
             // 出轨检测：如果玩家在排他关系中与非伴侣爱豆互动
             if (delta > 0 && Game.Relationship) {
               Game.Relationship.checkCheatingOnAction(targetIndex, delta);
+            }
+            // 被拍风险：高嫌疑度下约会行动有8%额外触发
+            if (delta > 0 && Game.Reality && Game.state.player.stats.suspicion >= 70) {
+              var idol = Game.state.idols[targetIndex];
+              var stage = idol ? (idol.relationshipStage || 'pursuit') : 'pursuit';
+              if ((stage === 'dating' || stage === 'married') && !Game.Reality.hasMediaFlag(targetIndex, 'caughtOnCamera')) {
+                if (Math.random() * 100 < 8) {
+                  setTimeout(function() { Game.Reality.checkCaughtOnCamera(targetIndex); }, 800);
+                }
+              }
             }
           }
           break;
@@ -1387,6 +1428,88 @@ Game.Turn = (() => {
     if (Math.random() * 100 < chance) {
       console.log('[Turn] 随机邂逅事件触发！当前爱豆数：' + idolCount + '，概率：' + chance + '%');
       Game.Encounter.triggerEncounter('random');
+    }
+  }
+
+  // ===== 媒体事件检测（阶段8） =====
+
+  /**
+   * 每回合检测私生/媒体事件
+   * 按优先级检查，每回合最多触发1个
+   */
+  function _checkMediaEvents() {
+    var idols = Game.state.idols || [];
+    var suspicion = Game.state.player.stats.suspicion || 0;
+
+    for (var i = 0; i < idols.length; i++) {
+      var idol = idols[i];
+      var stage = idol.relationshipStage || 'pursuit';
+      // 只对恋爱/已婚阶段的爱豆触发媒体事件
+      if (stage !== 'dating' && stage !== 'married') continue;
+
+      // D社预警: suspicion >= 50, 10-15%
+      if (suspicion >= 50 && !Game.Reality.hasMediaFlag(i, 'dispatchWarned')) {
+        if (Math.random() * 100 < (10 + Math.floor(Math.random() * 6))) {
+          Game.Reality.checkDispatchWarning(i);
+          return;
+        }
+      }
+
+      // 被拍事件: suspicion >= 70, 8-12%
+      if (suspicion >= 70 && !Game.Reality.hasMediaFlag(i, 'caughtOnCamera')) {
+        if (Math.random() * 100 < (8 + Math.floor(Math.random() * 5))) {
+          Game.Reality.checkCaughtOnCamera(i);
+          return;
+        }
+      }
+
+      // 粉丝扒料: suspicion >= 40, 15%
+      if (suspicion >= 40 && !Game.Reality.hasMediaFlag(i, 'fanInvestigated')) {
+        if (Math.random() * 100 < 15) {
+          Game.Reality.checkFanInvestigation(i);
+          return;
+        }
+      }
+    }
+  }
+
+  // ===== 日常细节检测（阶段8） =====
+
+  /**
+   * 每回合检测日常细节事件（纪念日/情侣物品/生病/定位共享）
+   */
+  function _checkDailyDetails() {
+    var idols = Game.state.idols || [];
+    var currentTurn = Game.state.currentTurn || 0;
+
+    for (var i = 0; i < idols.length; i++) {
+      var stage = idols[i].relationshipStage || 'pursuit';
+      // 攻略期只触发生病探望
+      if (stage === 'pursuit') continue;
+
+      // 纪念日检查
+      Game.Reality.checkAnniversary(i);
+
+      // 定位共享提议（恋爱首回合50%概率，仅触发一次）
+      if (stage === 'dating' && !Game.State.hasLocationSharing(i)) {
+        var lsTurn = Game.State.getAnniversaryTurn(i, 'locationSharing') || 0;
+        if (lsTurn === 0 && Math.random() * 100 < 50 && currentTurn - (Game.State.getAnniversaryTurn(i, 'datingStart') || currentTurn) <= 2) {
+          Game.Reality.checkLocationSharing(i);
+          Game.State.setAnniversaryTurn(i, 'locationSharing', currentTurn); // 标记已提示
+          return;
+        }
+      }
+
+      // 情侣物品: 10%
+      if (Math.random() * 100 < 10) {
+        Game.Reality.checkCoupleItem(i);
+        return;
+      }
+    }
+
+    // 生病探望: 8%（任意阶段任意爱豆）
+    if (idols.length > 0 && Math.random() * 100 < 8) {
+      Game.Reality.checkSickVisit();
     }
   }
 
