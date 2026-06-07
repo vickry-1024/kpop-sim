@@ -1366,3 +1366,65 @@
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
 }
+
+/* SNS 评论加载中 */
+.sns-detail-comments-loading {
+  text-align: center;
+  padding: var(--spacing-md);
+  color: var(--text-hint);
+  font-size: var(--font-size-xs);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* SNS 玩家自己的评论 */
+.sns-detail-comment-self {
+  background: linear-gradient(135deg, rgba(248, 165, 194, 0.15), rgba(248, 165, 194, 0.05));
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  margin: 2px 0;
+}
+
+.sns-detail-comment-self .sns-detail-comment-text {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* SNS 评论输入区域 */
+.sns-comment-input-area {
+  display: flex;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
+  position: sticky;
+  bottom: 0;
+}
+
+.sns-comment-input {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 8px 14px;
+  font-size: var(--font-size-xs);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  resize: none;
+  min-height: 36px;
+  max-height: 80px;
+  outline: none;
+  font-family: inherit;
+}
+
+.sns-comment-input:focus {
+  border-color: var(--color-primary);
+}
+
+.sns-comment-input::placeholder {
+  color: var(--text-hint);
+  font-size: 11px;
+}
