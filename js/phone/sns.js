@@ -17,6 +17,12 @@ Game.PhoneSNS = (() => {
   // 当前查看的帖子索引（用于评论提交）
   var _currentPostIndex = null;
 
+  // 玩家自己帖子的AI评论缓存（key: postIndex, value: comments array）
+  var _myPostCommentCache = {};
+
+  // 当前查看的自己的帖子索引
+  var _currentMyPostIndex = null;
+
   // ===== 发帖风格定义 =====
   const POST_STYLES = [
     {
@@ -199,6 +205,15 @@ Game.PhoneSNS = (() => {
 
     container.innerHTML = `
       <div class="sns-feed" id="sns-feed-list">
+        <!-- 玩家自己的账号入口 -->
+        <div class="sns-my-account-entry" onclick="Game.PhoneSNS.showMyAccount()">
+          <div class="sns-my-account-entry-avatar">🧑‍🎤</div>
+          <div class="sns-my-account-entry-info">
+            <span class="sns-my-account-entry-name">${escapeHtml(Game.state.player.name)}</span>
+            <span class="sns-my-account-entry-hint">查看你的账号主页 →</span>
+          </div>
+        </div>
+
         ${posts.map((post, postIndex) => `
           <div class="sns-post-card" onclick="Game.PhoneSNS.showPostDetail(${postIndex})" style="cursor:pointer;">
             <div class="sns-post-header">
@@ -384,6 +399,11 @@ Game.PhoneSNS = (() => {
   function publishWithStyle(style, text) {
     // 应用风格特定的数值效果
     applyStyleEffects(style);
+
+    // 保存帖子到玩家发帖记录
+    if (Game.State.addPlayerPost) {
+      Game.State.addPlayerPost(text, style.id);
+    }
 
     // 返回动态流
     const container = document.getElementById('phone-app-content');
@@ -860,6 +880,485 @@ Game.PhoneSNS = (() => {
     if (container) renderFeed(container);
   }
 
+  // ===== 玩家自己的SNS账号页面（功能5） =====
+
+  /**
+   * 渲染玩家自己的账号主页
+   */
+  function showMyAccount() {
+    _view = 'my-account';
+
+    var container = document.getElementById('phone-app-content');
+    var titleEl = document.getElementById('phone-app-title');
+    var headerActions = document.getElementById('phone-app-header-actions');
+
+    if (!container) return;
+    if (titleEl) titleEl.textContent = '📱 我的账号';
+    if (headerActions) headerActions.innerHTML = '';
+
+    // 覆盖返回按钮
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.setAttribute('onclick', 'Game.PhoneSNS.backFromMyAccount()');
+    }
+
+    var player = Game.state.player;
+    var social = Game.State.getSocialData ? Game.State.getSocialData() : { followers: 0, posts: 0 };
+    var suspicion = player.stats.suspicion || 0;
+    var posts = Game.State.getPlayerPosts ? Game.State.getPlayerPosts() : [];
+
+    // 粉丝数格式化
+    var followerStr = social.followers >= 10000
+      ? (social.followers / 10000).toFixed(1) + '万'
+      : social.followers.toLocaleString();
+
+    // 嫌疑度指示器
+    var suspicionIcon = suspicion < 20 ? '🟢' : (suspicion < 50 ? '🟡' : '🔴');
+    var suspicionLabel = suspicion < 20 ? '安全' : (suspicion < 50 ? '被注意' : '高危');
+
+    // 身份简介
+    var identityText = (player.identityTags && player.identityTags.length > 0)
+      ? player.identityTags.join(' · ')
+      : (player.identityCustom || 'SNS用户');
+
+    // 风格图标映射
+    var styleIcons = {
+      'lovestagram': '💕', 'fan-support': '📣',
+      'daily-life': '🌸', 'custom': '✏️'
+    };
+    var styleLabels = {
+      'lovestagram': '暗戳戳秀恩爱', 'fan-support': '粉丝视角应援',
+      'daily-life': '晒日常', 'custom': '自定义'
+    };
+
+    // 帖子列表HTML
+    var postsHtml = '';
+    if (posts.length === 0) {
+      postsHtml = '<div class="sns-my-empty">📭 还没有发过帖子<br><span style="font-size:12px;color:var(--text-hint);">回到动态流发布你的第一条帖子吧</span></div>';
+    } else {
+      postsHtml = posts.map(function(post, i) {
+        var preview = post.text.length > 50 ? post.text.substring(0, 50) + '...' : post.text;
+        var styleIcon = styleIcons[post.styleId] || '✏️';
+        var styleLabel = styleLabels[post.styleId] || '自定义';
+        var timeStr = post.turn ? '第' + post.turn + '回合' : '刚刚';
+        return '<div class="sns-my-post-card" onclick="Game.PhoneSNS.showMyPostDetail(' + i + ')">' +
+          '<div class="sns-my-post-header">' +
+            '<span class="sns-my-post-style-badge">' + styleIcon + ' ' + styleLabel + '</span>' +
+            '<span class="sns-my-post-time">' + timeStr + '</span>' +
+          '</div>' +
+          '<div class="sns-my-post-body">' + escapeHtml(preview) + '</div>' +
+          '<div class="sns-my-post-stats">' +
+            '<span>❤️ ' + (post.likes || 0) + '</span>' +
+            '<span>💬 ' + (post.comments || 0) + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    container.innerHTML =
+      '<div class="sns-my-account">' +
+        // 个人资料头部
+        '<div class="sns-my-profile-card">' +
+          '<div class="sns-my-profile-avatar">🧑‍🎤</div>' +
+          '<div class="sns-my-profile-info">' +
+            '<span class="sns-my-profile-name">' + escapeHtml(player.name) + '</span>' +
+            '<span class="sns-my-profile-handle">@' + escapeHtml(player.name.toLowerCase().replace(/\s/g, '_')) + '_official</span>' +
+            '<span class="sns-my-profile-bio">' + escapeHtml(identityText) + '</span>' +
+          '</div>' +
+        '</div>' +
+        // 统计数据行
+        '<div class="sns-my-stats">' +
+          '<div class="sns-my-stat-item">' +
+            '<span class="sns-my-stat-value">' + followerStr + '</span>' +
+            '<span class="sns-my-stat-label">粉丝</span>' +
+          '</div>' +
+          '<div class="sns-my-stat-item">' +
+            '<span class="sns-my-stat-value">' + posts.length + '</span>' +
+            '<span class="sns-my-stat-label">帖子</span>' +
+          '</div>' +
+          '<div class="sns-my-stat-item">' +
+            '<span class="sns-my-stat-value">' + suspicionIcon + ' ' + suspicion + '</span>' +
+            '<span class="sns-my-stat-label">嫌疑度 · ' + suspicionLabel + '</span>' +
+          '</div>' +
+        '</div>' +
+        // 帖子列表
+        '<div class="sns-my-posts-section">' +
+          '<div class="sns-my-posts-title">📝 我的动态</div>' +
+          postsHtml +
+        '</div>' +
+      '</div>';
+  }
+
+  /**
+   * 显示玩家自己帖子的详情（异步加载评论）
+   */
+  function showMyPostDetail(postIndex) {
+    var posts = Game.State.getPlayerPosts ? Game.State.getPlayerPosts() : [];
+    var post = posts[postIndex];
+    if (!post) return;
+
+    _view = 'my-post-detail';
+    _currentMyPostIndex = postIndex;
+
+    var container = document.getElementById('phone-app-content');
+    var titleEl = document.getElementById('phone-app-title');
+    var headerActions = document.getElementById('phone-app-header-actions');
+
+    if (!container) return;
+    if (titleEl) titleEl.textContent = '📱 我的帖子';
+    if (headerActions) headerActions.innerHTML = '';
+
+    // 覆盖返回按钮
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.setAttribute('onclick', 'Game.PhoneSNS.backFromMyAccount()');
+    }
+
+    // 风格图标
+    var styleIcons = {
+      'lovestagram': '💕', 'fan-support': '📣',
+      'daily-life': '🌸', 'custom': '✏️'
+    };
+    var styleIcon = styleIcons[post.styleId] || '✏️';
+    var timeStr = post.turn ? '第' + post.turn + '回合' : '刚刚';
+
+    container.innerHTML =
+      '<div class="sns-post-detail">' +
+        '<div class="sns-detail-header">' +
+          '<div class="sns-detail-avatar">🧑‍🎤</div>' +
+          '<div class="sns-detail-user-info">' +
+            '<span class="sns-detail-username">' + escapeHtml(Game.state.player.name) + '</span>' +
+            '<span class="sns-detail-time">' + timeStr + ' · ' + styleIcon + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sns-detail-body">' + escapeHtml(post.text) + '</div>' +
+        '<div class="sns-detail-actions">' +
+          '<button class="sns-detail-action-btn" id="sns-my-detail-like-btn" onclick="Game.PhoneSNS.likeMyPost()">' +
+            '❤️ ' + (post.likes || 0) +
+          '</button>' +
+          '<button class="sns-detail-action-btn" onclick="Game.PhoneSNS.sharePost()">' +
+            '🔗 分享' +
+          '</button>' +
+        '</div>' +
+        '<div class="sns-detail-comments-section" id="sns-detail-comments-section">' +
+          '<div class="sns-detail-comments-title">💬 评论</div>' +
+          '<div class="sns-detail-comments-loading" id="sns-comments-loading">' +
+            '⏳ AI生成评论中...' +
+          '</div>' +
+          '<div id="sns-comments-list"></div>' +
+        '</div>' +
+        '<div class="sns-comment-input-area">' +
+          '<textarea class="sns-comment-input" id="sns-my-comment-input"' +
+            ' placeholder="写评论..."' +
+            ' maxlength="200"></textarea>' +
+          '<button class="btn btn-primary btn-sm" id="sns-my-comment-submit-btn" ' +
+            ' onclick="Game.PhoneSNS.submitMyPostComment()">发送</button>' +
+        '</div>' +
+      '</div>';
+
+    // 异步加载评论
+    generateMyPostComments(post, postIndex).then(function(comments) {
+      var loadingEl = document.getElementById('sns-comments-loading');
+      var listEl = document.getElementById('sns-comments-list');
+      var titleEl2 = document.querySelector('.sns-detail-comments-title');
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (listEl) listEl.innerHTML = renderMyCommentsHTML(comments);
+      if (titleEl2) titleEl2.textContent = '💬 评论 (' + comments.length + '条)';
+    }).catch(function() {
+      var loadingEl = document.getElementById('sns-comments-loading');
+      if (loadingEl) loadingEl.textContent = '加载评论失败';
+    });
+  }
+
+  /**
+   * 渲染玩家帖子的评论HTML（含评论者类型标签）
+   */
+  function renderMyCommentsHTML(comments) {
+    if (!comments || comments.length === 0) return '';
+    return comments.map(function(c) {
+      var typeBadge = '';
+      if (c.type === 'fan') {
+        typeBadge = '<span class="sns-commenter-tag sns-commenter-fan">粉丝</span>';
+      } else if (c.type === 'idol-fan') {
+        typeBadge = '<span class="sns-commenter-tag sns-commenter-idol-fan">某爱豆粉丝</span>';
+      } else if (c.type === 'toxic') {
+        typeBadge = '<span class="sns-commenter-tag sns-commenter-toxic">毒唯</span>';
+      }
+      return '<div class="sns-detail-comment">' +
+        '<span class="sns-detail-comment-user">' + escapeHtml(c.username) + '</span>' +
+        typeBadge +
+        '<span class="sns-detail-comment-text">' + escapeHtml(c.text) + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  /**
+   * 为自己的帖子生成AI评论（数量和类型基于粉丝数+嫌疑度）
+   */
+  async function generateMyPostComments(post, postIndex) {
+    // 缓存检查
+    if (_myPostCommentCache[postIndex]) return _myPostCommentCache[postIndex];
+
+    var social = Game.State.getSocialData ? Game.State.getSocialData() : { followers: 0 };
+    var suspicion = Game.state.player.stats.suspicion || 0;
+    var followers = social.followers || 0;
+
+    // 粉丝数决定评论数量
+    var totalComments;
+    if (followers < 500) {
+      totalComments = 2 + Math.floor(Math.random() * 3); // 2-4
+    } else if (followers < 2000) {
+      totalComments = 4 + Math.floor(Math.random() * 4); // 4-7
+    } else if (followers < 10000) {
+      totalComments = 7 + Math.floor(Math.random() * 4); // 7-10
+    } else {
+      totalComments = 10 + Math.floor(Math.random() * 6); // 10-15
+    }
+
+    // 嫌疑度决定评论类型比例
+    var fanRatio, neutralRatio, idolFanRatio, toxicRatio;
+    if (suspicion < 20) {
+      fanRatio = 0.70; neutralRatio = 0.25; idolFanRatio = 0.05; toxicRatio = 0.00;
+    } else if (suspicion < 50) {
+      fanRatio = 0.45; neutralRatio = 0.25; idolFanRatio = 0.20; toxicRatio = 0.10;
+    } else {
+      fanRatio = 0.20; neutralRatio = 0.20; idolFanRatio = 0.30; toxicRatio = 0.30;
+    }
+
+    // 计算各类型数量
+    var fanCount = Math.max(0, Math.round(totalComments * fanRatio));
+    var neutralCount = Math.max(0, Math.round(totalComments * neutralRatio));
+    var idolFanCount = Math.max(0, Math.round(totalComments * idolFanRatio));
+    var toxicCount = Math.max(0, totalComments - fanCount - neutralCount - idolFanCount);
+
+    // 尝试DeepSeek API生成
+    if (Game.API && Game.API.hasAnyKey && Game.API.hasAnyKey()) {
+      try {
+        var messages = [
+          { role: 'system', content: '你是韩国SNS平台的评论生成器。请根据帖主的内容和粉丝画像，生成不同立场的评论。\n\n帖主身份：' + (Game.state.player.name) + '，SNS账号，粉丝数' + followers + '，嫌疑度' + suspicion + '/100（被怀疑与爱豆有私交的程度）。\n\n你需要生成共' + totalComments + '条评论，分配如下：\n- ' + fanCount + '条来自"真爱粉"：喜欢帖主、支持鼓励、友善互动\n- ' + neutralCount + '条来自"路人"：中性、吃瓜、客观\n- ' + idolFanCount + '条来自"爱豆粉丝"：保护爱豆、怀疑帖主蹭热度、阴阳怪气\n- ' + toxicCount + '条来自"毒唯"：攻击性、辱骂帖主、要求远离爱豆\n\n每条评论格式：{"username":"用户名","text":"评论内容","type":"fan|neutral|idol-fan|toxic"}\n\n要求：\n- 用户名多样化（韩文/中文/英文名）\n- 评论真实自然，符合各类型人设\n- 毒唯评论要有攻击性但不过线（不涉及人身威胁）\n- 必须返回严格的JSON数组格式' },
+          { role: 'user', content: '帖子内容：' + post.text + '\n\n请生成' + totalComments + '条评论，其中真爱粉' + fanCount + '条、路人' + neutralCount + '条、爱豆粉丝' + idolFanCount + '条、毒唯' + toxicCount + '条：' }
+        ];
+
+        var response = await Game.API.callDeepSeek(messages, { temperature: 0.95, maxTokens: 1200 });
+        if (response && response.trim()) {
+          var cleaned = response.trim();
+          if (cleaned.startsWith('```')) {
+            cleaned = cleaned.replace(/```\w*\n?/g, '').replace(/```/g, '');
+          }
+          var parsed = JSON.parse(cleaned);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            _myPostCommentCache[postIndex] = parsed;
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('[SNS] 玩家帖子AI评论生成失败，使用静态评论:', e.message);
+      }
+    }
+
+    // fallback到静态评论
+    var fallback = getMyPostStaticComments(postIndex, totalComments, suspicion);
+    _myPostCommentCache[postIndex] = fallback;
+    return fallback;
+  }
+
+  /**
+   * 静态评论fallback（API不可用时使用）
+   */
+  function getMyPostStaticComments(postIndex, totalCount, suspicion) {
+    // 真爱粉评论池
+    var fanPool = [
+      { username: '追星小天使', text: '博主太有趣了！每条动态都好真实 💕', type: 'fan' },
+      { username: '日常点赞用户', text: '关注你好久了，每次看你的帖子心情都变好～', type: 'fan' },
+      { username: '默默支持的人', text: '欧尼！今天也来给你留言了 要一直更新哦', type: 'fan' },
+      { username: '新来的小粉丝', text: '刚关注！好好奇博主的生活 多发点日常吧', type: 'fan' },
+      { username: '真爱粉本粉', text: '第一个来报道！博主的每一篇都点赞了 ❤️', type: 'fan' },
+      { username: '天使人间分使', text: '姐姐发的内容都好治愈 上班路上必看', type: 'fan' },
+      { username: '你的小太阳', text: '今天的博主也好美！继续发光吧 ✨', type: 'fan' },
+      { username: '忠实读者', text: '博主文笔好好 感觉是个很温柔的人呢', type: 'fan' },
+      { username: '追更少女', text: '每天都来看 已经习惯有你的SNS了', type: 'fan' },
+      { username: '野生小粉丝', text: '博主回复过我的评论！！兴奋了一整天', type: 'fan' }
+    ];
+
+    // 路人评论池
+    var neutralPool = [
+      { username: '路过的西瓜', text: '刷到这条 内容还行吧 先观望', type: 'neutral' },
+      { username: '吃瓜群众', text: '路人路过 这是谁？有科普的吗', type: 'neutral' },
+      { username: '随便看看', text: '首页推给我的 写得还行 已阅', type: 'neutral' },
+      { username: '深夜冲浪选手', text: '算法推到我首页了 点赞数还挺高', type: 'neutral' },
+      { username: '打酱油的', text: '哦 所以呢？感觉像是蹭热度的', type: 'neutral' },
+      { username: '路人甲', text: '评论区好精彩 我就看看不说话 🍿', type: 'neutral' },
+      { username: '围观群众', text: 'emmmm 感觉不太对劲 但又说不上来', type: 'neutral' },
+      { username: '韩网潜水员', text: '这个账号在韩网好像也有人讨论...不确定', type: 'neutral' }
+    ];
+
+    // 爱豆粉丝评论池（护主型）
+    var idolFanPool = [
+      { username: '永远守护欧巴', text: '你发这些是想蹭我爱豆热度吗？别太过分了', type: 'idol-fan' },
+      { username: '真爱粉绝不认输', text: '又来了 每次我爱豆有动静你就发帖 是不是故意的', type: 'idol-fan' },
+      { username: '保护我方爱豆', text: '大家注意 这个账号老发暗示性内容 不要被带节奏', type: 'idol-fan' },
+      { username: '心中有爱豆', text: 'emmm 你之前发的那些...希望是我想多了', type: 'idol-fan' },
+      { username: '理智追星人', text: '麻烦不要天天发这种暗示 我爱豆很忙的没空理你', type: 'idol-fan' },
+      { username: '数据粉本粉', text: '有这时间多切瓜刷榜 发什么暗示帖啊', type: 'idol-fan' },
+      { username: '站姐预备役', text: '我拍到过你...你到底是谁？离我爱豆远点', type: 'idol-fan' },
+      { username: '追星少女小蔡', text: '大家别去她主页 给热度就是帮她蹭', type: 'idol-fan' }
+    ];
+
+    // 毒唯评论池（攻击型）
+    var toxicPool = [
+      { username: '毒唯出征中', text: '你配吗？也不看看自己什么样子 离我爱豆远点！', type: 'toxic' },
+      { username: '只爱一个人', text: '看到你就烦 天天发暗示帖蹭热度真恶心', type: 'toxic' },
+      { username: '为欧巴而战', text: '我真的服了 你是不是有妄想症啊？清醒一点吧', type: 'toxic' },
+      { username: '守护本命', text: '别做梦了 我爱豆身边根本不缺你这种人', type: 'toxic' },
+      { username: '私生退退退', text: '你是不是就是那个被拍到在宿舍楼下的私生？？', type: 'toxic' },
+      { username: '反黑组组长', text: '已经举报了 大家点举报 这种账号就不该存在', type: 'toxic' },
+      { username: '铁血毒唯', text: '你发的每条我都截图了 等着被扒吧', type: 'toxic' },
+      { username: '纯净追星', text: '滚滚滚滚滚！！不要污染我们的追星环境', type: 'toxic' }
+    ];
+
+    // 根据嫌疑度确定比例
+    var fanRatio, neutralRatio, idolFanRatio, toxicRatio;
+    if (suspicion < 20) {
+      fanRatio = 0.70; neutralRatio = 0.25; idolFanRatio = 0.05; toxicRatio = 0.00;
+    } else if (suspicion < 50) {
+      fanRatio = 0.45; neutralRatio = 0.25; idolFanRatio = 0.20; toxicRatio = 0.10;
+    } else {
+      fanRatio = 0.20; neutralRatio = 0.20; idolFanRatio = 0.30; toxicRatio = 0.30;
+    }
+
+    var fanCount = Math.max(0, Math.round(totalCount * fanRatio));
+    var neutralCount = Math.max(0, Math.round(totalCount * neutralRatio));
+    var idolFanCount = Math.max(0, Math.round(totalCount * idolFanRatio));
+    var toxicCount = Math.max(0, totalCount - fanCount - neutralCount - idolFanCount);
+
+    // 随机选取
+    var seed = postIndex * 13 + 7;
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = (seed + i * 1103515245 + 12345) % (i + 1);
+        if (j < 0) j += i + 1;
+        var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      }
+      return a;
+    }
+
+    var comments = [];
+    comments = comments.concat(shuffle(fanPool).slice(0, fanCount));
+    comments = comments.concat(shuffle(neutralPool).slice(0, neutralCount));
+    comments = comments.concat(shuffle(idolFanPool).slice(0, idolFanCount));
+    comments = comments.concat(shuffle(toxicPool).slice(0, toxicCount));
+
+    // 再次打乱顺序
+    return shuffle(comments);
+  }
+
+  /**
+   * 给玩家自己的帖子点赞
+   */
+  function likeMyPost() {
+    if (_currentMyPostIndex === null) return;
+    var btn = document.getElementById('sns-my-detail-like-btn');
+    if (!btn) return;
+
+    // 更新状态
+    if (Game.State.addPlayerPostLike) {
+      Game.State.addPlayerPostLike(_currentMyPostIndex);
+    }
+
+    btn.innerHTML = '❤️ +1';
+    btn.style.transform = 'scale(1.3)';
+    btn.style.color = '#FF6B6B';
+    btn.style.transition = 'all 0.2s ease';
+    setTimeout(function() {
+      var posts = Game.State.getPlayerPosts ? Game.State.getPlayerPosts() : [];
+      var post = posts[_currentMyPostIndex];
+      var likes = post ? (post.likes || 1) : 1;
+      btn.innerHTML = '❤️ ' + likes;
+      btn.style.transform = 'scale(1)';
+      btn.style.color = '#FF6B6B';
+    }, 300);
+  }
+
+  /**
+   * 玩家在自己的帖子下发表评论
+   */
+  function submitMyPostComment() {
+    if (_currentMyPostIndex === null) return;
+    var input = document.getElementById('sns-my-comment-input');
+    var btn = document.getElementById('sns-my-comment-submit-btn');
+    if (!input) return;
+
+    var text = input.value.trim();
+    if (!text) return;
+
+    // 更新评论计数
+    if (Game.State.addPlayerPostComment) {
+      Game.State.addPlayerPostComment(_currentMyPostIndex);
+    }
+
+    // 插入评论
+    var listEl = document.getElementById('sns-comments-list');
+    if (listEl) {
+      var commentEl = document.createElement('div');
+      commentEl.className = 'sns-detail-comment sns-detail-comment-self';
+      commentEl.innerHTML =
+        '<span class="sns-detail-comment-user" style="color:var(--color-primary);">🧑‍🎤 博主</span>' +
+        '<span class="sns-detail-comment-text">' + escapeHtml(text) + '</span>';
+      listEl.appendChild(commentEl);
+      listEl.scrollTop = listEl.scrollHeight;
+    }
+
+    input.value = '';
+
+    // 冷却
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '已发送';
+      setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.textContent = '发送'; }
+      }, 3000);
+    }
+
+    // 更新评论数
+    var titleEl = document.querySelector('.sns-detail-comments-title');
+    if (titleEl) {
+      var currentCount = parseInt(titleEl.textContent.match(/\d+/)) || 0;
+      titleEl.textContent = '💬 评论 (' + (currentCount + 1) + '条)';
+    }
+  }
+
+  /**
+   * 从"我的账号"相关页面返回
+   */
+  function backFromMyAccount() {
+    var container = document.getElementById('phone-app-content');
+    var titleEl = document.getElementById('phone-app-title');
+
+    if (_view === 'my-post-detail') {
+      // 从帖子详情返回账号主页
+      if (container && titleEl) {
+        showMyAccount();
+      }
+    } else {
+      // 从账号主页返回动态流
+      if (titleEl) titleEl.textContent = '📱 SNS';
+
+      var backBtn = document.querySelector('.phone-app-back');
+      if (backBtn) {
+        backBtn.setAttribute('onclick', 'Game.Phone.closeApp()');
+      }
+
+      // 清除缓存
+      _myPostCommentCache = {};
+      _currentMyPostIndex = null;
+
+      if (container) renderFeed(container);
+    }
+  }
+
   // ===== 工具 =====
 
   function formatCount(n) {
@@ -881,7 +1380,12 @@ Game.PhoneSNS = (() => {
     likePost,
     sharePost,
     backToFeed,
-    submitComment
+    submitComment,
+    showMyAccount,
+    showMyPostDetail,
+    likeMyPost,
+    submitMyPostComment,
+    backFromMyAccount
   };
 
 })();

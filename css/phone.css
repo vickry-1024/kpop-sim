@@ -1428,3 +1428,233 @@
   color: var(--text-hint);
   font-size: 11px;
 }
+
+/* ===== 玩家SNS账号页面（功能5） ===== */
+
+/* Feed顶部的"我的账号"入口 */
+.sns-my-account-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 14px var(--spacing-md);
+  margin: var(--spacing-xs) var(--spacing-md);
+  background: linear-gradient(135deg, rgba(248, 165, 194, 0.12), rgba(248, 165, 194, 0.04));
+  border: 1.5px solid rgba(248, 165, 194, 0.3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sns-my-account-entry:active {
+  background: linear-gradient(135deg, rgba(248, 165, 194, 0.2), rgba(248, 165, 194, 0.08));
+  transform: scale(0.98);
+}
+
+.sns-my-account-entry-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #F8A5C2, #FFD93D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.sns-my-account-entry-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sns-my-account-entry-name {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sns-my-account-entry-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-dark);
+}
+
+/* 玩家账号主页 */
+.sns-my-account {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 个人资料卡片 */
+.sns-my-profile-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-md);
+  background: linear-gradient(180deg, rgba(248, 165, 194, 0.08), var(--bg-card));
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sns-my-profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #F8A5C2, #FFD93D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(248, 165, 194, 0.3);
+}
+
+.sns-my-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sns-my-profile-name {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.sns-my-profile-handle {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+}
+
+.sns-my-profile-bio {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* 统计数据行 */
+.sns-my-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: var(--spacing-md);
+  background: var(--bg-card);
+  border-bottom: 6px solid var(--border-color);
+}
+
+.sns-my-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sns-my-stat-value {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sns-my-stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+}
+
+/* 帖子列表 */
+.sns-my-posts-section {
+  padding: var(--spacing-sm) 0;
+}
+
+.sns-my-posts-title {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 玩家帖子卡片 */
+.sns-my-post-card {
+  padding: var(--spacing-md);
+  margin: var(--spacing-xs) var(--spacing-md);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sns-my-post-card:active {
+  transform: scale(0.98);
+  background: var(--bg-input);
+}
+
+.sns-my-post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.sns-my-post-style-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: var(--radius-xl);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.sns-my-post-time {
+  font-size: var(--font-size-xs);
+  color: var(--text-hint);
+}
+
+.sns-my-post-body {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-sm);
+}
+
+.sns-my-post-stats {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+/* 空状态 */
+.sns-my-empty {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* 评论者类型标签 */
+.sns-commenter-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.sns-commenter-fan {
+  background: rgba(78, 205, 196, 0.15);
+  color: #2DB8A0;
+}
+
+.sns-commenter-idol-fan {
+  background: rgba(255, 165, 2, 0.15);
+  color: #E08E00;
+}
+
+.sns-commenter-toxic {
+  background: rgba(255, 107, 107, 0.15);
+  color: #E05050;
+}

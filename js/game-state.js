@@ -463,6 +463,65 @@ Game.State = (() => {
     return encounter;
   }
 
+  // ===== 玩家发帖记录（功能5：玩家SNS账号页面） =====
+
+  /**
+   * 保存一条玩家发帖记录
+   * @param {string} text - 帖子内容
+   * @param {string} styleId - 发帖风格ID
+   */
+  function addPlayerPost(text, styleId) {
+    if (!Game.state.playerPosts) Game.state.playerPosts = [];
+    Game.state.playerPosts.push({
+      text: text,
+      styleId: styleId || 'custom',
+      turn: Game.state.currentTurn,
+      timestamp: Date.now(),
+      likes: 0,
+      comments: 0
+    });
+    autoSave();
+  }
+
+  /**
+   * 获取玩家所有发帖（最新在前）
+   * @returns {Array}
+   */
+  function getPlayerPosts() {
+    var posts = Game.state.playerPosts || [];
+    // 返回副本，最新在前
+    return posts.slice().reverse();
+  }
+
+  /**
+   * 给玩家帖子点赞数+1
+   * @param {number} postIndex - 在 getPlayerPosts() 返回的顺序中的索引
+   */
+  function addPlayerPostLike(postIndex) {
+    var posts = Game.state.playerPosts;
+    if (!posts) return;
+    // postIndex 对应 getPlayerPosts 中的顺序（最新在前）
+    var reversedIndex = posts.length - 1 - postIndex;
+    if (reversedIndex >= 0 && reversedIndex < posts.length) {
+      posts[reversedIndex].likes = (posts[reversedIndex].likes || 0) + 1;
+      autoSave();
+    }
+  }
+
+  /**
+   * 给玩家帖子评论数+1
+   * @param {number} postIndex - 在 getPlayerPosts() 返回的顺序中的索引
+   */
+  function addPlayerPostComment(postIndex) {
+    var posts = Game.state.playerPosts;
+    if (!posts) return;
+    var reversedIndex = posts.length - 1 - postIndex;
+    if (reversedIndex >= 0 && reversedIndex < posts.length) {
+      posts[reversedIndex].comments = (posts[reversedIndex].comments || 0) + 1;
+      autoSave();
+    }
+  }
+
   // ===== 工具 =====
 
   function clamp(val) {
@@ -586,6 +645,9 @@ Game.State = (() => {
     // 补齐邂逅队列（功能4）
     if (!data.encounterQueue) data.encounterQueue = [];
 
+    // 补齐玩家发帖记录（功能5：玩家SNS账号页面）
+    if (!data.playerPosts) data.playerPosts = [];
+
     // 更新版本号
     data.version = currentVersion;
 
@@ -701,7 +763,11 @@ Game.State = (() => {
     clearPendingReply,
     getPendingReply,
     queueEncounter,
-    popEncounter
+    popEncounter,
+    addPlayerPost,
+    getPlayerPosts,
+    addPlayerPostLike,
+    addPlayerPostComment
   };
 
 })();
