@@ -179,6 +179,14 @@ Game.Turn = (() => {
           if (targetIndex !== null && targetIndex !== undefined) {
             // 好感度越高，获得好感越难（边际递减）
             if (delta > 0) {
+              // 回归期加成（阶段9）：对回归期爱豆好感获取×1.2
+              if (Game.Events && Game.Events.getActiveComeback(targetIndex)) {
+                delta = Math.round(delta * 1.2);
+              }
+              // 压力惩罚（阶段9）：stress≥70触发的回合好感获取减半
+              if (Game.Events && Game.Events.hasStress70Penalty()) {
+                delta = Math.round(delta * 0.5);
+              }
               var currentAff = Game.state.idols[targetIndex].stats.affection || 0;
               if (currentAff >= 90) {
                 delta = Math.round(delta * 0.3);
@@ -368,6 +376,21 @@ Game.Turn = (() => {
     // 17. 日常细节检测（阶段8）
     if (Game.Reality) {
       _checkDailyDetails();
+    }
+
+    // 18. 固定事件检测（阶段9：生日/回归期/颁奖礼）
+    if (Game.Events) {
+      Game.Events.checkFixedEvents();
+    }
+
+    // 19. 数值门槛事件检测（阶段9）
+    if (Game.Events) {
+      Game.Events.checkThresholdEvents();
+    }
+
+    // 20. 突发新闻（阶段9）
+    if (Game.Events) {
+      Game.Events.checkBreakingNews();
     }
 
     console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
@@ -788,6 +811,14 @@ Game.Turn = (() => {
           if (targetIndex !== null && targetIndex !== undefined) {
             // 好感度越高，获得好感越难（边际递减）
             if (delta > 0) {
+              // 回归期加成（阶段9）：对回归期爱豆好感获取×1.2
+              if (Game.Events && Game.Events.getActiveComeback(targetIndex)) {
+                delta = Math.round(delta * 1.2);
+              }
+              // 压力惩罚（阶段9）：stress≥70触发的回合好感获取减半
+              if (Game.Events && Game.Events.hasStress70Penalty()) {
+                delta = Math.round(delta * 0.5);
+              }
               var currentAff2 = Game.state.idols[targetIndex].stats.affection || 0;
               if (currentAff2 >= 90) {
                 delta = Math.round(delta * 0.3);
@@ -1026,10 +1057,12 @@ Game.Turn = (() => {
   function renderTurnHeader() {
     const el = document.getElementById('schedule-turn-info');
     if (!el) return;
-    el.innerHTML = `
-      <span class="turn-label">📅 第 ${Game.state.currentTurn} 回合</span>
-      <span class="turn-hint">半个月的行程</span>
-    `;
+    var dateStr = '';
+    if (Game.Events && Game.state.currentTurn > 0) {
+      dateStr = Game.Events.formatDate(Game.state.currentTurn);
+    }
+    el.innerHTML = '<span class="turn-label">📅 第 ' + Game.state.currentTurn + ' 回合</span>' +
+      '<span class="turn-hint">' + (dateStr || '半个月的行程') + '</span>';
   }
 
   /**

@@ -618,7 +618,9 @@ Game.Setup = (() => {
         affection: 10  // 初始好感度
       },
       relationshipStage: 'pursuit',  // 攻略期
-      marriagePublic: false
+      marriagePublic: false,
+      birthMonth: Math.floor(Math.random() * 12) + 1,
+      birthHalf: Math.random() < 0.5 ? 1 : 2
     }));
 
     Game.state.currentTurn = 0;
@@ -657,6 +659,11 @@ Game.Setup = (() => {
     Game.state.locationSharing = {};
     Game.state.checkInCooldowns = {};
     Game.state.lastFamousSceneTurn = 0;
+
+    // 初始化事件系统字段（阶段9）
+    Game.state.eventFlags = {};
+    Game.state.comebacks = [];
+    Game.state.lastBreakingNewsTurn = 0;
 
     // 3. 选择空存档槽并保存
     const slot = Game.State.findEmptySlot();

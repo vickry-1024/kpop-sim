@@ -656,6 +656,71 @@ Game.State = (() => {
     return cd[String(idolIndex)] || 0;
   }
 
+  // ===== 事件系统通用标记（阶段9） =====
+
+  /**
+   * 设置事件去重标记
+   * @param {string} flagId - 标记ID（如 'birthday-0-y1', 'susp-60'）
+   * @param {*} value - 标记值，默认true
+   */
+  function setEventFlag(flagId, value) {
+    if (!Game.state.eventFlags) Game.state.eventFlags = {};
+    Game.state.eventFlags[flagId] = (value !== undefined) ? value : true;
+    autoSave();
+  }
+
+  /**
+   * 检查事件去重标记是否存在
+   * @param {string} flagId
+   * @returns {boolean}
+   */
+  function hasEventFlag(flagId) {
+    return !!(Game.state.eventFlags && Game.state.eventFlags[flagId]);
+  }
+
+  // ===== 回归期追踪（阶段9） =====
+
+  /**
+   * 添加回归期记录
+   * @param {number} idolIndex
+   * @param {number} startTurn
+   * @param {number} endTurn
+   */
+  function addComeback(idolIndex, startTurn, endTurn) {
+    if (!Game.state.comebacks) Game.state.comebacks = [];
+    Game.state.comebacks.push({ idolIndex: idolIndex, startTurn: startTurn, endTurn: endTurn });
+    autoSave();
+  }
+
+  /**
+   * 获取指定爱豆当前活跃的回归期
+   * @param {number} idolIndex
+   * @returns {Object|null}
+   */
+  function getActiveComeback(idolIndex) {
+    var comebacks = Game.state.comebacks || [];
+    var currentTurn = Game.state.currentTurn || 0;
+    for (var i = 0; i < comebacks.length; i++) {
+      var cb = comebacks[i];
+      if (cb.idolIndex === idolIndex && cb.startTurn <= currentTurn && cb.endTurn > currentTurn) {
+        return cb;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 获取所有活跃的回归期（自动清理过期）
+   * @returns {Array}
+   */
+  function getActiveComebacks() {
+    var comebacks = Game.state.comebacks || [];
+    var currentTurn = Game.state.currentTurn || 0;
+    return comebacks.filter(function(cb) {
+      return cb.endTurn > currentTurn;
+    });
+  }
+
   // ===== 工具 =====
 
   function clamp(val) {
@@ -813,6 +878,16 @@ Game.State = (() => {
       }
     });
 
+    // 补齐事件系统字段（阶段9）
+    if (!data.eventFlags) data.eventFlags = {};
+    if (!data.comebacks) data.comebacks = [];
+    if (data.lastBreakingNewsTurn === undefined) data.lastBreakingNewsTurn = 0;
+    // 为已有爱豆随机补填生日（估算值）
+    (data.idols || []).forEach(function(idol) {
+      if (idol.birthMonth === undefined) idol.birthMonth = Math.floor(Math.random() * 12) + 1;
+      if (idol.birthHalf === undefined) idol.birthHalf = Math.random() < 0.5 ? 1 : 2;
+    });
+
     // 更新版本号
     data.version = currentVersion;
 
@@ -946,7 +1021,13 @@ Game.State = (() => {
     setLocationSharing,
     hasLocationSharing,
     setCheckInCooldown,
-    getCheckInCooldown
+    getCheckInCooldown,
+    // 事件系统（阶段9）
+    setEventFlag,
+    hasEventFlag,
+    addComeback,
+    getActiveComeback,
+    getActiveComebacks
   };
 
 })();

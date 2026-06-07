@@ -9,10 +9,10 @@
  */
 window.Game = {
   // 版本号
-  version: '0.10.0',
+  version: '0.11.0',
 
   // 当前开发阶段
-  phase: '阶段9 ✅ → 阶段8：现实元素系统（查岗/媒体/名场面/日常细节）',
+  phase: '阶段10 ✅ → 阶段9：事件系统完整版（日历/固定事件/门槛事件/突发新闻/事件日志UI）',
 
   // 全局状态
   state: {
@@ -204,6 +204,12 @@ function initApp() {
   // 现实元素系统（阶段8）
   if (Game.Reality) {
     Game.Reality.init();
+  }
+
+  // 事件系统完整版（阶段9）
+  if (Game.Events) {
+    Game.Events.init();
+    console.log('[App] 事件系统就绪');
   }
 
   // 决定显示哪个画面：有存档→标题画面，无存档→设定向导

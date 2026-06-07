@@ -149,7 +149,9 @@ Game.Encounter = (() => {
         affection: Math.floor(Math.random() * 6) // 0-5 初始好感
       },
       relationshipStage: 'pursuit',
-      marriagePublic: false
+      marriagePublic: false,
+      birthMonth: Math.floor(Math.random() * 12) + 1,
+      birthHalf: Math.random() < 0.5 ? 1 : 2
     };
 
     Game.state.idols.push(newIdol);
