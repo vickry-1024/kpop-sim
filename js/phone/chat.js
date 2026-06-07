@@ -296,7 +296,7 @@ Game.PhoneChat = (() => {
 
     if (history.length === 0) {
       // 首次对话：显示预设开场白
-      const greeting = getGreeting(idol);
+      const greeting = getGreeting(idol, idolIndex);
       history = [
         { from: 'idol', text: greeting, time: Date.now() }
       ];
@@ -558,16 +558,19 @@ Game.PhoneChat = (() => {
   /**
    * 获取首次对话的开场白
    */
-  function getGreeting(idol) {
+  function getGreeting(idol, idolIndex) {
     const aff = idol.stats.affection || 0;
     const honorific = Game.Actions.getHonorific(idol.gender);
     const stage = idol.relationshipStage || 'pursuit';
-    const isPartner = (Game.state.datingIdolId === Game.state.idols.indexOf(idol)) || (Game.state.marriedIdolId === Game.state.idols.indexOf(idol));
+    // 使用索引直接比对，避免 indexOf 引用相等的问题
+    const isPartner = (Game.state.datingIdolId === idolIndex) || (Game.state.marriedIdolId === idolIndex);
 
     // 关系阶段专属开场白：已婚
     if (stage === 'married' && isPartner) {
+      // 根据爱豆性别选择合适称呼
+      var spouseTerm = idol.gender === 'female' ? '老婆' : '老公';
       var greetings = [
-        '老公～回来啦！今天想吃什么？我让阿姨准备了～💍',
+        spouseTerm + '～回来啦！今天想吃什么？我让阿姨准备了～💍',
         '亲爱的！我今天看了一个超好看的剧，晚上我们一起看吧？',
         honorific + '～今天工作累不累？来抱抱🫂',
         '你终于回来啦！我今天一个人在家好无聊哦～想你了'
@@ -1188,45 +1191,7 @@ Game.PhoneChat = (() => {
   }
 
   // ===== 经纪人介入系统 =====
-
-  // 经纪人行动定义
-  var MANAGER_ACTIONS = [
-    {
-      id: 'warn',
-      label: '警告',
-      messageTemplate: '{honorific}是{idolName}的经纪人。你们最近走得太近了，小心点。公司那边已经有人在注意了。',
-      effects: { suspicion: -5, stress: 5 },
-      personality: '严厉谨慎'
-    },
-    {
-      id: 'help',
-      label: '帮助隐瞒',
-      messageTemplate: '{honorific}是{idolName}的经纪人。说实话我理解你们的关系，但这样下去会出事的。我会帮你们打掩护，你们自己也要注意分寸。',
-      effects: { suspicionRateHalved: true, turns: 3 },
-      personality: '通情达理'
-    },
-    {
-      id: 'pressure',
-      label: '催分手',
-      messageTemplate: '{honorific}是{idolName}的经纪人。你们的事我已经知道了。为了{idolPronoun}的前途，你必须和{idolPronoun}断了。这对谁都没有好处。',
-      effects: { stress: 15, affection: -3 },
-      personality: '冷漠强硬'
-    },
-    {
-      id: 'threaten',
-      label: '威胁曝光',
-      messageTemplate: '{honorific}是{idolName}的经纪人。我已经忍了很久了。再继续下去我就直接告诉公司高层，后果你们自己承担。',
-      effects: { stress: 20, triggerCrisis: true },
-      personality: '愤怒威胁'
-    },
-    {
-      id: 'friendly',
-      label: '友善提醒',
-      messageTemplate: '{honorific}是{idolName}的经纪人。别紧张，我不是来找麻烦的。只是以过来人的身份提醒你们注意安全，别被拍到。小心驶得万年船。',
-      effects: { suspicion: -3 },
-      personality: '温和友善'
-    }
-  ];
+  // MANAGER_ACTIONS 定义在 turn.js 中，chat.js 通过 Game.Turn.MANAGER_ACTIONS 引用
 
   var MANAGER_SURNAMES = ['朴', '金', '李', '崔', '郑', '姜', '赵', '尹', '宋', '全'];
   var MANAGER_GIVENS = ['正洙', '美英', '泰浩', '秀贤', '恩智', '尚宇', '敏瑞', '俊昊', '允儿', '在贤'];

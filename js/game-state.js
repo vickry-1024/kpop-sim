@@ -647,6 +647,13 @@ Game.State = (() => {
 
     // 补齐玩家发帖记录（功能5：玩家SNS账号页面）
     if (!data.playerPosts) data.playerPosts = [];
+    // 修复旧存档中 turn 为 0 或缺失的帖子
+    var currentTurn = data.currentTurn || 0;
+    for (var pi = 0; pi < data.playerPosts.length; pi++) {
+      if (!data.playerPosts[pi].turn || data.playerPosts[pi].turn === 0) {
+        data.playerPosts[pi].turn = Math.max(1, currentTurn);
+      }
+    }
 
     // 更新版本号
     data.version = currentVersion;

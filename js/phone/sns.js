@@ -1094,6 +1094,21 @@ Game.PhoneSNS = (() => {
   }
 
   /**
+   * 根据嫌疑度计算评论类型比例
+   * @param {number} suspicion - 当前嫌疑度（0-100）
+   * @returns {{fan: number, neutral: number, idolFan: number, toxic: number}}
+   */
+  function getCommentRatios(suspicion) {
+    if (suspicion < 20) {
+      return { fan: 0.70, neutral: 0.25, idolFan: 0.05, toxic: 0.00 };
+    } else if (suspicion < 50) {
+      return { fan: 0.45, neutral: 0.25, idolFan: 0.20, toxic: 0.10 };
+    } else {
+      return { fan: 0.20, neutral: 0.20, idolFan: 0.30, toxic: 0.30 };
+    }
+  }
+
+  /**
    * 为自己的帖子生成AI评论（数量和类型基于粉丝数+嫌疑度）
    */
   async function generateMyPostComments(post, postIndex) {
@@ -1117,14 +1132,8 @@ Game.PhoneSNS = (() => {
     }
 
     // 嫌疑度决定评论类型比例
-    var fanRatio, neutralRatio, idolFanRatio, toxicRatio;
-    if (suspicion < 20) {
-      fanRatio = 0.70; neutralRatio = 0.25; idolFanRatio = 0.05; toxicRatio = 0.00;
-    } else if (suspicion < 50) {
-      fanRatio = 0.45; neutralRatio = 0.25; idolFanRatio = 0.20; toxicRatio = 0.10;
-    } else {
-      fanRatio = 0.20; neutralRatio = 0.20; idolFanRatio = 0.30; toxicRatio = 0.30;
-    }
+    var ratios = getCommentRatios(suspicion);
+    var fanRatio = ratios.fan, neutralRatio = ratios.neutral, idolFanRatio = ratios.idolFan, toxicRatio = ratios.toxic;
 
     // 计算各类型数量
     var fanCount = Math.max(0, Math.round(totalComments * fanRatio));
@@ -1217,15 +1226,9 @@ Game.PhoneSNS = (() => {
       { username: '纯净追星', text: '滚滚滚滚滚！！不要污染我们的追星环境', type: 'toxic' }
     ];
 
-    // 根据嫌疑度确定比例
-    var fanRatio, neutralRatio, idolFanRatio, toxicRatio;
-    if (suspicion < 20) {
-      fanRatio = 0.70; neutralRatio = 0.25; idolFanRatio = 0.05; toxicRatio = 0.00;
-    } else if (suspicion < 50) {
-      fanRatio = 0.45; neutralRatio = 0.25; idolFanRatio = 0.20; toxicRatio = 0.10;
-    } else {
-      fanRatio = 0.20; neutralRatio = 0.20; idolFanRatio = 0.30; toxicRatio = 0.30;
-    }
+    // 根据嫌疑度确定比例（与 generateMyPostComments 共用工具函数）
+    var ratios = getCommentRatios(suspicion);
+    var fanRatio = ratios.fan, neutralRatio = ratios.neutral, idolFanRatio = ratios.idolFan, toxicRatio = ratios.toxic;
 
     var fanCount = Math.max(0, Math.round(totalCount * fanRatio));
     var neutralCount = Math.max(0, Math.round(totalCount * neutralRatio));

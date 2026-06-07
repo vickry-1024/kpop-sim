@@ -530,16 +530,7 @@ Game.Relationship = (() => {
     return idol ? (idol.nickname || idol.name) : '未知';
   }
 
-  /**
-   * HTML转义
-   * @param {string} str
-   * @returns {string}
-   */
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
-  }
+  // escapeHtml 使用 app.js 中的全局定义，此处不再重复定义
 
   /**
    * 刷新所有相关面板

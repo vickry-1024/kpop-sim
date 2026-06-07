@@ -9,10 +9,10 @@
  */
 window.Game = {
   // 版本号
-  version: '0.1.0',
+  version: '0.9.0',
 
   // 当前开发阶段
-  phase: '阶段5 ✅ → 准备阶段6：DeepSeek API接入',
+  phase: '阶段9 ✅ → 准备阶段10：结局系统',
 
   // 全局状态
   state: {
