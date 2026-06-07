@@ -398,6 +398,71 @@ Game.State = (() => {
     return eventType === 'dating' ? !!entry.datingConfirmed : !!entry.proposed;
   }
 
+  // ===== 待回复消息追踪（功能1：不回消息降好感度） =====
+
+  /**
+   * 标记爱豆的消息为待回复
+   * @param {number} idolIndex
+   * @param {string} phoneType
+   */
+  function setPendingReply(idolIndex, phoneType) {
+    if (!Game.state.pendingReplies) Game.state.pendingReplies = {};
+    var key = String(idolIndex);
+    var existing = Game.state.pendingReplies[key];
+    Game.state.pendingReplies[key] = {
+      turnReceived: Game.state.currentTurn,
+      phoneType: phoneType || 'main',
+      messageCount: (existing ? existing.messageCount : 0) + 1
+    };
+    autoSave();
+  }
+
+  /**
+   * 清除爱豆的待回复标记（玩家回复后）
+   * @param {number} idolIndex
+   */
+  function clearPendingReply(idolIndex) {
+    if (!Game.state.pendingReplies) return;
+    delete Game.state.pendingReplies[String(idolIndex)];
+    autoSave();
+  }
+
+  /**
+   * 获取爱豆的待回复信息
+   * @param {number} idolIndex
+   * @returns {Object|null}
+   */
+  function getPendingReply(idolIndex) {
+    if (!Game.state.pendingReplies) return null;
+    return Game.state.pendingReplies[String(idolIndex)] || null;
+  }
+
+  // ===== 邂逅系统（功能4：可认识新爱豆） =====
+
+  /**
+   * 将邂逅事件加入队列
+   * @param {string} source - 'action' | 'random'
+   */
+  function queueEncounter(source) {
+    if (!Game.state.encounterQueue) Game.state.encounterQueue = [];
+    Game.state.encounterQueue.push({
+      source: source,
+      turnQueued: Game.state.currentTurn
+    });
+    autoSave();
+  }
+
+  /**
+   * 从队列中取出一个邂逅事件
+   * @returns {Object|null}
+   */
+  function popEncounter() {
+    if (!Game.state.encounterQueue || Game.state.encounterQueue.length === 0) return null;
+    var encounter = Game.state.encounterQueue.shift();
+    autoSave();
+    return encounter;
+  }
+
   // ===== 工具 =====
 
   function clamp(val) {
@@ -515,6 +580,12 @@ Game.State = (() => {
     if (!data.cheatingSuspicion) data.cheatingSuspicion = {};
     if (!data.confirmedStages) data.confirmedStages = {};
 
+    // 补齐待回复消息追踪（功能1）
+    if (!data.pendingReplies) data.pendingReplies = {};
+
+    // 补齐邂逅队列（功能4）
+    if (!data.encounterQueue) data.encounterQueue = [];
+
     // 更新版本号
     data.version = currentVersion;
 
@@ -625,7 +696,12 @@ Game.State = (() => {
     addCheatingSuspicion,
     getCheatingSuspicion,
     confirmStageEvent,
-    isStageEventConfirmed
+    isStageEventConfirmed,
+    setPendingReply,
+    clearPendingReply,
+    getPendingReply,
+    queueEncounter,
+    popEncounter
   };
 
 })();

@@ -1375,3 +1375,43 @@
   font-weight: 700;
   vertical-align: middle;
 }
+
+/* ===== 邂逅弹窗（功能4：可认识新爱豆） ===== */
+.encounter-intro {
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+.encounter-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.encounter-title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.encounter-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.encounter-form {
+  padding: 0 var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.encounter-actions {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}

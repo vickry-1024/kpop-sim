@@ -193,8 +193,8 @@ Game.PhoneSNS = (() => {
 
     container.innerHTML = `
       <div class="sns-feed" id="sns-feed-list">
-        ${posts.map(post => `
-          <div class="sns-post-card">
+        ${posts.map((post, postIndex) => `
+          <div class="sns-post-card" onclick="Game.PhoneSNS.showPostDetail(${postIndex})" style="cursor:pointer;">
             <div class="sns-post-header">
               <div class="sns-post-avatar">${post.userIcon}</div>
               <div class="sns-post-user">
@@ -448,6 +448,161 @@ Game.PhoneSNS = (() => {
     if (Game.Profile) Game.Profile.refresh();
   }
 
+  // ===== SNS 动态详情（功能2） =====
+
+  /**
+   * 根据帖子类别获取模拟评论
+   */
+  function getPostComments(postIndex, category) {
+    var pool = {
+      update: [
+        { username: '评论区常驻用户', text: '太棒了！！今天也辛苦了💜' },
+        { username: '匿名网友', text: '早点休息呀！身体最重要' },
+        { username: '铁血粉丝', text: '这周的舞台都看了，每次都在进步！' },
+        { username: '深夜追星人', text: '好感动ㅠㅠ 永远支持你们' }
+      ],
+      teaser: [
+        { username: '解码大师', text: '我猜是凉爽夏日风！！看背景的颜色' },
+        { username: '音乐爱好家', text: '能不能剧透一下回归日期啊 等不及了' },
+        { username: '吃瓜群众', text: '据说这次是两首歌一起出 有人脉说的' }
+      ],
+      fan: [
+        { username: '同担姐妹', text: '好羡慕！！我没抽到本命小卡ㅠㅠ' },
+        { username: '换卡达人', text: '我有多的XX卡，换吗？？私信你了' },
+        { username: '追星元老', text: '这个角度拍得真好！请问是用什么相机？' }
+      ],
+      news: [
+        { username: '理智追星人', text: '这消息靠谱吗...先观望一下' },
+        { username: '八卦小能手', text: '业内人士说的是谁啊？解码一下' },
+        { username: '热心网友', text: '等官方消息吧，不要乱传谣言' }
+      ],
+      rumor: [
+        { username: '匿名吃瓜', text: '我也看到了！！不知道是真是假但是好激动' },
+        { username: '理性分析', text: '先别急着下定论 等当事人回应' },
+        { username: '显微镜女孩', text: '我分析了一波时间线，感觉有戏！' }
+      ]
+    };
+    var comments = pool[category] || [
+      { username: '网友', text: '有意思！关注一下' },
+      { username: '路人', text: '蹲一个后续' }
+    ];
+    // 使用postIndex作为种子随机选2-4条
+    var seed = postIndex * 7 + 3;
+    var count = 2 + (seed % 3); // 2-4条
+    var shuffled = comments.slice().sort(function() { return 0.5 - ((seed++ * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff; });
+    return shuffled.slice(0, count);
+  }
+
+  /**
+   * 显示帖子详情（子页面模式）
+   */
+  function showPostDetail(postIndex) {
+    var posts = getFeedPosts();
+    var post = posts[postIndex];
+    if (!post) return;
+
+    _view = 'detail';
+
+    var container = document.getElementById('phone-app-content');
+    var titleEl = document.getElementById('phone-app-title');
+    var headerActions = document.getElementById('phone-app-header-actions');
+
+    if (!container) return;
+    if (titleEl) titleEl.textContent = '📱 动态详情';
+    if (headerActions) headerActions.innerHTML = '';
+
+    // 覆盖返回按钮：返回feed而不是关闭app
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.setAttribute('onclick', 'Game.PhoneSNS.backToFeed()');
+    }
+
+    var comments = getPostComments(postIndex, post.category);
+    var commentHTML = comments.map(function(c) {
+      return '<div class="sns-detail-comment">' +
+        '<span class="sns-detail-comment-user">' + escapeHtml(c.username) + '</span>' +
+        '<span class="sns-detail-comment-text">' + escapeHtml(c.text) + '</span>' +
+      '</div>';
+    }).join('');
+
+    container.innerHTML =
+      '<div class="sns-post-detail">' +
+        '<div class="sns-detail-header">' +
+          '<div class="sns-detail-avatar">' + post.userIcon + '</div>' +
+          '<div class="sns-detail-user-info">' +
+            '<span class="sns-detail-username">' + escapeHtml(post.username) + '</span>' +
+            '<span class="sns-detail-time">' + post.time + '</span>' +
+          '</div>' +
+        '</div>' +
+        (post.image ? '<div class="sns-detail-image">' + post.image + '</div>' : '') +
+        '<div class="sns-detail-body">' + escapeHtml(post.body) + '</div>' +
+        '<div class="sns-detail-actions">' +
+          '<button class="sns-detail-action-btn" id="sns-detail-like-btn" onclick="Game.PhoneSNS.likePost()">' +
+            '❤️ ' + formatCount(post.likes) +
+          '</button>' +
+          '<button class="sns-detail-action-btn" onclick="Game.PhoneSNS.sharePost()">' +
+            '🔗 分享' +
+          '</button>' +
+        '</div>' +
+        '<div class="sns-detail-comments-section">' +
+          '<div class="sns-detail-comments-title">💬 热门评论 (' + comments.length + '条)</div>' +
+          commentHTML +
+        '</div>' +
+      '</div>';
+  }
+
+  /**
+   * 点赞按钮交互
+   */
+  function likePost() {
+    var btn = document.getElementById('sns-detail-like-btn');
+    if (!btn) return;
+    btn.innerHTML = '❤️ +1';
+    btn.style.transform = 'scale(1.3)';
+    btn.style.color = '#FF6B6B';
+    btn.style.transition = 'all 0.2s ease';
+    setTimeout(function() {
+      btn.innerHTML = '❤️ 已赞';
+      btn.style.transform = 'scale(1)';
+      btn.style.color = '#FF6B6B';
+      btn.disabled = true;
+    }, 300);
+  }
+
+  /**
+   * 分享按钮交互
+   */
+  function sharePost() {
+    var detail = document.querySelector('.sns-post-detail');
+    if (!detail) return;
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#FFF;padding:10px 24px;border-radius:20px;font-size:13px;z-index:600;';
+    toast.textContent = '✅ 已分享到你的主页';
+    document.body.appendChild(toast);
+    setTimeout(function() {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { toast.remove(); }, 300);
+    }, 1500);
+  }
+
+  /**
+   * 从详情页返回动态流
+   */
+  function backToFeed() {
+    var container = document.getElementById('phone-app-content');
+    var titleEl = document.getElementById('phone-app-title');
+    if (titleEl) titleEl.textContent = '📱 SNS';
+
+    // 恢复返回按钮
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.setAttribute('onclick', 'Game.Phone.closeApp()');
+    }
+
+    if (container) renderFeed(container);
+  }
+
   // ===== 工具 =====
 
   function formatCount(n) {
@@ -464,7 +619,11 @@ Game.PhoneSNS = (() => {
     selectStyle,
     renderCompose,
     publishCustomPost,
-    cancelCompose
+    cancelCompose,
+    showPostDetail,
+    likePost,
+    sharePost,
+    backToFeed
   };
 
 })();

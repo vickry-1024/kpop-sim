@@ -126,6 +126,14 @@ Game.Turn = (() => {
     // 随机事件：秘密手机解锁检测
     _checkSecretPhoneEvent(action, targetIndex);
 
+    // 邂逅检测：圈内活动行动
+    if (action.id === 'attend-event' && Game.Encounter) {
+      if (Math.random() * 100 < 60) {
+        console.log('[Turn] 圈内活动触发邂逅！');
+        setTimeout(function() { Game.Encounter.triggerEncounter('action'); }, 500);
+      }
+    }
+
     console.log('[Turn] 行动完成：' + action.name + (targetName ? ' → ' + targetName : ''));
     return true;
   }
@@ -169,6 +177,18 @@ Game.Turn = (() => {
       switch (key) {
         case 'affection':
           if (targetIndex !== null && targetIndex !== undefined) {
+            // 好感度越高，获得好感越难（边际递减）
+            if (delta > 0) {
+              var currentAff = Game.state.idols[targetIndex].stats.affection || 0;
+              if (currentAff >= 90) {
+                delta = Math.round(delta * 0.3);
+              } else if (currentAff >= 75) {
+                delta = Math.round(delta * 0.5);
+              } else if (currentAff >= 50) {
+                delta = Math.round(delta * 0.7);
+              }
+            }
+            if (delta === 0) return;
             Game.State.addAffection(targetIndex, delta);
             const idolName = Game.state.idols[targetIndex].nickname || Game.state.idols[targetIndex].name;
             log.push({ label: idolName + ' 好感度', delta: delta });
@@ -280,6 +300,9 @@ Game.Turn = (() => {
     // 2. 压力自然衰减
     Game.State.addStress(TURN_END_STRESS_DECAY);
 
+    // 2.5. 检查未回复消息 → 降低好感度
+    _checkUnrepliedPenalties();
+
     // 3. 回合数+1
     Game.state.currentTurn++;
 
@@ -312,6 +335,9 @@ Game.Turn = (() => {
     if (Game.Relationship) {
       Game.Relationship.checkAllStageTransitions();
     }
+
+    // 13. 随机邂逅检测
+    _checkRandomEncounters();
 
     console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
   }
@@ -686,6 +712,14 @@ Game.Turn = (() => {
     // 随机事件：秘密手机解锁检测
     _checkSecretPhoneEvent(action, targetIndex);
 
+    // 邂逅检测：圈内活动行动
+    if (action.id === 'attend-event' && Game.Encounter) {
+      if (Math.random() * 100 < 60) {
+        console.log('[Turn] 圈内活动触发邂逅！');
+        setTimeout(function() { Game.Encounter.triggerEncounter('action'); }, 500);
+      }
+    }
+
     console.log('[Turn] 行动完成：' + action.name + (subLabel ? ' · ' + subLabel : '') + (targetName ? ' → ' + targetName : ''));
     return true;
   }
@@ -721,6 +755,18 @@ Game.Turn = (() => {
       switch (key) {
         case 'affection':
           if (targetIndex !== null && targetIndex !== undefined) {
+            // 好感度越高，获得好感越难（边际递减）
+            if (delta > 0) {
+              var currentAff2 = Game.state.idols[targetIndex].stats.affection || 0;
+              if (currentAff2 >= 90) {
+                delta = Math.round(delta * 0.3);
+              } else if (currentAff2 >= 75) {
+                delta = Math.round(delta * 0.5);
+              } else if (currentAff2 >= 50) {
+                delta = Math.round(delta * 0.7);
+              }
+            }
+            if (delta === 0) return;
             Game.State.addAffection(targetIndex, delta);
             const idolName = Game.state.idols[targetIndex].nickname || Game.state.idols[targetIndex].name;
             log.push({ label: idolName + ' 好感度', delta: delta });
@@ -1281,6 +1327,68 @@ Game.Turn = (() => {
       personality: '温和友善'
     }
   ];
+
+  // ===== 未回复消息惩罚（功能1） =====
+
+  /**
+   * 检查是否有未回复的爱豆消息，如有则降低好感度
+   * 在回合结束时调用（回合数+1之前）
+   */
+  function _checkUnrepliedPenalties() {
+    var pending = Game.state.pendingReplies || {};
+    if (Object.keys(pending).length === 0) return;
+
+    var currentTurn = Game.state.currentTurn;
+    var idols = Game.state.idols || [];
+
+    Object.keys(pending).forEach(function(key) {
+      var entry = pending[key];
+      // 检查是否是上一回合（或更早）的未回复
+      if (entry.turnReceived < currentTurn) {
+        var idx = parseInt(key, 10);
+        var idol = idols[idx];
+        if (!idol) return;
+
+        // 好感度减少2-5点
+        var penalty = 2 + Math.floor(Math.random() * 4); // 2~5
+        Game.State.addAffection(idx, -penalty);
+
+        // 添加到事件日志
+        var idolName = idol.nickname || idol.name;
+        Game.State.addEventLog({
+          type: 'unreplied-penalty',
+          idolIndex: idx,
+          idolName: idolName,
+          penalty: penalty,
+          label: '未回复' + idolName + '的消息，好感度-' + penalty,
+          timestamp: Date.now()
+        });
+
+        console.log('[Turn] ' + idolName + ' 的消息被忽略' + entry.turnReceived + '回合，好感度-' + penalty);
+
+        // 清除pending标记（只惩罚一次）
+        Game.State.clearPendingReply(idx);
+      }
+    });
+  }
+
+  // ===== 随机邂逅检测（功能4） =====
+
+  /**
+   * 回合结束时随机触发邂逅事件
+   */
+  function _checkRandomEncounters() {
+    if (!Game.Encounter || !Game.Encounter.triggerEncounter) return;
+
+    var idolCount = (Game.state.idols || []).length;
+    // 基础概率15%，每多一个爱豆-3%，最少5%
+    var chance = Math.max(5, 15 - (idolCount - 1) * 3);
+
+    if (Math.random() * 100 < chance) {
+      console.log('[Turn] 随机邂逅事件触发！当前爱豆数：' + idolCount + '，概率：' + chance + '%');
+      Game.Encounter.triggerEncounter('random');
+    }
+  }
 
   // ===== 公开API =====
   return {

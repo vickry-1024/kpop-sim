@@ -240,6 +240,11 @@ Game.PhoneChat = (() => {
     // 清除该联系人的未读消息
     clearUnread(idolIndex, phoneType);
 
+    // 打开对话也视为"已关注"，清除待回复标记
+    if (Game.State.clearPendingReply) {
+      Game.State.clearPendingReply(idolIndex);
+    }
+
     // 更新标题
     const titleEl = document.getElementById('phone-app-title');
     if (titleEl) titleEl.textContent = '💬 ' + idolName;
@@ -341,6 +346,11 @@ Game.PhoneChat = (() => {
     // 添加玩家消息
     await addMessage(idolIndex, phoneType, 'me', reply.text);
 
+    // 清除待回复标记
+    if (Game.State.clearPendingReply) {
+      Game.State.clearPendingReply(idolIndex);
+    }
+
     // 清空快捷回复（防重复点击）
     const quickEl = document.getElementById('chat-quick-replies');
     if (quickEl) quickEl.innerHTML = '<span style="font-size:11px;color:var(--text-hint);padding:8px;">对方正在输入...</span>';
@@ -383,6 +393,11 @@ Game.PhoneChat = (() => {
     // 添加玩家消息
     await addMessage(idolIndex, phoneType, 'me', text);
     input.value = '';
+
+    // 清除待回复标记
+    if (Game.State.clearPendingReply) {
+      Game.State.clearPendingReply(idolIndex);
+    }
 
     // 清空快捷回复
     const quickEl = document.getElementById('chat-quick-replies');
@@ -1596,6 +1611,11 @@ Game.PhoneChat = (() => {
 
         // 增加未读计数
         incrementUnread(idolIndex, phoneType);
+
+        // 标记为待回复（不回消息将降低好感度）
+        if (Game.State.setPendingReply) {
+          Game.State.setPendingReply(idolIndex, phoneType);
+        }
 
         console.log('[PhoneChat] ' + (idol.nickname || idol.name) + ' 主动发来消息: ' + message.trim().substring(0, 30) + '...');
         return true;

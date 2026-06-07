@@ -196,6 +196,11 @@ function initApp() {
     Game.Phone.init();
   }
 
+  // 邂逅系统（被动触发，无需主动初始化）
+  if (Game.Encounter) {
+    console.log('[App] 邂逅系统就绪');
+  }
+
   // 决定显示哪个画面：有存档→标题画面，无存档→设定向导
   const summaries = Game.State.getSaveSummaries();
   const hasSaves = summaries.some(s => s.hasData);
