@@ -393,6 +393,15 @@ Game.Turn = (() => {
       Game.Events.checkBreakingNews();
     }
 
+    // 21. 结局检测（阶段10）
+    if (Game.Endings) {
+      var triggered = Game.Endings.checkEndings();
+      if (triggered) {
+        console.log('[Turn] 结局触发：' + triggered.name);
+        return; // 结局画面接管，阻止后续UI操作
+      }
+    }
+
     console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
   }
 

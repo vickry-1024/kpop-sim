@@ -883,6 +883,13 @@ Game.State = (() => {
     if (!data.comebacks) data.comebacks = [];
     if (data.lastBreakingNewsTurn === undefined) data.lastBreakingNewsTurn = 0;
     // 为已有爱豆随机补填生日（估算值）
+
+    // 补齐结局系统字段（阶段10）
+    if (data.endingTriggered === undefined) data.endingTriggered = false;
+    if (data.endingId === undefined) data.endingId = null;
+    if (data.endingTurn === undefined) data.endingTurn = 0;
+    if (data._pendingEnding === undefined) data._pendingEnding = null;
+    // 为已有爱豆随机补填生日（估算值）
     (data.idols || []).forEach(function(idol) {
       if (idol.birthMonth === undefined) idol.birthMonth = Math.floor(Math.random() * 12) + 1;
       if (idol.birthHalf === undefined) idol.birthHalf = Math.random() < 0.5 ? 1 : 2;

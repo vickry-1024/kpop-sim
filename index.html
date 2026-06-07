@@ -527,6 +527,22 @@
   <script src="js/encounter.js"></script>
   <script src="js/reality.js"></script>
   <script src="js/events.js"></script>
+  <script src="js/endings.js"></script>
   <script src="js/router.js"></script>
+
+  <!-- 结局展示画面（阶段10） -->
+  <div class="ending-overlay" id="ending-overlay" style="display:none; opacity:0;">
+    <div class="ending-screen" style="transform:translateY(20px); opacity:0; transition: all 0.5s ease-out;">
+      <div class="ending-badge" id="ending-badge"></div>
+      <h1 class="ending-title" id="ending-title"></h1>
+      <div class="ending-divider"></div>
+      <div class="ending-narrative" id="ending-narrative"></div>
+      <div class="ending-stats" id="ending-stats"></div>
+      <div class="ending-actions">
+        <button class="btn btn-primary btn-block" id="ending-return-btn">🏠 返回标题画面</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

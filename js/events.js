@@ -50,7 +50,23 @@ Game.Events = (() => {
     'media': 'reality',
     'unreplied-penalty': 'negative',
     'manager-intervention': 'negative',
-    'manager-crisis': 'negative'
+    'manager-crisis': 'negative',
+    // 结局事件类型（阶段10）
+    'ending-sweet-wedding': 'ending',
+    'ending-secret-marriage': 'ending',
+    'ending-cheating-exposed': 'ending',
+    'ending-marriage-breakdown': 'ending',
+    'ending-stress-breakdown': 'ending',
+    'ending-life-winner': 'ending',
+    'ending-career-queen': 'ending',
+    'ending-forced-public': 'ending',
+    'ending-company-split': 'ending',
+    'ending-fan-boycott': 'ending',
+    'ending-perfect-crime': 'ending',
+    'ending-ruined-reputation': 'ending',
+    'ending-solo-beauty': 'ending',
+    'ending-return-to-normal': 'ending',
+    'ending-elopement': 'ending'
   };
 
   /** 分类显示名 */
@@ -60,7 +76,8 @@ Game.Events = (() => {
     'threshold': '门槛事件',
     'stage': '关系阶段',
     'reality': '现实元素',
-    'negative': '负面事件'
+    'negative': '负面事件',
+    'ending': '结局'
   };
 
   /** 分类颜色条class */
@@ -70,7 +87,8 @@ Game.Events = (() => {
     'threshold': 'event-card-bar-threshold',
     'stage': 'event-card-bar-stage',
     'reality': 'event-card-bar-reality',
-    'negative': 'event-card-bar-negative'
+    'negative': 'event-card-bar-negative',
+    'ending': 'event-card-bar-ending'
   };
 
   /** 事件类型 → 显示图标 */
@@ -106,7 +124,23 @@ Game.Events = (() => {
     'media': '📸',
     'unreplied-penalty': '📵',
     'manager-intervention': '👔',
-    'manager-crisis': '🔴'
+    'manager-crisis': '🔴',
+    // 结局事件类型（阶段10）
+    'ending-sweet-wedding': '💒',
+    'ending-secret-marriage': '🤫',
+    'ending-cheating-exposed': '💔',
+    'ending-marriage-breakdown': '💍',
+    'ending-stress-breakdown': '😰',
+    'ending-life-winner': '🌟',
+    'ending-career-queen': '💼',
+    'ending-forced-public': '🔥',
+    'ending-company-split': '🏢',
+    'ending-fan-boycott': '📢',
+    'ending-perfect-crime': '😈',
+    'ending-ruined-reputation': '📰',
+    'ending-solo-beauty': '🏃',
+    'ending-return-to-normal': '🌿',
+    'ending-elopement': '✈️'
   };
 
   /** 事件类型 → 显示标题 */
@@ -142,7 +176,23 @@ Game.Events = (() => {
     'media': '媒体事件',
     'unreplied-penalty': '未回消息',
     'manager-intervention': '经纪人介入',
-    'manager-crisis': '经纪人危机'
+    'manager-crisis': '经纪人危机',
+    // 结局事件类型（阶段10）
+    'ending-sweet-wedding': '甜蜜婚礼',
+    'ending-secret-marriage': '秘密婚姻',
+    'ending-cheating-exposed': '出轨败露',
+    'ending-marriage-breakdown': '婚姻破裂',
+    'ending-stress-breakdown': '压力崩溃',
+    'ending-life-winner': '人生赢家',
+    'ending-career-queen': '事业女王',
+    'ending-forced-public': '被迫公开',
+    'ending-company-split': '公司拆散',
+    'ending-fan-boycott': '粉丝抵制',
+    'ending-perfect-crime': '完美犯罪',
+    'ending-ruined-reputation': '身败名裂',
+    'ending-solo-beauty': '独美人生',
+    'ending-return-to-normal': '归隐田园',
+    'ending-elopement': '私奔天涯'
   };
 
   /** 突发新闻事件池 */
@@ -973,7 +1023,8 @@ Game.Events = (() => {
       { key: 'threshold', label: '门槛事件' },
       { key: 'stage', label: '关系阶段' },
       { key: 'reality', label: '现实元素' },
-      { key: 'negative', label: '负面事件' }
+      { key: 'negative', label: '负面事件' },
+      { key: 'ending', label: '结局' }
     ];
 
     var pillsHtml = filters.map(function(f) {

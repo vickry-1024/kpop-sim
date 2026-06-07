@@ -9,10 +9,10 @@
  */
 window.Game = {
   // 版本号
-  version: '0.11.0',
+  version: '0.12.0',
 
   // 当前开发阶段
-  phase: '阶段10 ✅ → 阶段9：事件系统完整版（日历/固定事件/门槛事件/突发新闻/事件日志UI）',
+  phase: '阶段11 ✅ → 阶段10：结局系统（15个结局/条件检测/结局画面/结局回顾）',
 
   // 全局状态
   state: {
@@ -210,6 +210,12 @@ function initApp() {
   if (Game.Events) {
     Game.Events.init();
     console.log('[App] 事件系统就绪');
+  }
+
+  // 结局系统（阶段10）
+  if (Game.Endings) {
+    Game.Endings.init();
+    console.log('[App] 结局系统就绪');
   }
 
   // 决定显示哪个画面：有存档→标题画面，无存档→设定向导

@@ -454,6 +454,11 @@ Game.Relationship = (() => {
         (reason === 'cheating' ? '出轨行为被发现。' : '')
     });
 
+    // 标记潜在结局（阶段10：出轨败露/婚姻破裂）
+    if (reason === 'cheating') {
+      Game.state._pendingEnding = isMarried ? 'marriage-breakdown' : 'cheating-exposed';
+    }
+
     // 显示通知
     showBreakupToast(idolName, isMarried);
     refreshAllPanels();

@@ -1842,3 +1842,221 @@
   font-size: 0.78rem;
   color: var(--text-muted);
 }
+
+/* ===== 结局展示画面（阶段10） ===== */
+
+.ending-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(15, 10, 30, 0.95), rgba(30, 15, 50, 0.97));
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  transition: opacity 0.4s ease-out;
+  overflow-y: auto;
+}
+
+.ending-screen {
+  background: linear-gradient(180deg, #1a1a2e, #16213e);
+  border-radius: 20px;
+  padding: 32px 24px 24px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(138, 100, 235, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.ending-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.ending-badge-marriage {
+  background: rgba(240, 165, 0, 0.2);
+  color: #F0A500;
+  border: 1px solid rgba(240, 165, 0, 0.3);
+}
+
+.ending-badge-breakup {
+  background: rgba(255, 107, 107, 0.2);
+  color: #FF6B6B;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.ending-badge-exposure {
+  background: rgba(255, 165, 2, 0.2);
+  color: #FFA502;
+  border: 1px solid rgba(255, 165, 2, 0.3);
+}
+
+.ending-badge-career {
+  background: rgba(78, 205, 196, 0.2);
+  color: #4ECDC4;
+  border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.ending-badge-cheating {
+  background: rgba(167, 139, 250, 0.2);
+  color: #A78BFA;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.ending-badge-solo {
+  background: rgba(160, 160, 160, 0.2);
+  color: #A0A0A0;
+  border: 1px solid rgba(160, 160, 160, 0.3);
+}
+
+.ending-badge-unexpected {
+  background: rgba(248, 165, 194, 0.2);
+  color: #F8A5C2;
+  border: 1px solid rgba(248, 165, 194, 0.3);
+}
+
+.ending-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 8px 0 16px;
+  letter-spacing: 0.5px;
+}
+
+.ending-divider {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  margin: 0 auto 20px;
+}
+
+.ending-narrative {
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: pre-wrap;
+  margin-bottom: 24px;
+  padding: 0 4px;
+}
+
+.ending-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.ending-stat-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ending-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.ending-stat-label {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ending-actions {
+  padding-top: 8px;
+}
+
+.ending-actions .btn {
+  padding: 14px;
+  font-size: 1rem;
+  border-radius: 14px;
+}
+
+/* ===== 结局回顾区域（阶段10） ===== */
+
+.endings-review-section {
+  margin-top: 24px;
+  padding: 0 4px;
+}
+
+.endings-review-card {
+  background: linear-gradient(135deg, rgba(240, 165, 0, 0.08), rgba(240, 165, 0, 0.02));
+  border: 1px solid rgba(240, 165, 0, 0.2);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+
+.endings-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.endings-review-icon {
+  font-size: 1.2rem;
+}
+
+.endings-review-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #F0A500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.endings-review-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.endings-review-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.endings-review-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.endings-review-replay-btn {
+  font-size: 0.78rem;
+  padding: 8px 18px;
+}
+
+/* ===== 结局事件卡片颜色条（阶段10） ===== */
+
+.event-card-bar-ending {
+  background: #F0A500;
+}
+
+/* ===== 结局事件分类标签（阶段10） ===== */
+
+.cat-ending {
+  background: rgba(240, 165, 0, 0.15);
+  color: #F0A500;
+  border: 1px solid rgba(240, 165, 0, 0.25);
+}

@@ -665,6 +665,12 @@ Game.Setup = (() => {
     Game.state.comebacks = [];
     Game.state.lastBreakingNewsTurn = 0;
 
+    // 初始化结局系统字段（阶段10）
+    Game.state.endingTriggered = false;
+    Game.state.endingId = null;
+    Game.state.endingTurn = 0;
+    Game.state._pendingEnding = null;
+
     // 3. 选择空存档槽并保存
     const slot = Game.State.findEmptySlot();
     Game.State.setCurrentSlot(slot);
