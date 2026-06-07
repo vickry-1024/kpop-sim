@@ -6,7 +6,12 @@
 Game.State = (() => {
 
   // 当前使用的存档槽（自动存档时写入此槽）
-  let _currentSlot = 1;
+  var _currentSlot = 1;
+
+  // 防抖保存（阶段12）：合并多次autoSave调用为一次写入
+  var _dirty = false;
+  var _saveTimer = null;
+  var _SAVE_DEBOUNCE_MS = 250;
 
   // ===== 存档槽管理 =====
 
@@ -150,7 +155,7 @@ Game.State = (() => {
     Game.state.player.secretPhone.unlocked = true;
     Game.state.player.secretPhone.idolIndex = idolIndex;
     autoSave();
-    console.log('[State] 秘密手机已解锁！爱豆索引：' + idolIndex);
+    Game.DEBUG && console.log('[State] 秘密手机已解锁！爱豆索引：' + idolIndex);
   }
 
   /**
@@ -727,13 +732,42 @@ Game.State = (() => {
     return Math.max(0, Math.min(100, Math.round(val)));
   }
 
+  /**
+   * 自动存档（防抖版 — 阶段12）
+   * 多次快速调用合并为一次写入，250ms内无新调用才实际写入
+   * 关键路径（returnToTitle、endTurn）请使用 flushSave() 确保立即写入
+   */
   function autoSave() {
-    Game.state.currentTurn = Game.state.currentTurn || 0;
-    Game.state._saveSlot = _currentSlot;
-    Game.Storage.saveGame(_currentSlot, Game.state);
-    // 刷新视觉氛围（阶段11）
-    if (Game.Visual && Game.Visual.refreshAtmosphere) {
-      setTimeout(function() { Game.Visual.refreshAtmosphere(); }, 0);
+    _dirty = true;
+    if (!_saveTimer) {
+      _saveTimer = setTimeout(function() {
+        Game.state.currentTurn = Game.state.currentTurn || 0;
+        Game.state._saveSlot = _currentSlot;
+        Game.Storage.saveGame(_currentSlot, Game.state);
+        _dirty = false;
+        _saveTimer = null;
+        // 刷新视觉氛围（阶段11）
+        if (Game.Visual && Game.Visual.refreshAtmosphere) {
+          Game.Visual.refreshAtmosphere();
+        }
+      }, _SAVE_DEBOUNCE_MS);
+    }
+  }
+
+  /**
+   * 强制立即保存（阶段12）
+   * 用于关键路径：返回标题画面、回合结束、页面关闭
+   */
+  function flushSave() {
+    if (_saveTimer) {
+      clearTimeout(_saveTimer);
+      _saveTimer = null;
+    }
+    if (_dirty || !Game.state._saveSlot) {
+      Game.state.currentTurn = Game.state.currentTurn || 0;
+      Game.state._saveSlot = _currentSlot;
+      Game.Storage.saveGame(_currentSlot, Game.state);
+      _dirty = false;
     }
   }
 
@@ -752,7 +786,7 @@ Game.State = (() => {
     // 版本相同，无需迁移
     if (loadedVersion === currentVersion) return data;
 
-    console.log('[State] 存档版本迁移：' + loadedVersion + ' → ' + currentVersion);
+    Game.DEBUG && console.log('[State] 存档版本迁移：' + loadedVersion + ' → ' + currentVersion);
 
     // 补齐顶层字段
     data.currentTurn = data.currentTurn || 0;
@@ -902,7 +936,7 @@ Game.State = (() => {
     // 更新版本号
     data.version = currentVersion;
 
-    console.log('[State] 存档迁移完成');
+    Game.DEBUG && console.log('[State] 存档迁移完成');
     return data;
   }
 
@@ -953,7 +987,7 @@ Game.State = (() => {
     Game.state = migrated;
     _currentSlot = migrated._saveSlot || slot;
 
-    console.log('[State] 游戏已加载：槽' + slot + '，玩家：' + migrated.player.name + '，版本：' + migrated.version);
+    Game.DEBUG && console.log('[State] 游戏已加载：槽' + slot + '，玩家：' + migrated.player.name + '，版本：' + migrated.version);
     return true;
   }
 
@@ -967,7 +1001,7 @@ Game.State = (() => {
     if (_currentSlot === slot) {
       _currentSlot = 1;
     }
-    console.log('[State] 存档已删除：槽' + slot);
+    Game.DEBUG && console.log('[State] 存档已删除：槽' + slot);
   }
 
   // ===== 公开API =====
@@ -988,6 +1022,7 @@ Game.State = (() => {
     loadGame,
     deleteSave,
     autoSave,
+    flushSave,
     findEmptySlot,
     allSlotsFull,
     getCurrentSlot,

@@ -140,7 +140,7 @@ Game.Relations = (() => {
         refresh();
       }
     });
-    console.log('[Relations] 关系面板初始化完成');
+    Game.DEBUG && console.log('[Relations] 关系面板初始化完成');
   }
 
   // ===== 公开API =====

@@ -42,7 +42,7 @@ Game.Visual = (function() {
     // 简单的性能检测：老旧设备关闭复杂特效
     _detectLowPerformance();
 
-    console.log('[Visual] 视觉氛围模块初始化完成');
+    Game.DEBUG && console.log('[Visual] 视觉氛围模块初始化完成');
   }
 
   /**
@@ -177,7 +177,7 @@ Game.Visual = (function() {
     // 超过10ms视为低性能设备
     if (duration > 10) {
       document.body.classList.add('low-performance');
-      console.log('[Visual] 检测到低性能设备，已启用降级模式（耗时' + duration.toFixed(1) + 'ms）');
+      Game.DEBUG && console.log('[Visual] 检测到低性能设备，已启用降级模式（耗时' + duration.toFixed(1) + 'ms）');
     }
   }
 

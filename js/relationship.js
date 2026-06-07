@@ -549,7 +549,7 @@ Game.Relationship = (() => {
   // ===== 初始化 =====
 
   function init() {
-    console.log('[Relationship] 关系阶段系统初始化完成');
+    Game.DEBUG && console.log('[Relationship] 关系阶段系统初始化完成');
   }
 
   // ===== 公开API =====

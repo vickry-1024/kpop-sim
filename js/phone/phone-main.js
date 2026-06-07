@@ -41,7 +41,7 @@ Game.Phone = (() => {
         renderHomeScreen();
       }
     });
-    console.log('[Phone] 手机系统初始化完成');
+    Game.DEBUG && console.log('[Phone] 手机系统初始化完成');
   }
 
   // ===== 秘密手机状态 =====
@@ -197,6 +197,10 @@ Game.Phone = (() => {
    */
   function closeApp() {
     _currentApp = null;
+    // 重置各APP的DOM缓存（阶段12）
+    if (Game.PhoneChat && Game.PhoneChat.resetCache) Game.PhoneChat.resetCache();
+    if (Game.PhoneSNS && Game.PhoneSNS.resetCache) Game.PhoneSNS.resetCache();
+    if (Game.PhoneNews && Game.PhoneNews.resetCache) Game.PhoneNews.resetCache();
     renderHomeScreen();
   }
 
@@ -250,7 +254,7 @@ Game.Phone = (() => {
     if (Game.Visual && Game.Visual.refreshAtmosphere) {
       Game.Visual.refreshAtmosphere();
     }
-    console.log('[Phone] 切换到：' + (_phoneType === 'main' ? '主手机' : '秘密手机'));
+    Game.DEBUG && console.log('[Phone] 切换到：' + (_phoneType === 'main' ? '主手机' : '秘密手机'));
   }
 
   // ===== 相册 =====
@@ -286,6 +290,8 @@ Game.Phone = (() => {
       return;
     }
 
+    // 回收旧blob URL防止内存泄漏（阶段12）
+    Game.revokeElementBlobURLs(grid);
     grid.innerHTML = items.map(item => `
       <div class="gallery-item">
         <img src="${URL.createObjectURL(item.blob)}" alt="${item.label}">

@@ -788,7 +788,7 @@ Game.Reality = (() => {
   }
 
   function init() {
-    console.log('[Reality] 现实元素系统初始化完成');
+    Game.DEBUG && console.log('[Reality] 现实元素系统初始化完成');
   }
 
   return {

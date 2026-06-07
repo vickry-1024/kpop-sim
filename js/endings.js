@@ -491,7 +491,7 @@ Game.Endings = (() => {
       renderEndingScreen(ending);
     }, 300);
 
-    console.log('[Endings] 结局触发：' + ending.name + '（' + ending.id + '）');
+    Game.DEBUG && console.log('[Endings] 结局触发：' + ending.name + '（' + ending.id + '）');
   }
 
   // ===== 结局叙述文本生成 =====
@@ -972,7 +972,7 @@ Game.Endings = (() => {
       }
     }
 
-    console.log('[Endings] 结局系统就绪（15个结局）');
+    Game.DEBUG && console.log('[Endings] 结局系统就绪（15个结局）');
   }
 
   /**

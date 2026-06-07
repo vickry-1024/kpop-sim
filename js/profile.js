@@ -191,6 +191,7 @@ Game.Profile = (() => {
       const photo = await Game.Storage.getPhoto('wallpaper');
       if (photo && preview && img) {
         preview.style.display = 'block';
+        if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
         img.src = URL.createObjectURL(photo.blob);
         if (nameEl) nameEl.textContent = '✓ 已设置（点击上方按钮更换）';
       } else {
@@ -217,6 +218,8 @@ Game.Profile = (() => {
       const photo = await Game.Storage.getPhoto(idol.avatarId);
       if (photo) {
         preview.style.display = 'block';
+        // 回收旧blob URL防止内存泄漏（阶段12）
+        Game.revokeElementBlobURLs(preview);
         preview.innerHTML = `
           <img src="${URL.createObjectURL(photo.blob)}" alt="头像预览">
           <button class="photo-remove" onclick="Game.Profile.removeAvatar(${index})">✕</button>
@@ -244,7 +247,7 @@ Game.Profile = (() => {
 
     try {
       await Game.Storage.replacePhoto(file, 'wallpaper');
-      console.log('[Profile] 壁纸已更新');
+      Game.DEBUG && console.log('[Profile] 壁纸已更新');
       await renderWallpaperPreview();
     } catch (e) {
       console.error('[Profile] 壁纸更新失败', e);
@@ -255,7 +258,7 @@ Game.Profile = (() => {
   async function removeWallpaper() {
     try {
       await Game.Storage.deletePhoto('wallpaper');
-      console.log('[Profile] 壁纸已删除');
+      Game.DEBUG && console.log('[Profile] 壁纸已删除');
       await renderWallpaperPreview();
     } catch (e) {
       console.error('[Profile] 壁纸删除失败', e);
@@ -283,7 +286,7 @@ Game.Profile = (() => {
 
     try {
       await Game.Storage.replacePhoto(file, idol.avatarId);
-      console.log('[Profile] 头像已更新: idol-' + index);
+      Game.DEBUG && console.log('[Profile] 头像已更新: idol-' + index);
 
       // 更新预览
       await renderAvatarPreview(index);
@@ -307,7 +310,7 @@ Game.Profile = (() => {
     if (idol.avatarId) {
       try {
         await Game.Storage.deletePhoto(idol.avatarId);
-        console.log('[Profile] 头像已删除: idol-' + index);
+        Game.DEBUG && console.log('[Profile] 头像已删除: idol-' + index);
       } catch (e) {
         console.error('[Profile] 头像删除失败', e);
       }
@@ -415,7 +418,7 @@ Game.Profile = (() => {
     Game.Storage.saveApiKey(key);
     input.value = '';
     renderApiSettings();
-    console.log('[Profile] API Key已保存');
+    Game.DEBUG && console.log('[Profile] API Key已保存');
   }
 
   /**
@@ -427,7 +430,7 @@ Game.Profile = (() => {
     }
     localStorage.removeItem('kpop-sim:api-key');
     renderApiSettings();
-    console.log('[Profile] API Key已清除');
+    Game.DEBUG && console.log('[Profile] API Key已清除');
   }
 
   /**

@@ -33,7 +33,7 @@ Game.Router = (() => {
     });
 
     // 默认显示日程页（已在HTML中预设为active）
-    console.log('[Router] 路由初始化完成，当前页面：' + _currentPage);
+    Game.DEBUG && console.log('[Router] 路由初始化完成，当前页面：' + _currentPage);
   }
 
   /**
@@ -83,7 +83,7 @@ Game.Router = (() => {
       setTimeout(function() { Game.Visual.refreshAtmosphere(); }, 50);
     }
 
-    console.log('[Router] 页面切换：' + previousPage + ' → ' + pageName);
+    Game.DEBUG && console.log('[Router] 页面切换：' + previousPage + ' → ' + pageName);
   }
 
   /**

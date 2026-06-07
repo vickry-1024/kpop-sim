@@ -96,6 +96,16 @@ Game.Storage = (() => {
   }
 
   /**
+   * 释放照片URL（阶段12：防止blob URL内存泄漏）
+   * @param {string} url - 由 getPhotoURL 或 URL.createObjectURL 创建的blob URL
+   */
+  function revokePhotoURL(url) {
+    if (url && url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  /**
    * 删除照片
    */
   async function deletePhoto(photoId) {
@@ -124,12 +134,53 @@ Game.Storage = (() => {
    * @param {Object} data - 存档数据
    */
   function saveGame(slot, data) {
-    const saveData = {
+    var saveData = {
       ...data,
       timestamp: Date.now(),
       version: Game.version
     };
-    localStorage.setItem(KEYS.SAVE_SLOT(slot), JSON.stringify(saveData));
+    try {
+      localStorage.setItem(KEYS.SAVE_SLOT(slot), JSON.stringify(saveData));
+    } catch (e) {
+      // QuotaExceededError：存储空间不足（阶段12）
+      if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        console.error('[Storage] 存储空间不足！请清理浏览器数据或删除旧存档。当前数据未保存。');
+        // 尝试清理最旧存档槽位后重试一次
+        try {
+          var oldestSlot = _findOldestSaveSlot(slot);
+          if (oldestSlot) {
+            localStorage.removeItem(KEYS.SAVE_SLOT(oldestSlot));
+            localStorage.setItem(KEYS.SAVE_SLOT(slot), JSON.stringify(saveData));
+            console.warn('[Storage] 已清理槽' + oldestSlot + '，当前数据已紧急保存到槽' + slot);
+          }
+        } catch (e2) {
+          console.error('[Storage] 紧急保存也失败，数据可能丢失');
+        }
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  /**
+   * 找到最旧的存档槽（排除当前槽），用于紧急清理
+   */
+  function _findOldestSaveSlot(currentSlot) {
+    var oldestSlot = null;
+    var oldestTime = Infinity;
+    for (var s = 1; s <= 3; s++) {
+      if (s === currentSlot) continue;
+      var raw = localStorage.getItem(KEYS.SAVE_SLOT(s));
+      if (!raw) return s; // 空槽直接返回
+      try {
+        var data = JSON.parse(raw);
+        if (data.timestamp && data.timestamp < oldestTime) {
+          oldestTime = data.timestamp;
+          oldestSlot = s;
+        }
+      } catch (e) { /* 损坏的存档，可以覆盖 */ return s; }
+    }
+    return oldestSlot;
   }
 
   /**
@@ -246,6 +297,21 @@ Game.Storage = (() => {
   }
 
   /**
+   * 估算localStorage使用量（阶段12：存储诊断）
+   * @returns {number} 大约字节数
+   */
+  function getStorageUsage() {
+    var total = 0;
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (key && key.indexOf('kpop-sim:') === 0) {
+        total += (localStorage.getItem(key) || '').length * 2; // UTF-16 → 字节估算
+      }
+    }
+    return total;
+  }
+
+  /**
    * 清除所有游戏数据
    */
   async function clearAll() {
@@ -273,6 +339,7 @@ Game.Storage = (() => {
     savePhoto,
     getPhoto,
     getPhotoURL,
+    revokePhotoURL,
     deletePhoto,
     replacePhoto,
     // 存档
@@ -290,6 +357,8 @@ Game.Storage = (() => {
     // 设置
     saveSettings,
     loadSettings,
+    // 诊断
+    getStorageUsage,
     // 其他
     clearAll,
     KEYS

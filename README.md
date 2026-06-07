@@ -28,6 +28,46 @@
 - 数据全本地存储（隐私安全）
 - 部署在 GitHub Pages
 
+## 系统要求
+
+| 平台 | 最低版本 |
+|------|---------|
+| Safari (iOS) | 14.1+ |
+| Chrome (Android) | 90+ |
+| Samsung Internet | 14+ |
+| 其他 | 2021年后发布的现代移动浏览器即可 |
+
+> ⚠️ 旧版iOS Safari（<14.1）不支持CSS flexbox `gap`属性，布局可能错乱。建议将系统更新至iOS 14.5以上。
+
+## 更新日志
+
+### v0.14.0 — 测试优化与发布准备 (2026-06-08)
+- 🔧 修复blob URL内存泄漏（6处 `URL.createObjectURL` 添加 `revokeObjectURL`）
+- 🔧 修复AI响应JSON解析崩溃风险（添加局部try/catch保护）
+- 🔧 修复localStorage满时游戏崩溃（添加QuotaExceededError处理）
+- ⚡ autoSave防抖优化（每回合从~15次写入降到1次）
+- ⚡ DEBUG门控：生产环境关闭96条调试日志
+- ⚡ SNS评论缓存上限（防止内存无限增长）
+- ⚡ 手机模块DOM查询缓存
+- 📝 完善文档和浏览器兼容说明
+
+### v0.13.0 — 视觉打磨 (2026-06-06)
+- 动态氛围系统（嫌疑度红框/压力褪色/好感度粉光/秘密模式暗色主题）
+
+### v0.12.0 — 结局系统 (2026-06-07)
+- 15种结局，含AI生成结局文本
+
+## 隐私说明
+
+🔒 **所有数据仅存储在你的设备上**，不会有任何数据上传到服务器。游戏使用浏览器的 localStorage 和 IndexedDB 存储：
+
+- 游戏存档 → 浏览器 localStorage（3个存档槽）
+- 照片/头像 → 浏览器 IndexedDB
+- 聊天记录 → 浏览器 IndexedDB
+- API Key → 浏览器 localStorage（base64编码）
+
+你可以随时通过浏览器设置清除这些数据。
+
 ## 快速链接
 
 - 🎮 [开始游戏](https://vickry-1024.github.io/kpop-sim/)

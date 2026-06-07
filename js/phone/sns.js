@@ -14,11 +14,32 @@ Game.PhoneSNS = (() => {
   // AI评论缓存（key: postIndex, value: comments array）
   var _commentCache = {};
 
-  // 当前查看的帖子索引（用于评论提交）
-  var _currentPostIndex = null;
-
   // 玩家自己帖子的AI评论缓存（key: postIndex, value: comments array）
   var _myPostCommentCache = {};
+
+  // 缓存大小上限（阶段12：防止无限增长）
+  var MAX_CACHE_SIZE = 50;
+
+  // DOM元素缓存（阶段12：减少重复DOM查询）
+  var _contentEl = null;
+  function _getContentEl() {
+    if (!_contentEl) _contentEl = document.getElementById('phone-app-content');
+    return _contentEl;
+  }
+
+  /**
+   * 裁剪缓存，保留最新的MAX_CACHE_SIZE条
+   */
+  function _trimCache(cache) {
+    var keys = Object.keys(cache);
+    if (keys.length > MAX_CACHE_SIZE) {
+      // 删除最旧的条目（FIFO）
+      var removeCount = keys.length - MAX_CACHE_SIZE;
+      for (var i = 0; i < removeCount; i++) {
+        delete cache[keys[i]];
+      }
+    }
+  }
 
   // 当前查看的自己的帖子索引
   var _currentMyPostIndex = null;
@@ -251,7 +272,7 @@ Game.PhoneSNS = (() => {
    * 渲染发帖风格选择界面
    */
   function renderStyleSelect() {
-    const container = document.getElementById('phone-app-content');
+    const container = _getContentEl();
     if (!container) return;
 
     _view = 'style-select';
@@ -320,7 +341,7 @@ Game.PhoneSNS = (() => {
    * 渲染自定义发帖编辑界面
    */
   function renderCompose() {
-    const container = document.getElementById('phone-app-content');
+    const container = _getContentEl();
     if (!container) return;
 
     _view = 'compose';
@@ -383,7 +404,7 @@ Game.PhoneSNS = (() => {
    * 取消发帖
    */
   function cancelCompose() {
-    const container = document.getElementById('phone-app-content');
+    const container = _getContentEl();
     const titleEl = document.getElementById('phone-app-title');
     const headerActions = document.getElementById('phone-app-header-actions');
 
@@ -406,7 +427,7 @@ Game.PhoneSNS = (() => {
     }
 
     // 返回动态流
-    const container = document.getElementById('phone-app-content');
+    const container = _getContentEl();
     const titleEl = document.getElementById('phone-app-title');
     const headerActions = document.getElementById('phone-app-header-actions');
 
@@ -568,9 +589,17 @@ Game.PhoneSNS = (() => {
         if (cleaned.startsWith('```')) {
           cleaned = cleaned.replace(/```\w*\n?/g, '').replace(/```/g, '');
         }
-        var parsed = JSON.parse(cleaned);
+        if (!cleaned) return getFallbackComments();
+        var parsed;
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch (parseErr) {
+          console.warn('[SNS] AI评论JSON解析失败:', parseErr.message);
+          return getFallbackComments();
+        }
         if (Array.isArray(parsed) && parsed.length > 0) {
           _commentCache[postIndex] = parsed;
+          _trimCache(_commentCache);
           return parsed;
         }
       }
@@ -578,10 +607,14 @@ Game.PhoneSNS = (() => {
       console.warn('[SNS] AI评论生成失败，使用静态评论:', e.message);
     }
 
-    // fallback
-    var fallback = getStaticComments(postIndex, post.category);
-    _commentCache[postIndex] = fallback;
-    return fallback;
+    return getFallbackComments();
+
+    function getFallbackComments() {
+      var fallback = getStaticComments(postIndex, post.category);
+      _commentCache[postIndex] = fallback;
+      _trimCache(_commentCache);
+      return fallback;
+    }
   }
 
   /**
@@ -608,7 +641,7 @@ Game.PhoneSNS = (() => {
     _view = 'detail';
     _currentPostIndex = postIndex;
 
-    var container = document.getElementById('phone-app-content');
+    var container = _getContentEl();
     var titleEl = document.getElementById('phone-app-title');
     var headerActions = document.getElementById('phone-app-header-actions');
 
@@ -821,7 +854,7 @@ Game.PhoneSNS = (() => {
     Game.State.autoSave();
     if (Game.Profile) Game.Profile.refresh();
 
-    console.log('[SNS] 玩家评论，风险等级：' + risk.level + '，嫌疑度+' + risk.suspicion + '，粉丝+' + risk.followers);
+    Game.DEBUG && console.log('[SNS] 玩家评论，风险等级：' + risk.level + '，嫌疑度+' + risk.suspicion + '，粉丝+' + risk.followers);
   }
 
   /**
@@ -863,7 +896,7 @@ Game.PhoneSNS = (() => {
    * 从详情页返回动态流
    */
   function backToFeed() {
-    var container = document.getElementById('phone-app-content');
+    var container = _getContentEl();
     var titleEl = document.getElementById('phone-app-title');
     if (titleEl) titleEl.textContent = '📱 SNS';
 
@@ -888,7 +921,7 @@ Game.PhoneSNS = (() => {
   function showMyAccount() {
     _view = 'my-account';
 
-    var container = document.getElementById('phone-app-content');
+    var container = _getContentEl();
     var titleEl = document.getElementById('phone-app-title');
     var headerActions = document.getElementById('phone-app-header-actions');
 
@@ -1000,7 +1033,7 @@ Game.PhoneSNS = (() => {
     _view = 'my-post-detail';
     _currentMyPostIndex = postIndex;
 
-    var container = document.getElementById('phone-app-content');
+    var container = _getContentEl();
     var titleEl = document.getElementById('phone-app-title');
     var headerActions = document.getElementById('phone-app-header-actions');
 
@@ -1155,9 +1188,17 @@ Game.PhoneSNS = (() => {
           if (cleaned.startsWith('```')) {
             cleaned = cleaned.replace(/```\w*\n?/g, '').replace(/```/g, '');
           }
-          var parsed = JSON.parse(cleaned);
+          if (!cleaned) return getMyPostFallbackComments();
+          var parsed;
+          try {
+            parsed = JSON.parse(cleaned);
+          } catch (parseErr) {
+            console.warn('[SNS] 玩家帖子AI评论JSON解析失败:', parseErr.message);
+            return getMyPostFallbackComments();
+          }
           if (Array.isArray(parsed) && parsed.length > 0) {
             _myPostCommentCache[postIndex] = parsed;
+            _trimCache(_myPostCommentCache);
             return parsed;
           }
         }
@@ -1166,10 +1207,14 @@ Game.PhoneSNS = (() => {
       }
     }
 
-    // fallback到静态评论
-    var fallback = getMyPostStaticComments(postIndex, totalComments, suspicion);
-    _myPostCommentCache[postIndex] = fallback;
-    return fallback;
+    return getMyPostFallbackComments();
+
+    function getMyPostFallbackComments() {
+      var fallback = getMyPostStaticComments(postIndex, totalComments, suspicion);
+      _myPostCommentCache[postIndex] = fallback;
+      _trimCache(_myPostCommentCache);
+      return fallback;
+    }
   }
 
   /**
@@ -1337,7 +1382,7 @@ Game.PhoneSNS = (() => {
    * 从"我的账号"相关页面返回
    */
   function backFromMyAccount() {
-    var container = document.getElementById('phone-app-content');
+    var container = _getContentEl();
     var titleEl = document.getElementById('phone-app-title');
 
     if (_view === 'my-post-detail') {
@@ -1373,6 +1418,8 @@ Game.PhoneSNS = (() => {
   // ===== 公开API =====
 
   return {
+    // DOM缓存重置（阶段12）
+    resetCache: function() { _contentEl = null; },
     renderFeed,
     renderStyleSelect,
     selectStyle,

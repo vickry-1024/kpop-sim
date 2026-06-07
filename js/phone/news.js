@@ -8,6 +8,13 @@ Game.PhoneNews = (() => {
   // 当前详情展开的新闻索引（-1 = 列表视图）
   let _detailIndex = -1;
 
+  // DOM元素缓存（阶段12）
+  var _contentEl = null;
+  function _getContentEl() {
+    if (!_contentEl) _contentEl = document.getElementById('phone-app-content');
+    return _contentEl;
+  }
+
   // ===== 预设新闻数据 =====
 
   function getArticles() {
@@ -121,7 +128,7 @@ Game.PhoneNews = (() => {
   function renderDetail(index) {
     _detailIndex = index;
 
-    const container = document.getElementById('phone-app-content');
+    const container = _getContentEl();
     if (!container) return;
 
     const articles = getArticles();
@@ -161,6 +168,7 @@ Game.PhoneNews = (() => {
   // ===== 公开API =====
 
   return {
+    resetCache: function() { _contentEl = null; },
     renderList,
     renderDetail
   };

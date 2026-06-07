@@ -9,10 +9,13 @@
  */
 window.Game = {
   // 版本号
-  version: '0.13.0',
+  version: '0.14.0',
 
   // 当前开发阶段
-  phase: '阶段12 ✅ → 阶段11：视觉打磨（动态氛围/秘密模式全局化/手机真实感）',
+  phase: '阶段12 ➡️ 测试优化与发布准备',
+
+  // 调试模式：生产环境关闭，调试时在控制台执行 Game.DEBUG = true 重新开启
+  DEBUG: false,
 
   // 全局状态
   state: {
@@ -91,8 +94,12 @@ Game.confirmDeleteSave = function(slot) {
  * 返回标题画面（保存当前进度后返回）
  */
 Game.returnToTitle = function() {
-  // 先保存当前进度
-  Game.State.autoSave();
+  // 强制立即保存当前进度（不走防抖，保证数据不丢失）
+  if (Game.State.flushSave) {
+    Game.State.flushSave();
+  } else {
+    Game.State.autoSave();
+  }
 
   const titleScreen = document.getElementById('title-screen');
   const app = document.getElementById('app');
@@ -110,7 +117,7 @@ Game.returnToTitle = function() {
     }, 200);
   }
 
-  console.log('[App] 返回标题画面，进度已保存（槽' + Game.State.getCurrentSlot() + '）');
+  Game.DEBUG && console.log('[App] 返回标题画面，进度已保存（槽' + Game.State.getCurrentSlot() + '）');
 };
 
 /**
@@ -158,7 +165,7 @@ function showAppScreen() {
   if (Game.Relations) Game.Relations.refresh();
   if (Game.Turn) Game.Turn.refreshUI();
 
-  console.log('[App] 游戏主界面已显示');
+  Game.DEBUG && console.log('[App] 游戏主界面已显示');
 }
 
 /**
@@ -174,7 +181,7 @@ function initApp() {
   // 视觉氛围系统（阶段11）
   if (Game.Visual) {
     Game.Visual.init();
-    console.log('[App] 视觉氛围系统就绪');
+    Game.DEBUG && console.log('[App] 视觉氛围系统就绪');
   }
 
   // 初始化个人面板
@@ -204,7 +211,7 @@ function initApp() {
 
   // 邂逅系统（被动触发，无需主动初始化）
   if (Game.Encounter) {
-    console.log('[App] 邂逅系统就绪');
+    Game.DEBUG && console.log('[App] 邂逅系统就绪');
   }
 
   // 现实元素系统（阶段8）
@@ -215,14 +222,21 @@ function initApp() {
   // 事件系统完整版（阶段9）
   if (Game.Events) {
     Game.Events.init();
-    console.log('[App] 事件系统就绪');
+    Game.DEBUG && console.log('[App] 事件系统就绪');
   }
 
   // 结局系统（阶段10）
   if (Game.Endings) {
     Game.Endings.init();
-    console.log('[App] 结局系统就绪');
+    Game.DEBUG && console.log('[App] 结局系统就绪');
   }
+
+  // 页面关闭前强制保存（阶段12：防止防抖导致的数据丢失）
+  window.addEventListener('beforeunload', function() {
+    if (Game.State && Game.State.flushSave && Game.state.initialized) {
+      Game.State.flushSave();
+    }
+  });
 
   // 决定显示哪个画面：有存档→标题画面，无存档→设定向导
   const summaries = Game.State.getSaveSummaries();
@@ -243,10 +257,23 @@ function initApp() {
     // Game.Setup.initAllListeners() 已在 DOMContentLoaded 中调用
   }
 
-  console.log('🎮 Kpop嫂子模拟器 v' + Game.version + ' 初始化完成');
-  console.log('📱 在手机上打开可获得最佳体验');
-  console.log('📋 当前阶段：' + Game.phase);
+  Game.DEBUG && console.log('🎮 Kpop嫂子模拟器 v' + Game.version + ' 初始化完成');
+  Game.DEBUG && console.log('📱 在手机上打开可获得最佳体验');
+  Game.DEBUG && console.log('📋 当前阶段：' + Game.phase);
 }
+
+/**
+ * 回收元素内所有blob URL（防止内存泄漏，阶段12）
+ * 在 innerHTML 替换或 img.src 重新赋值前调用
+ * @param {Element} element - 包含可能blob URL的容器元素
+ */
+Game.revokeElementBlobURLs = function(element) {
+  if (!element) return;
+  var imgs = element.querySelectorAll('img[src^="blob:"]');
+  for (var i = 0; i < imgs.length; i++) {
+    URL.revokeObjectURL(imgs[i].src);
+  }
+};
 
 /**
  * HTML转义工具

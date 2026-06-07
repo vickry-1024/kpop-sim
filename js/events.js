@@ -1136,7 +1136,7 @@ Game.Events = (() => {
       }
     });
 
-    console.log('[Events] 事件系统完整版初始化完成');
+    Game.DEBUG && console.log('[Events] 事件系统完整版初始化完成');
   }
 
   // ===== 公开API =====

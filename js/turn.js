@@ -33,7 +33,7 @@ Game.Turn = (() => {
         refreshUI();
       }
     });
-    console.log('[Turn] 回合系统初始化完成');
+    Game.DEBUG && console.log('[Turn] 回合系统初始化完成');
   }
 
   // ===== 回合管理 =====
@@ -45,7 +45,7 @@ Game.Turn = (() => {
     if (!Game.state.currentTurn || Game.state.currentTurn < 1) {
       Game.state.currentTurn = 1;
       Game.State.autoSave();
-      console.log('[Turn] 游戏开始：第1回合');
+      Game.DEBUG && console.log('[Turn] 游戏开始：第1回合');
     }
   }
 
@@ -129,12 +129,12 @@ Game.Turn = (() => {
     // 邂逅检测：圈内活动行动
     if (action.id === 'attend-event' && Game.Encounter) {
       if (Math.random() * 100 < 60) {
-        console.log('[Turn] 圈内活动触发邂逅！');
+        Game.DEBUG && console.log('[Turn] 圈内活动触发邂逅！');
         setTimeout(function() { Game.Encounter.triggerEncounter('action'); }, 500);
       }
     }
 
-    console.log('[Turn] 行动完成：' + action.name + (targetName ? ' → ' + targetName : ''));
+    Game.DEBUG && console.log('[Turn] 行动完成：' + action.name + (targetName ? ' → ' + targetName : ''));
     return true;
   }
 
@@ -167,7 +167,7 @@ Game.Turn = (() => {
         // 检查经纪人帮助隐瞒buff（嫌疑度增幅减半）
         if (targetIndex !== null && targetIndex !== undefined && Game.State.hasActiveBuff('suspicionRateHalved', targetIndex)) {
           delta = Math.round(delta / 2);
-          console.log('[Turn] 经纪人buff生效：嫌疑度增幅减半（idolIndex=' + targetIndex + '）');
+          Game.DEBUG && console.log('[Turn] 经纪人buff生效：嫌疑度增幅减半（idolIndex=' + targetIndex + '）');
         }
       }
 
@@ -332,8 +332,12 @@ Game.Turn = (() => {
     // 4. 清空本回合行动日志
     _turnLog = [];
 
-    // 5. 自动存档
-    Game.State.autoSave();
+    // 5. 强制存档（阶段12：回合结束是关键节点，不走防抖）
+    if (Game.State.flushSave) {
+      Game.State.flushSave();
+    } else {
+      Game.State.autoSave();
+    }
 
     // 6. 刷新UI
     refreshUI();
@@ -402,12 +406,12 @@ Game.Turn = (() => {
     if (Game.Endings) {
       var triggered = Game.Endings.checkEndings();
       if (triggered) {
-        console.log('[Turn] 结局触发：' + triggered.name);
+        Game.DEBUG && console.log('[Turn] 结局触发：' + triggered.name);
         return; // 结局画面接管，阻止后续UI操作
       }
     }
 
-    console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
+    Game.DEBUG && console.log('[Turn] 回合结束 → 第' + Game.state.currentTurn + '回合');
   }
 
   // ===== 目标选择弹窗 =====
@@ -783,12 +787,12 @@ Game.Turn = (() => {
     // 邂逅检测：圈内活动行动
     if (action.id === 'attend-event' && Game.Encounter) {
       if (Math.random() * 100 < 60) {
-        console.log('[Turn] 圈内活动触发邂逅！');
+        Game.DEBUG && console.log('[Turn] 圈内活动触发邂逅！');
         setTimeout(function() { Game.Encounter.triggerEncounter('action'); }, 500);
       }
     }
 
-    console.log('[Turn] 行动完成：' + action.name + (subLabel ? ' · ' + subLabel : '') + (targetName ? ' → ' + targetName : ''));
+    Game.DEBUG && console.log('[Turn] 行动完成：' + action.name + (subLabel ? ' · ' + subLabel : '') + (targetName ? ' → ' + targetName : ''));
     return true;
   }
 
@@ -814,7 +818,7 @@ Game.Turn = (() => {
         // 检查经纪人帮助隐瞒buff（嫌疑度增幅减半）
         if (targetIndex !== null && targetIndex !== undefined && Game.State.hasActiveBuff('suspicionRateHalved', targetIndex)) {
           delta = Math.round(delta / 2);
-          console.log('[Turn] 经纪人buff生效：嫌疑度增幅减半（idolIndex=' + targetIndex + '）');
+          Game.DEBUG && console.log('[Turn] 经纪人buff生效：嫌疑度增幅减半（idolIndex=' + targetIndex + '）');
         }
       }
 
@@ -996,7 +1000,7 @@ Game.Turn = (() => {
     // 触发！解锁秘密手机
     Game.State.unlockSecretPhone(targetIndex);
     const idolName = idol.nickname || idol.name;
-    console.log('[Turn] 🎉 秘密手机事件触发！' + idolName + '的经纪人悄悄递来一部手机...');
+    Game.DEBUG && console.log('[Turn] 🎉 秘密手机事件触发！' + idolName + '的经纪人悄悄递来一部手机...');
 
     // 显示提示
     _showSecretPhoneNotification(idolName);
@@ -1232,7 +1236,7 @@ Game.Turn = (() => {
       // fire-and-forget
       Game.PhoneChat.tryProactiveMessage(idx, phoneType).then(sent => {
         if (sent) {
-          console.log('[Turn] ' + (idols[idx].nickname || idols[idx].name) + ' 主动发来消息（' + phoneType + '）');
+          Game.DEBUG && console.log('[Turn] ' + (idols[idx].nickname || idols[idx].name) + ' 主动发来消息（' + phoneType + '）');
         }
       }).catch(() => {});
 
@@ -1260,7 +1264,7 @@ Game.Turn = (() => {
     for (const friend of shuffled) {
       if (sentCount >= maxPerTurn) break;
       Game.PhoneChat.tryFriendProactiveMessage(friend.id).then(sent => {
-        if (sent) console.log('[Turn] 好友' + friend.name + ' 主动发来消息');
+        if (sent) Game.DEBUG && console.log('[Turn] 好友' + friend.name + ' 主动发来消息');
       }).catch(() => {});
       sentCount++;
     }
@@ -1362,7 +1366,7 @@ Game.Turn = (() => {
       });
     }
 
-    console.log('[Turn] 经纪人介入！' + managerName + ' → ' + (idol.nickname || idol.name) + '（' + action.label + '）');
+    Game.DEBUG && console.log('[Turn] 经纪人介入！' + managerName + ' → ' + (idol.nickname || idol.name) + '（' + action.label + '）');
   }
 
   // ===== 经纪人跟进消息 =====
@@ -1457,7 +1461,7 @@ Game.Turn = (() => {
           timestamp: Date.now()
         });
 
-        console.log('[Turn] ' + idolName + ' 的消息被忽略' + entry.turnReceived + '回合，好感度-' + penalty);
+        Game.DEBUG && console.log('[Turn] ' + idolName + ' 的消息被忽略' + entry.turnReceived + '回合，好感度-' + penalty);
 
         // 清除pending标记（只惩罚一次）
         Game.State.clearPendingReply(idx);
@@ -1478,7 +1482,7 @@ Game.Turn = (() => {
     var chance = Math.max(5, 15 - (idolCount - 1) * 3);
 
     if (Math.random() * 100 < chance) {
-      console.log('[Turn] 随机邂逅事件触发！当前爱豆数：' + idolCount + '，概率：' + chance + '%');
+      Game.DEBUG && console.log('[Turn] 随机邂逅事件触发！当前爱豆数：' + idolCount + '，概率：' + chance + '%');
       Game.Encounter.triggerEncounter('random');
     }
   }

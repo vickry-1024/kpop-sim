@@ -8,6 +8,13 @@ Game.PhoneChat = (() => {
   // 当前对话的爱豆索引
   let _currentIdolIndex = null;
 
+  // DOM元素缓存（阶段12）
+  var _contentEl = null;
+  function _getContentEl() {
+    if (!_contentEl) _contentEl = document.getElementById('phone-app-content');
+    return _contentEl;
+  }
+
   // 好友类型标签和图标
   var FRIEND_TYPE_LABELS = { bestie: '闺蜜', friend: '朋友' };
 
@@ -232,7 +239,7 @@ Game.PhoneChat = (() => {
     const idol = Game.state.idols[idolIndex];
     if (!idol) return;
 
-    const container = document.getElementById('phone-app-content');
+    const container = _getContentEl();
     if (!container) return;
 
     const idolName = idol.nickname || idol.name;
@@ -649,7 +656,7 @@ Game.PhoneChat = (() => {
           return aiReply.trim();
         }
       } catch (e) {
-        console.log('[PhoneChat] AI回复失败，使用预设:', e.message);
+        Game.DEBUG && console.log('[PhoneChat] AI回复失败，使用预设:', e.message);
       }
     }
 
@@ -816,7 +823,7 @@ Game.PhoneChat = (() => {
     var friend = Game.State.getFriendById(friendId);
     if (!friend) return;
 
-    var container = document.getElementById('phone-app-content');
+    var container = _getContentEl();
     if (!container) return;
 
     // 清除未读
@@ -1125,7 +1132,7 @@ Game.PhoneChat = (() => {
         history.push({ from: 'friend', text: message.trim(), time: Date.now() });
         await saveFriendHistory(friendId, history);
         incrementFriendUnread(friendId);
-        console.log('[PhoneChat] 好友' + friend.name + ' 主动发来消息');
+        Game.DEBUG && console.log('[PhoneChat] 好友' + friend.name + ' 主动发来消息');
         return true;
       }
     } catch (e) { /* ignore */ }
@@ -1252,7 +1259,7 @@ Game.PhoneChat = (() => {
     var idol = Game.state.idols[idolIndex];
     if (!idol) return;
 
-    var container = document.getElementById('phone-app-content');
+    var container = _getContentEl();
     if (!container) return;
 
     // 清除未读
@@ -1457,7 +1464,7 @@ Game.PhoneChat = (() => {
       Game.State.autoSave();
     }
 
-    console.log('[PhoneChat] 经纪人跟进消息 → idolIndex=' + idolIndex);
+    Game.DEBUG && console.log('[PhoneChat] 经纪人跟进消息 → idolIndex=' + idolIndex);
     return true;
   }
 
@@ -1491,7 +1498,7 @@ Game.PhoneChat = (() => {
         const reply = await Game.API.callDeepSeek(messages, { temperature: 0.9, maxTokens: 200 });
         if (reply && reply.trim()) return reply.trim();
       } catch (e) {
-        console.log('[PhoneChat] AI主动消息生成失败，使用预设');
+        Game.DEBUG && console.log('[PhoneChat] AI主动消息生成失败，使用预设');
       }
     }
 
@@ -1582,7 +1589,7 @@ Game.PhoneChat = (() => {
           Game.State.setPendingReply(idolIndex, phoneType);
         }
 
-        console.log('[PhoneChat] ' + (idol.nickname || idol.name) + ' 主动发来消息: ' + message.trim().substring(0, 30) + '...');
+        Game.DEBUG && console.log('[PhoneChat] ' + (idol.nickname || idol.name) + ' 主动发来消息: ' + message.trim().substring(0, 30) + '...');
         return true;
       }
     } catch (e) {
@@ -1594,6 +1601,7 @@ Game.PhoneChat = (() => {
   // ===== 公开API =====
 
   return {
+    resetCache: function() { _contentEl = null; },
     renderContactList,
     renderSecretContact,
     openConversation,

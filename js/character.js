@@ -52,7 +52,7 @@ Game.Setup = (() => {
   function init() {
     _currentStep = 0;
     showStep(_currentStep);
-    console.log('[Setup] 设定向导初始化完成');
+    Game.DEBUG && console.log('[Setup] 设定向导初始化完成');
   }
 
   // ===== 步骤导航 =====
@@ -347,6 +347,8 @@ Game.Setup = (() => {
     const container = document.getElementById('extras-list');
     if (!container) return;
 
+    // 回收旧blob URL防止内存泄漏（阶段12）
+    Game.revokeElementBlobURLs(container);
     container.innerHTML = _idolsData.map((idol, i) => `
       <div class="extra-card">
         <div class="extra-card-title">💜 ${idol.name || '爱豆 ' + (i + 1)}</div>
@@ -404,6 +406,8 @@ Game.Setup = (() => {
     const nameEl = document.getElementById('avatar-name-' + index);
     if (preview) {
       preview.style.display = 'block';
+      // 回收旧blob URL防止内存泄漏（阶段12）
+      Game.revokeElementBlobURLs(preview);
       preview.innerHTML = `
         <img src="${URL.createObjectURL(file)}" alt="头像预览">
         <button class="photo-remove" onclick="Game.Setup.removeAvatar(${index})">✕</button>
@@ -455,7 +459,10 @@ Game.Setup = (() => {
 
     if (_wallpaperFile) {
       if (preview) preview.style.display = 'block';
-      if (img) img.src = URL.createObjectURL(_wallpaperFile);
+      if (img) {
+        if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+        img.src = URL.createObjectURL(_wallpaperFile);
+      }
       if (nameEl) nameEl.textContent = '✓ ' + _wallpaperFile.name;
     } else {
       if (preview) preview.style.display = 'none';
@@ -554,14 +561,14 @@ Game.Setup = (() => {
   // ===== 开始游戏 =====
 
   async function startGame() {
-    console.log('[Setup] 开始游戏...');
+    Game.DEBUG && console.log('[Setup] 开始游戏...');
 
     // 1. 保存照片到IndexedDB
     for (let i = 0; i < _idolsData.length; i++) {
       if (_idolsData[i].avatarFile) {
         try {
           await Game.Storage.savePhoto(_idolsData[i].avatarFile, _idolsData[i].avatarId);
-          console.log('[Setup] 头像已保存: idol-' + i);
+          Game.DEBUG && console.log('[Setup] 头像已保存: idol-' + i);
         } catch (e) {
           console.warn('[Setup] 头像保存失败: idol-' + i, e);
         }
@@ -571,7 +578,7 @@ Game.Setup = (() => {
     if (_wallpaperFile) {
       try {
         await Game.Storage.savePhoto(_wallpaperFile, 'wallpaper');
-        console.log('[Setup] 壁纸已保存');
+        Game.DEBUG && console.log('[Setup] 壁纸已保存');
       } catch (e) {
         console.warn('[Setup] 壁纸保存失败', e);
       }
@@ -675,7 +682,7 @@ Game.Setup = (() => {
     const slot = Game.State.findEmptySlot();
     Game.State.setCurrentSlot(slot);
     Game.State.autoSave();
-    console.log('[Setup] 新游戏使用存档槽' + slot);
+    Game.DEBUG && console.log('[Setup] 新游戏使用存档槽' + slot);
 
     // 4. 异步分析身份（不阻塞游戏启动）
     maybeAnalyzeIdentity();
@@ -694,7 +701,7 @@ Game.Setup = (() => {
       Game.Turn.refreshUI();
     }
 
-    console.log('[Setup] 游戏开始！玩家：' + _playerData.name + '，攻略爱豆：' + _idolsData.length + '位');
+    Game.DEBUG && console.log('[Setup] 游戏开始！玩家：' + _playerData.name + '，攻略爱豆：' + _idolsData.length + '位');
   }
 
   /**
@@ -703,7 +710,7 @@ Game.Setup = (() => {
    */
   async function maybeAnalyzeIdentity() {
     if (!Game.API) {
-      console.log('[Setup] API模块未加载，跳过身份分析');
+      Game.DEBUG && console.log('[Setup] API模块未加载，跳过身份分析');
       return;
     }
 
@@ -714,7 +721,7 @@ Game.Setup = (() => {
       const personalityText = player.personalityTags.join('、')
         + (player.personalityCustom ? ' / ' + player.personalityCustom : '');
 
-      console.log('[Setup] 开始身份分析: ' + identityText);
+      Game.DEBUG && console.log('[Setup] 开始身份分析: ' + identityText);
 
       const modifiers = await Game.API.analyzeIdentity(identityText, personalityText);
       if (modifiers) {
@@ -736,7 +743,7 @@ Game.Setup = (() => {
         player.identityModifiers.stressResist = modifiers.stressResist || 0;
 
         Game.State.autoSave();
-        console.log('[Setup] 身份分析完成，修正值已应用:', player.identityModifiers);
+        Game.DEBUG && console.log('[Setup] 身份分析完成，修正值已应用:', player.identityModifiers);
       }
     } catch (e) {
       console.warn('[Setup] 身份分析失败，使用默认修正值:', e.message);

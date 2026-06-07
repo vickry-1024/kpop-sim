@@ -175,7 +175,7 @@ Game.Encounter = (() => {
     if (Game.Profile) Game.Profile.refresh();
     Game.State.autoSave();
 
-    console.log('[Encounter] 新爱豆已添加：' + name + '（idol-' + newIndex + '）');
+    Game.DEBUG && console.log('[Encounter] 新爱豆已添加：' + name + '（idol-' + newIndex + '）');
   }
 
   /**
@@ -184,7 +184,7 @@ Game.Encounter = (() => {
   function skipEncounter() {
     Game.State.popEncounter();
     hideEncounterModal();
-    console.log('[Encounter] 玩家跳过了邂逅');
+    Game.DEBUG && console.log('[Encounter] 玩家跳过了邂逅');
   }
 
   /**
