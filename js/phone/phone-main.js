@@ -246,6 +246,10 @@ Game.Phone = (() => {
     _phoneType = _phoneType === 'main' ? 'secret' : 'main';
     _currentApp = null;
     renderHomeScreen();
+    // 刷新全局视觉主题（阶段11）
+    if (Game.Visual && Game.Visual.refreshAtmosphere) {
+      Game.Visual.refreshAtmosphere();
+    }
     console.log('[Phone] 切换到：' + (_phoneType === 'main' ? '主手机' : '秘密手机'));
   }
 

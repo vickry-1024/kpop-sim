@@ -5,14 +5,18 @@
   --color-primary: #F8A5C2;
   --color-primary-light: #FCE4EC;
   --color-primary-dark: #D4687E;
+  --primary-light: var(--color-primary-light);
 
   /* ===== 日常模式（默认） ===== */
   --bg-main: #FFFAFA;
+  --bg-primary: var(--bg-main);
   --bg-card: #FFFFFF;
   --bg-input: #F5F5F5;
+  --bg-secondary: #F5F5F5;
   --text-primary: #2D2D2D;
   --text-secondary: #8E8E93;
   --text-hint: #C7C7CC;
+  --text-muted: #A0A0A0;
   --border-color: #F0F0F0;
 
   /* ===== 秘密模式 ===== */
@@ -52,6 +56,7 @@
   --radius-lg: 20px;
   --radius-xl: 25px;
   --radius-full: 50%;
+  --border-radius: var(--radius-md);
 
   /* ===== 字号系统 ===== */
   --font-size-xs: 11px;

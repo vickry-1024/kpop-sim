@@ -78,6 +78,11 @@ Game.Router = (() => {
     // 触发页面切换事件（供其他模块监听）
     _onPageChanged(previousPage, pageName);
 
+    // 页面切换后刷新视觉氛围（阶段11）
+    if (Game.Visual && Game.Visual.refreshAtmosphere) {
+      setTimeout(function() { Game.Visual.refreshAtmosphere(); }, 50);
+    }
+
     console.log('[Router] 页面切换：' + previousPage + ' → ' + pageName);
   }
 

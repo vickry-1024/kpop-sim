@@ -731,6 +731,10 @@ Game.State = (() => {
     Game.state.currentTurn = Game.state.currentTurn || 0;
     Game.state._saveSlot = _currentSlot;
     Game.Storage.saveGame(_currentSlot, Game.state);
+    // 刷新视觉氛围（阶段11）
+    if (Game.Visual && Game.Visual.refreshAtmosphere) {
+      setTimeout(function() { Game.Visual.refreshAtmosphere(); }, 0);
+    }
   }
 
   // ===== 存档版本迁移 =====

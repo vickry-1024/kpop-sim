@@ -18,8 +18,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Pretendard", "Noto Sans SC", "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.5;
-  color: #2D2D2D;
-  background-color: #FFFAFA;
+  color: var(--text-primary);
+  background-color: var(--bg-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* 防止iOS橡皮筋效果导致页面弹跳 */

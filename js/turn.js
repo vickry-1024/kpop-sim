@@ -318,6 +318,11 @@ Game.Turn = (() => {
     // 2. 压力自然衰减
     Game.State.addStress(TURN_END_STRESS_DECAY);
 
+    // 2.6. 压力>90触发视觉抖动（阶段11）
+    if (Game.state.player.stats.stress > 90 && Game.Visual) {
+      Game.Visual.triggerStressShake();
+    }
+
     // 2.5. 检查未回复消息 → 降低好感度
     _checkUnrepliedPenalties();
 
@@ -1058,6 +1063,11 @@ Game.Turn = (() => {
     renderActionGrid();
     renderActionLog();
     renderEndTurnButton();
+
+    // 刷新视觉氛围（阶段11）
+    if (Game.Visual && Game.Visual.refreshAtmosphere) {
+      Game.Visual.refreshAtmosphere();
+    }
   }
 
   /**

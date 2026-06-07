@@ -81,6 +81,29 @@ Game.Profile = (() => {
     if (!container) return;
 
     const stats = player.stats;
+
+    // 基于数值阈值动态获取属性条颜色（阶段11）
+    function getStatBarColor(key, value) {
+      switch (key) {
+        case 'stress':
+          if (value > 80) return 'var(--color-danger)';
+          if (value > 60) return 'var(--color-warning)';
+          return 'var(--color-stress)';
+        case 'suspicion':
+          if (value > 80) return 'var(--color-danger)';
+          if (value > 50) return 'var(--color-warning)';
+          return 'var(--color-suspicion)';
+        case 'stamina':
+          if (value < 20) return 'var(--color-danger)';
+          if (value < 50) return 'var(--color-warning)';
+          return 'var(--color-stamina)';
+        case 'charm':
+          return 'var(--color-charm)';
+        default:
+          return 'var(--color-affection)';
+      }
+    }
+
     const statDefs = [
       { key: 'stamina', label: '⚡ 体力', color: 'var(--color-stamina, #4ECDC4)' },
       { key: 'charm',   label: '✨ 魅力', color: 'var(--color-charm, #FF6B9D)' },
@@ -95,7 +118,7 @@ Game.Profile = (() => {
           <span class="stat-value">${stats[def.key]}</span>
         </div>
         <div class="stat-bar-bg">
-          <div class="stat-bar-fill" style="width:${Math.min(stats[def.key], 100)}%; background:${def.color};"></div>
+          <div class="stat-bar-fill" style="width:${Math.min(stats[def.key], 100)}%; background:${getStatBarColor(def.key, stats[def.key])};"></div>
         </div>
       </div>
     `).join('');

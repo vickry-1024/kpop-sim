@@ -9,10 +9,10 @@
  */
 window.Game = {
   // 版本号
-  version: '0.12.0',
+  version: '0.13.0',
 
   // 当前开发阶段
-  phase: '阶段11 ✅ → 阶段10：结局系统（15个结局/条件检测/结局画面/结局回顾）',
+  phase: '阶段12 ✅ → 阶段11：视觉打磨（动态氛围/秘密模式全局化/手机真实感）',
 
   // 全局状态
   state: {
@@ -169,6 +169,12 @@ function initApp() {
   // 初始化路由（选项卡切换）
   if (Game.Router) {
     Game.Router.init();
+  }
+
+  // 视觉氛围系统（阶段11）
+  if (Game.Visual) {
+    Game.Visual.init();
+    console.log('[App] 视觉氛围系统就绪');
   }
 
   // 初始化个人面板

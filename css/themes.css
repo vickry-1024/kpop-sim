@@ -1,0 +1,267 @@
+/**
+ * 全局主题与动态氛围CSS — 阶段11
+ * 通过body级CSS类控制：秘密模式暗色主题 / 嫌疑度警告 / 压力衰减 / 好感度光晕
+ */
+
+/* ===== 全局秘密模式 — body级暗色主题 ===== */
+
+body.secret-mode .app-container {
+  background-color: var(--secret-bg);
+}
+
+/* 秘密模式 — 所有页面卡片 */
+body.secret-mode .page-title,
+body.secret-mode .page-subtitle {
+  color: var(--secret-text);
+}
+
+body.secret-mode .card,
+body.secret-mode .profile-section,
+body.secret-mode .profile-card,
+body.secret-mode .relation-card,
+body.secret-mode .placeholder-card {
+  background: var(--secret-card);
+  color: var(--secret-text);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.secret-mode .stat-label,
+body.secret-mode .stat-value,
+body.secret-mode .profile-info-label,
+body.secret-mode .profile-info-value,
+body.secret-mode .relation-name {
+  color: var(--secret-text);
+}
+
+/* 秘密模式 — 底部导航 */
+body.secret-mode .bottom-nav {
+  background: var(--secret-card);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.secret-mode .nav-item .nav-label {
+  color: var(--secret-text);
+}
+
+body.secret-mode .nav-item.active .nav-label {
+  color: var(--secret-accent);
+}
+
+/* 秘密模式 — 输入框 */
+body.secret-mode .setup-input,
+body.secret-mode input[type="text"],
+body.secret-mode input[type="password"] {
+  background: var(--secret-card);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--secret-text);
+}
+
+/* 秘密模式 — 标签和按钮 */
+body.secret-mode .tag-item {
+  background: var(--secret-card);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--secret-text);
+}
+
+body.secret-mode .tag-item.selected {
+  border-color: var(--secret-accent);
+  color: var(--secret-accent);
+  background: rgba(187, 134, 252, 0.1);
+}
+
+body.secret-mode .btn-secondary {
+  border-color: var(--secret-accent);
+  color: var(--secret-accent);
+}
+
+/* 秘密模式 — 事件页面 */
+body.secret-mode .event-filter-bar {
+  background: var(--secret-bg);
+}
+
+body.secret-mode .event-card {
+  background: var(--secret-card);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+body.secret-mode .event-card-title {
+  color: var(--secret-text);
+}
+
+body.secret-mode .event-card-body {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.secret-mode .event-turn-header {
+  background: linear-gradient(to bottom, var(--secret-bg) 80%, transparent);
+}
+
+/* 秘密模式 — 操作日志 */
+body.secret-mode .action-log-item {
+  background: var(--secret-card);
+  color: var(--secret-text);
+}
+
+body.secret-mode .action-log-desc {
+  color: var(--secret-text);
+}
+
+/* 秘密模式 — 行动卡片 */
+body.secret-mode .action-card {
+  background: var(--secret-card);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--secret-text);
+}
+
+body.secret-mode .action-card-name {
+  color: var(--secret-text);
+}
+
+body.secret-mode .action-card-cost {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.secret-mode .action-category-title {
+  color: var(--secret-accent);
+}
+
+/* 秘密模式 — 回合信息 */
+body.secret-mode .turn-label,
+body.secret-mode .turn-hint {
+  color: var(--secret-text);
+}
+
+body.secret-mode .stamina-header-label,
+body.secret-mode .stamina-header-value {
+  color: var(--secret-text);
+}
+
+
+/* ===== 嫌疑度视觉警告系统 ===== */
+
+/* 嫌疑度 > 60: 顶部红色渐变边框 */
+body.suspicion-high .app-container {
+  border-top: 2px solid var(--color-danger);
+  transition: border-color var(--transition-normal);
+}
+
+/* 嫌疑度 > 80: 红色脉冲动画（app容器整屏警告） */
+body.suspicion-critical .app-container {
+  animation: suspicionPulse 2s ease-in-out infinite;
+}
+
+@keyframes suspicionPulse {
+  0%, 100% {
+    box-shadow: inset 0 0 0 rgba(255, 71, 87, 0);
+  }
+  50% {
+    box-shadow: inset 0 0 20px rgba(255, 71, 87, 0.15);
+  }
+}
+
+/* 嫌疑度>80时关键UI元素变色 */
+body.suspicion-critical .page-title {
+  color: var(--color-danger);
+  transition: color var(--transition-normal);
+}
+
+
+/* ===== 压力值视觉衰减系统 ===== */
+
+/* 压力 > 70: 整体饱和度降低 */
+body.stress-high .app-container {
+  filter: saturate(0.7);
+  transition: filter var(--transition-slow);
+}
+
+/* 压力 > 90: 屏幕抖动 */
+body.stress-critical .app-container {
+  animation: stressShake 0.5s ease-in-out;
+}
+
+@keyframes stressShake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-4px); }
+  30% { transform: translateX(4px); }
+  50% { transform: translateX(-3px); }
+  70% { transform: translateX(3px); }
+  90% { transform: translateX(-1px); }
+}
+
+
+/* ===== 好感度氛围系统（温暖柔光） ===== */
+
+/* 好感度 > 80: 聊天气泡粉色光晕 */
+body.affection-warm .chat-bubble-idol {
+  box-shadow: 0 2px 12px rgba(248, 165, 194, 0.35);
+  transition: box-shadow var(--transition-normal);
+}
+
+/* 好感度 > 80: 好感度条额外光晕 */
+body.affection-warm .affection-bar-fill {
+  box-shadow: 0 0 8px rgba(248, 165, 194, 0.3);
+}
+
+
+/* ===== 过渡动画增强 ===== */
+
+/* 全局主题切换平滑过渡 */
+.app-container,
+.bottom-nav,
+.page,
+.card,
+.profile-section,
+.profile-card,
+.relation-card,
+.placeholder-card,
+.action-card,
+.event-card,
+input[type="text"],
+input[type="password"],
+.tag-item,
+.btn-secondary {
+  transition: background-color var(--transition-normal),
+              color var(--transition-normal),
+              border-color var(--transition-normal);
+}
+
+/* 数值驱动状态切换的平滑过渡 */
+body .app-container {
+  transition: border-top-color var(--transition-normal),
+              filter var(--transition-slow),
+              box-shadow var(--transition-normal);
+}
+
+
+/* ===== 性能降级模式 ===== */
+
+body.low-performance .app-container {
+  filter: none !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+body.low-performance .chat-bubble-idol {
+  box-shadow: none !important;
+}
+
+
+/* ===== prefers-reduced-motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  body.stress-critical .app-container {
+    animation: none;
+  }
+
+  body.suspicion-critical .app-container {
+    animation: none;
+  }
+}
