@@ -187,6 +187,14 @@ Game.Turn = (() => {
               if (Game.Events && Game.Events.hasStress70Penalty()) {
                 delta = Math.round(delta * 0.5);
               }
+              // 公司限制接触惩罚（阶段8补充）：1级-30% 2级-50% 3级-70%
+              if (Game.State.hasContactRestriction && Game.State.hasContactRestriction(targetIndex)) {
+                var restriction = Game.State.getContactRestriction(targetIndex);
+                if (restriction) {
+                  var multipliers = { 1: 0.7, 2: 0.5, 3: 0.3 };
+                  delta = Math.round(delta * (multipliers[restriction.level] || 0.7));
+                }
+              }
               var currentAff = Game.state.idols[targetIndex].stats.affection || 0;
               if (currentAff >= 90) {
                 delta = Math.round(delta * 0.3);
@@ -387,6 +395,20 @@ Game.Turn = (() => {
       _checkDailyDetails();
     }
 
+    // 17b. 亲友社交圈检测（阶段8补充）
+    if (Game.Reality) {
+      Game.Reality.checkBestFriendReaction();
+      Game.Reality.checkFamilyReaction();
+      Game.Reality.checkTeammateAttitude();
+    }
+
+    // 17c. 公司干涉检测（阶段8补充）
+    if (Game.Reality) {
+      Game.Reality.checkDatingBan();
+      Game.Reality.checkGagOrder();
+      Game.Reality.checkContactRestriction();
+    }
+
     // 18. 固定事件检测（阶段9：生日/回归期/颁奖礼）
     if (Game.Events) {
       Game.Events.checkFixedEvents();
@@ -434,17 +456,20 @@ Game.Turn = (() => {
 
     title.textContent = action.icon + ' ' + action.name + ' — 选择对象';
 
-    const idols = Game.state.idols || [];
-    list.innerHTML = idols.map((idol, i) => `
-      <button class="target-option" onclick="Game.Turn.confirmTarget(${i})">
-        <span class="target-option-icon">💜</span>
-        <div class="target-option-info">
-          <span class="target-option-name">${escapeHtml(idol.nickname || idol.name)}</span>
-          <span class="target-option-affection">好感度: ${idol.stats.affection}</span>
-        </div>
-        <span class="target-option-arrow">→</span>
-      </button>
-    `).join('');
+    var idols = Game.state.idols || [];
+    list.innerHTML = idols.map(function(idol, i) {
+      var banned = Game.State.hasDatingBan && Game.State.hasDatingBan(i);
+      var banRemaining = banned ? Game.State.getDatingBanRemaining(i) : 0;
+      var banLabel = banned ? ' 🚫禁爱令(' + banRemaining + '回合)' : '';
+      return '<button class="target-option' + (banned ? ' target-banned' : '') + '" onclick="Game.Turn.confirmTarget(' + i + ')">' +
+        '<span class="target-option-icon">💜</span>' +
+        '<div class="target-option-info">' +
+          '<span class="target-option-name">' + escapeHtml(idol.nickname || idol.name) + banLabel + '</span>' +
+          '<span class="target-option-affection">好感度: ' + (idol.stats.affection || 0) + '</span>' +
+        '</div>' +
+        '<span class="target-option-arrow">→</span>' +
+      '</button>';
+    }).join('');
 
     modal.style.display = 'flex';
   }
@@ -470,6 +495,14 @@ Game.Turn = (() => {
     }
 
     // 检查是否有子选项
+    var bannedForDate = Game.State.hasDatingBan && Game.State.hasDatingBan(targetIndex);
+    if (bannedForDate && (actionId === 'date' || action.category === 'idol')) {
+      if (!confirm('⚠️ 该爱豆目前处于禁爱令期间（剩余' + Game.State.getDatingBanRemaining(targetIndex) + '回合）。\n\n在禁爱令期间约会将大幅增加嫌疑度（+8~15）。确定要继续吗？')) {
+        return;
+      }
+      // 增加额外嫌疑度惩罚
+      Game.State.addSuspicion(Math.floor(Math.random() * 8) + 8);
+    }
     if (action.subType === 'chat') {
       // 显示聊天对话界面
       showChatModal(actionId, targetIndex);
@@ -836,6 +869,14 @@ Game.Turn = (() => {
               // 压力惩罚（阶段9）：stress≥70触发的回合好感获取减半
               if (Game.Events && Game.Events.hasStress70Penalty()) {
                 delta = Math.round(delta * 0.5);
+              }
+              // 公司限制接触惩罚（阶段8补充）：1级-30% 2级-50% 3级-70%
+              if (Game.State.hasContactRestriction && Game.State.hasContactRestriction(targetIndex)) {
+                var restriction = Game.State.getContactRestriction(targetIndex);
+                if (restriction) {
+                  var multipliers = { 1: 0.7, 2: 0.5, 3: 0.3 };
+                  delta = Math.round(delta * (multipliers[restriction.level] || 0.7));
+                }
               }
               var currentAff2 = Game.state.idols[targetIndex].stats.affection || 0;
               if (currentAff2 >= 90) {

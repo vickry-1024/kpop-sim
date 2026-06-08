@@ -776,6 +776,602 @@ Game.Reality = (() => {
   }
 
   // ======================================================================
+  //  👥 亲友社交圈
+  // ======================================================================
+
+  /**
+   * 闺蜜态度事件
+   * 每5-8回合触发一次，根据嫌疑度和关系阶段变化内容
+   */
+  function checkBestFriendReaction() {
+    var currentTurn = Game.state.currentTurn || 0;
+    var lastTurn = Game.State.getBestFriendCooldown();
+    if (currentTurn - lastTurn < 5) return;
+    if (Math.random() * 100 > 30) return;
+
+    Game.State.setBestFriendCooldown(currentTurn);
+
+    var suspicion = Game.state.player.stats.suspicion || 0;
+    var idols = Game.state.idols || [];
+    var friendName = '小美'; // 默认闺蜜名（后续可从存档读取）
+    var friendData = Game.State.getFriendById ? Game.State.getFriendById('friend-bestie') : null;
+    if (friendData && friendData.name) friendName = friendData.name;
+
+    // 根据情况选择不同的闺蜜对话
+    var message = '';
+    var options = [];
+
+    if (suspicion >= 60) {
+      message = '喂喂喂！我跟你讲，最近论坛上好多人都在传你的事情...你是不是有事情没告诉我啊？😳';
+      options = [
+        { label: '📞 全盘托出', choice: 'confide_all',
+          desc: '把最近的经历都告诉闺蜜。压力-5~10，嫌疑度-3' },
+        { label: '😅 含糊其辞', choice: 'evade',
+          desc: '"没什么大事啦～你想多了"' },
+        { label: '🤐 坚决否认', choice: 'deny',
+          desc: '"那都是乱传的，别信" 压力+5' }
+      ];
+    } else if (suspicion >= 20 || hasAnyDatingOrMarried()) {
+      message = '嘿～我听说你最近跟那个爱豆走得挺近的嘛...怎么样怎么样？给我更新一下近况呗！🤭';
+      options = [
+        { label: '💬 分享一下', choice: 'share',
+          desc: '和闺蜜聊聊近况。压力-3~8，心情变好' },
+        { label: '🙊 保持神秘', choice: 'mystery',
+          desc: '"时机到了自然告诉你啦～"' },
+        { label: '😤 嫌她太八卦', choice: 'annoyed',
+          desc: '"你能不能别这么八卦啊" 压力+3' }
+      ];
+    } else {
+      message = '你这几天怎么老是盯着手机傻笑？是不是有什么好事瞒着我呀～我请你喝奶茶，你讲给我听！🧋';
+      options = [
+        { label: '🧋 跟她聊聊', choice: 'chat',
+          desc: '和闺蜜聊聊天放松。压力-2~5' },
+        { label: '😊 微笑不语', choice: 'smile',
+          desc: '保持神秘感' }
+      ];
+    }
+
+    showSocialModal('👯 闺蜜 ' + escapeHtml(friendName), message, options, function(choice) {
+      resolveBestFriend(choice, friendName);
+    });
+  }
+
+  function hasAnyDatingOrMarried() {
+    var idols = Game.state.idols || [];
+    for (var i = 0; i < idols.length; i++) {
+      var s = idols[i].relationshipStage || 'pursuit';
+      if (s === 'dating' || s === 'married') return true;
+    }
+    return false;
+  }
+
+  function resolveBestFriend(choice, friendName) {
+    switch (choice) {
+      case 'confide_all':
+        Game.State.addStress(randInRange([-10, -5]));
+        Game.State.addSuspicion(randInRange([-3, -1]));
+        showToast('全盘托出 💬', '你跟' + escapeHtml(friendName) + '把事情的来龙去脉都说了。她认真地听完，拍了拍你的肩膀。"不管怎样，我都支持你！"',
+          '👯', { stress: [-10, -5], suspicion: [-3, -1] }, 4000);
+        break;
+      case 'evade':
+        showToast('含糊其辞 😅', escapeHtml(friendName) + '翻了个白眼。"行行行，你不说我也能猜到七八分..."',
+          '👯', null, 4000);
+        break;
+      case 'deny':
+        Game.State.addStress(randInRange([3, 5]));
+        showToast('坚决否认 🤐', '虽然嘴上否认了，但' + escapeHtml(friendName) + '明显不信。你心里也觉得对闺蜜撒谎不太好...',
+          '👯', { stress: [3, 5] }, 4000);
+        break;
+      case 'share':
+        Game.State.addStress(randInRange([-8, -3]));
+        showToast('分享近况 💬', escapeHtml(friendName) + '听得眼睛发亮。"天哪天哪天哪！这也太甜了吧！！"',
+          '👯', { stress: [-8, -3] }, 4000);
+        break;
+      case 'mystery':
+        showToast('保持神秘 🙊', escapeHtml(friendName) + '做了个鬼脸。"哼，小气鬼！不过看你开心的样子，应该还不错～"',
+          '👯', null, 4000);
+        break;
+      case 'annoyed':
+        Game.State.addStress(randInRange([2, 3]));
+        showToast('嫌她八卦 😤', escapeHtml(friendName) + '愣了一下，有点委屈。"我...我只是关心你而已嘛。"',
+          '👯', { stress: [2, 3] }, 4000);
+        break;
+      default:
+        // chat / smile
+        Game.State.addStress(randInRange([-5, -2]));
+        showToast('闺蜜时光 💕', '和' + escapeHtml(friendName) + '聊了会儿天，心情好了不少。有好朋友真好～',
+          '👯', { stress: [-5, -2] }, 4000);
+    }
+
+    Game.State.addEventLog({ type: 'best-friend', choice: choice,
+      summary: '👯 闺蜜' + escapeHtml(friendName) + '找你聊天（' + choice + '）' });
+  }
+
+  /**
+   * 家人反应事件
+   * 嫌疑度>=30且有恋爱/已婚关系时，15%概率触发
+   */
+  function checkFamilyReaction() {
+    var currentTurn = Game.state.currentTurn || 0;
+    var idols = Game.state.idols || [];
+    var suspicion = Game.state.player.stats.suspicion || 0;
+
+    if (suspicion < 30) return;
+
+    // 找到第一个有家人反应价值的爱豆
+    var targetIndex = -1;
+    for (var i = 0; i < idols.length; i++) {
+      var stage = idols[i].relationshipStage || 'pursuit';
+      if (stage !== 'dating' && stage !== 'married') continue;
+      if (Game.State.getFamilyReaction(i)) continue; // 已触发过
+      targetIndex = i;
+      break;
+    }
+    if (targetIndex < 0) return;
+
+    // 15%概率
+    if (Math.random() * 100 > 15) return;
+
+    var idol = idols[targetIndex];
+    var idolName = escapeHtml(idol.nickname || idol.name);
+    var stage = idol.relationshipStage || 'pursuit';
+    var isMarried = stage === 'married';
+
+    var message, options;
+    if (suspicion >= 70) {
+      message = '家里来电话了...爸妈好像看到了网上的那些传言。\n\n"我们听说了你的事情。我们不是反对，但是...和一个爱豆在一起，你想过后果吗？你的事业、你的生活...你真的准备好了吗？"';
+      options = [
+        { label: '❤️ 坦诚沟通', choice: 'honest',
+          desc: '认真跟家人解释你们的关系。压力+5，但嫌疑度-8' },
+        { label: '😰 闪烁其词', choice: 'evade',
+          desc: '"那都是网上乱传的..." 压力+10' },
+        { label: '💪 坚定表态', choice: 'firm',
+          desc: '"我考虑清楚了，请相信我" 嫌疑度-3，好感+1~2' }
+      ];
+    } else if (suspicion >= 40) {
+      message = '妈妈打来电话，语气有些担忧。\n\n"宝贝，妈妈看到你最近在SNS上的一些动态...那个人，是认真的吗？妈妈只是不想你受伤。"';
+      options = [
+        { label: '💕 安抚解释', choice: 'reassure',
+          desc: '让家人放心。压力-3，嫌疑度-2' },
+        { label: '😤 不耐烦', choice: 'impatient',
+          desc: '"妈你别管了！" 压力+3' }
+      ];
+    } else {
+      message = '回家吃饭时，父母似乎有话想问又不敢问。\n\n"那个...最近是不是谈恋爱了？看起来挺开心的样子。"空气安静了几秒。';
+      options = [
+        { label: '😊 大方承认', choice: 'admit',
+          desc: '"嗯，在和一个很好的人交往。"' },
+        { label: '🙊 暂时不说', choice: 'deflect',
+          desc: '"吃饭吃饭～别聊这个啦"' }
+      ];
+    }
+
+    showSocialModal('👨‍👩‍👧 家人的关心', message, options, function(choice) {
+      resolveFamilyReaction(targetIndex, choice, idolName, isMarried);
+    });
+  }
+
+  function resolveFamilyReaction(idolIndex, choice, idolName, isMarried) {
+    switch (choice) {
+      case 'honest':
+        Game.State.addStress(randInRange([3, 5]));
+        Game.State.addSuspicion(randInRange([-8, -5]));
+        Game.State.setFamilyReaction(idolIndex, 'supportive');
+        showToast('坦诚沟通 ❤️', '你花了很长时间跟家人解释了你们的关系。虽然他们还有些担心，但最终表示理解。"只要是你自己的选择，我们支持你。"',
+          '👨‍👩‍👧', { stress: [3, 5], suspicion: [-8, -5] }, 5000);
+        break;
+      case 'evade':
+        Game.State.addStress(randInRange([8, 10]));
+        Game.State.setFamilyReaction(idolIndex, 'worried');
+        showToast('闪烁其词 😰', '电话那头的沉默让你很不舒服。你知道他们只是关心你，但你现在还没准备好说清楚...',
+          '👨‍👩‍👧', { stress: [8, 10] }, 5000);
+        break;
+      case 'firm':
+        Game.State.addSuspicion(randInRange([-3, -1]));
+        Game.State.addAffection(idolIndex, randInRange([1, 2]));
+        Game.State.setFamilyReaction(idolIndex, 'supportive');
+        showToast('坚定表态 💪', '你的坚定让家人沉默了。最后爸爸叹了口气："行吧，你长大了。有事情随时跟我们说。"',
+          '👨‍👩‍👧', { suspicion: [-3, -1], affection: [1, 2] }, 5000);
+        break;
+      case 'reassure':
+        Game.State.addStress(randInRange([-3, -1]));
+        Game.State.addSuspicion(randInRange([-2, -1]));
+        Game.State.setFamilyReaction(idolIndex, 'supportive');
+        showToast('安抚解释 💕', '"妈你放心吧，我挺好的。等时机合适，我带ta回来给你们看看。"电话那头的声音轻松了不少。',
+          '👨‍👩‍👧', { stress: [-3, -1], suspicion: [-2, -1] }, 5000);
+        break;
+      case 'impatient':
+        Game.State.addStress(randInRange([2, 3]));
+        Game.State.setFamilyReaction(idolIndex, 'worried');
+        showToast('不耐烦 😤', '挂了电话后你觉得有点愧疚。他们只是关心你而已...',
+          '👨‍👩‍👧', { stress: [2, 3] }, 4000);
+        break;
+      default:
+        // admit / deflect
+        Game.State.setFamilyReaction(idolIndex, choice === 'admit' ? 'supportive' : 'neutral');
+        showToast(choice === 'admit' ? '大方承认 😊' : '暂时不说 🙊',
+          choice === 'admit' ? '父母相视一笑。"好吧，有空带回来吃顿饭。"' : '你机智地把话题转移到了今天的菜色上。父母也没再追问。',
+          '👨‍👩‍👧', null, 4000);
+    }
+
+    Game.State.addEventLog({ type: 'family-reaction', idolIndex: idolIndex,
+      summary: '👨‍👩‍👧 家人对' + escapeHtml(idolName) + '的关系产生了反应（' + choice + '）' });
+    refreshPanels();
+  }
+
+  /**
+   * 队友态度事件
+   * 当与某爱豆恋爱/结婚时，其队友可能表态
+   */
+  function checkTeammateAttitude() {
+    var currentTurn = Game.state.currentTurn || 0;
+    var idols = Game.state.idols || [];
+
+    for (var i = 0; i < idols.length; i++) {
+      var stage = idols[i].relationshipStage || 'pursuit';
+      if (stage !== 'dating' && stage !== 'married') continue;
+      if (Game.State.getTeammateAttitude(i)) continue; // 已触发
+
+      // 15%概率
+      if (Math.random() * 100 > 15) continue;
+
+      var idol = idols[i];
+      var idolName = escapeHtml(idol.nickname || idol.name);
+      var isMarried = stage === 'married';
+
+      // 随机队友名
+      var teammateNames = ['知秀', '泰民', '秀雅', '珉奎', '多贤', '志勋', '彩瑛', '范洙', '娜恩', '圣俊'];
+      var teammateName = teammateNames[Math.floor(Math.random() * teammateNames.length)];
+
+      // 60% 支持 / 40% 警惕
+      var isSupportive = Math.random() < 0.6;
+
+      var message, options;
+      if (isSupportive) {
+        message = '你收到了一条来自' + escapeHtml(teammateName) + '（' + idolName + '的队友）的私信：\n\n"嘿！我是' + escapeHtml(teammateName) + '～' + idolName + '跟我们提起过你。听说你们在一起了，真心为你们高兴！💕\n\n以后有什么事可以找我帮忙哦～我帮你们打掩护！"';
+        options = [
+          { label: '🙏 表示感谢', choice: 'thank',
+            desc: '感谢队友的支持。' + idolName + '好感和魅力+1~2' },
+          { label: '😊 友好回应', choice: 'friendly',
+            desc: '礼貌回应。好感+1' }
+        ];
+      } else {
+        message = '你收到了一条来自' + escapeHtml(teammateName) + '（' + idolName + '的队友）的消息：\n\n"听着，我是' + escapeHtml(teammateName) + '，' + idolName + '的队友。我知道你们的事了。\n\n说实话，我很担心。我们团现在正是上升期，如果' + idolName + '的恋情曝光，对全团都是打击。我不是针对你，但...请你们务必小心。不要影响团队。"';
+        options = [
+          { label: '🤝 表达理解', choice: 'understand',
+            desc: '表示理解队友的担心。嫌疑度-2，但压力+3' },
+          { label: '😤 感到不满', choice: 'offended',
+            desc: '"你凭什么干涉我们？" 嫌疑度+3' },
+          { label: '😐 已读不回', choice: 'ignore',
+            desc: '选择无视这条消息' }
+        ];
+      }
+
+      showSocialModal('🎤 ' + escapeHtml(teammateName) + '（队友）的消息', message, options, function(choice) {
+        resolveTeammateAttitude(i, choice, idolName, teammateName, isSupportive, isMarried);
+      });
+      return; // 每回合最多1次
+    }
+  }
+
+  function resolveTeammateAttitude(idolIndex, choice, idolName, teammateName, isSupportive, isMarried) {
+    if (isSupportive) {
+      switch (choice) {
+        case 'thank':
+          Game.State.addAffection(idolIndex, randInRange([1, 2]));
+          Game.State.addCharm(randInRange([1, 2]));
+          Game.State.setTeammateAttitude(idolIndex, 'supportive');
+          showToast('队友支持 💕', escapeHtml(teammateName) + '回了一个笑脸。"不客气！你们要一直幸福下去哦～❤️"',
+            '🎤', { affection: [1, 2], charm: [1, 2] }, 4000);
+          break;
+        default:
+          Game.State.addAffection(idolIndex, 1);
+          Game.State.setTeammateAttitude(idolIndex, 'supportive');
+          showToast('友好回应 😊', escapeHtml(teammateName) + '显得很高兴。"以后就是自己人了！"',
+            '🎤', { affection: [1, 1] }, 4000);
+      }
+    } else {
+      switch (choice) {
+        case 'understand':
+          Game.State.addSuspicion(randInRange([-2, -1]));
+          Game.State.addStress(randInRange([2, 3]));
+          Game.State.setTeammateAttitude(idolIndex, 'neutral');
+          showToast('表达理解 🤝', '你回复了一段诚恳的消息，表示理解团队的压力。' + escapeHtml(teammateName) + '回复："谢谢你能理解。我会尽量帮你们的。"',
+            '🎤', { suspicion: [-2, -1], stress: [2, 3] }, 4000);
+          break;
+        case 'offended':
+          Game.State.addSuspicion(randInRange([2, 3]));
+          Game.State.setTeammateAttitude(idolIndex, 'hostile');
+          showToast('感到不满 😤', '你的强硬回复让' + escapeHtml(teammateName) + '很不满。未来的团队氛围可能会更紧张...',
+            '🎤', { suspicion: [2, 3] }, 4000);
+          break;
+        default:
+          Game.State.setTeammateAttitude(idolIndex, 'neutral');
+          showToast('已读不回 😐', '你没有回复。也许沉默是最好的回应...至少目前是这样。',
+            '🎤', null, 4000);
+      }
+    }
+
+    Game.State.addEventLog({ type: 'teammate-attitude', idolIndex: idolIndex,
+      summary: '🎤 ' + idolName + '的队友' + escapeHtml(teammateName) + '表态（' + (isSupportive ? '支持' : '警惕') + '）' });
+    refreshPanels();
+  }
+
+  // ======================================================================
+  //  🏢 公司干涉完整版
+  // ======================================================================
+
+  /**
+   * 禁爱令事件
+   * 高嫌疑度下公司可能介入，强制禁爱
+   */
+  function checkDatingBan() {
+    var currentTurn = Game.state.currentTurn || 0;
+    var suspicion = Game.state.player.stats.suspicion || 0;
+    var idols = Game.state.idols || [];
+
+    if (suspicion < 50) return;
+
+    // 找恋爱/已婚爱豆，且未被禁爱
+    for (var i = 0; i < idols.length; i++) {
+      var stage = idols[i].relationshipStage || 'pursuit';
+      if (stage !== 'dating' && stage !== 'married') continue;
+      if (Game.State.hasDatingBan(i)) continue;
+
+      // 12%概率
+      if (Math.random() * 100 > 12) continue;
+
+      var idol = idols[i];
+      var idolName = escapeHtml(idol.nickname || idol.name);
+      var companyName = (idol.group || '所属公司') + '娱乐';
+
+      var message = '你收到了一封来自' + escapeHtml(companyName) + '的正式通知：\n\n"经公司内部讨论，鉴于近期舆论环境，公司决定对旗下艺人' + idolName + '实施禁爱令管理。请在以下选项中做出选择：\n\n如不配合，公司将采取进一步措施。"';
+      var options = [
+        { label: '📝 配合禁爱令', choice: 'comply',
+          desc: '遵守规定，约会行动锁定3回合' },
+        { label: '💼 协商谈判', choice: 'negotiate',
+          desc: '尝试与公司协商。粉丝-10~30，禁爱令缩短为1回合' },
+        { label: '🚫 坚决对抗', choice: 'defy',
+          desc: '"我不会放弃的。" 嫌疑度+10，可能触发公司进一步行动' }
+      ];
+
+      showSocialModal('🏢 禁爱令通知', message, options, function(choice) {
+        resolveDatingBan(i, choice, idolName, companyName);
+      });
+      return;
+    }
+  }
+
+  function resolveDatingBan(idolIndex, choice, idolName, companyName) {
+    switch (choice) {
+      case 'comply':
+        Game.State.setDatingBan(idolIndex, 3);
+        Game.State.addStress(randInRange([5, 10]));
+        Game.State.addSuspicion(randInRange([-5, -3]));
+        showToast('配合禁爱令 📝', '你签了字，同意在接下来的一个半月内减少与' + idolName + '的公开接触。虽然心里难受，但至少暂时安全了。',
+          '🏢', { stress: [5, 10], suspicion: [-5, -3] }, 5000);
+        break;
+      case 'negotiate':
+        Game.State.addFollowers(randInRange([-30, -10]));
+        Game.State.setDatingBan(idolIndex, 1);
+        Game.State.addStress(randInRange([3, 5]));
+        showToast('协商谈判 💼', '经过一番艰难的谈判，公司同意缩短限制时间，但要求你在SNS上配合公司宣传作为交换。粉丝有轻微流失。',
+          '🏢', { followers: [-30, -10], stress: [3, 5] }, 5000);
+        break;
+      case 'defy':
+        Game.State.addSuspicion(randInRange([8, 10]));
+        Game.State.addStress(randInRange([5, 10]));
+        showToast('坚决对抗 🚫', '你态度强硬地拒绝了禁爱令。' + escapeHtml(companyName) + '的负责人脸色铁青。"你会后悔的。"',
+          '🏢', { suspicion: [8, 10], stress: [5, 10] }, 5000);
+        break;
+    }
+
+    Game.State.addEventLog({ type: 'dating-ban', idolIndex: idolIndex,
+      summary: '🏢 ' + escapeHtml(companyName) + '对' + idolName + '发布禁爱令（选择：' + choice + '）' });
+    refreshPanels();
+  }
+
+  /**
+   * 封口协议事件
+   * 媒体压力大时公司可能要求签署保密协议
+   */
+  function checkGagOrder() {
+    var currentTurn = Game.state.currentTurn || 0;
+    var suspicion = Game.state.player.stats.suspicion || 0;
+    var idols = Game.state.idols || [];
+
+    if (suspicion < 40) return;
+
+    for (var i = 0; i < idols.length; i++) {
+      var stage = idols[i].relationshipStage || 'pursuit';
+      if (stage !== 'dating' && stage !== 'married') continue;
+      if (Game.State.hasGagOrder(i)) continue;
+
+      // 18%概率
+      if (Math.random() * 100 > 18) continue;
+
+      var idol = idols[i];
+      var idolName = escapeHtml(idol.nickname || idol.name);
+      var companyName = (idol.group || '所属公司') + '娱乐';
+
+      var message = '一位自称是' + escapeHtml(companyName) + '法务部的人联系了你：\n\n"您好，关于您与本公司旗下艺人' + idolName + '的关系，公司希望与您签署一份保密协议（NDA）。\n\n协议内容：您不得向任何第三方透露与该艺人的关系细节，不得在任何公开平台发布相关信息。违反协议将面临法律后果。"';
+      var options = [
+        { label: '✍️ 签署协议', choice: 'sign',
+          desc: '签署NDA。压力+10，嫌疑度-10，但SNS发帖功能受限2回合' },
+        { label: '🤔 暂不签署', choice: 'delay',
+          desc: '"我需要时间考虑。" 嫌疑度+3' },
+        { label: '❌ 拒绝签署', choice: 'refuse',
+          desc: '"我没什么好藏的。" 嫌疑度+8，但自由度不变' }
+      ];
+
+      showSocialModal('📄 保密协议', message, options, function(choice) {
+        resolveGagOrder(i, choice, idolName, companyName);
+      });
+      return;
+    }
+  }
+
+  function resolveGagOrder(idolIndex, choice, idolName, companyName) {
+    switch (choice) {
+      case 'sign':
+        Game.State.setGagOrder(idolIndex);
+        Game.State.addStress(randInRange([8, 10]));
+        Game.State.addSuspicion(randInRange([-10, -7]));
+        // 签署后2回合SNS发帖受限（通过锁定约会行动来体现）
+        Game.State.setDatingActionLock(idolIndex, 2);
+        showToast('签署协议 ✍️', '你签下了自己的名字。从现在起，你不能再在SNS上随意发言了。虽然憋得慌，但至少暂时把风险压下去了。',
+          '📄', { stress: [8, 10], suspicion: [-10, -7] }, 5000);
+        break;
+      case 'delay':
+        Game.State.addSuspicion(randInRange([2, 3]));
+        showToast('暂不签署 🤔', '"我需要仔细看看条款。"法务部的人皱了皱眉，但没再说什么。不过你知道这只是暂时的。',
+          '📄', { suspicion: [2, 3] }, 4000);
+        break;
+      case 'refuse':
+        Game.State.addSuspicion(randInRange([6, 8]));
+        showToast('拒绝签署 ❌', '法务部的人脸色一沉。"您知道这样做的后果吗？公司有权采取进一步行动保护艺人权益。"',
+          '📄', { suspicion: [6, 8] }, 5000);
+        break;
+    }
+
+    Game.State.addEventLog({ type: 'gag-order', idolIndex: idolIndex,
+      summary: '📄 ' + escapeHtml(companyName) + '要求签署关于' + idolName + '的保密协议（选择：' + choice + '）' });
+    refreshPanels();
+  }
+
+  /**
+   * 限制接触事件
+   * 公司或经纪人限制你接触爱豆
+   */
+  function checkContactRestriction() {
+    var currentTurn = Game.state.currentTurn || 0;
+    var suspicion = Game.state.player.stats.suspicion || 0;
+    var idols = Game.state.idols || [];
+
+    if (suspicion < 45) return;
+
+    for (var i = 0; i < idols.length; i++) {
+      var stage = idols[i].relationshipStage || 'pursuit';
+      if (stage !== 'dating' && stage !== 'married') continue;
+      if (Game.State.hasContactRestriction(i)) continue;
+
+      // 15%概率，有禁爱令或封口协议时提高到25%
+      var baseChance = 15;
+      if (Game.State.hasDatingBan(i) || Game.State.hasGagOrder(i)) baseChance = 25;
+      if (Math.random() * 100 > baseChance) continue;
+
+      var idol = idols[i];
+      var idolName = escapeHtml(idol.nickname || idol.name);
+      var managerName = '经纪人';
+      var intervention = Game.State.getManagerIntervention(i);
+      if (intervention && intervention.managerName) managerName = intervention.managerName;
+
+      var message = escapeHtml(managerName) + '发来了一条消息：\n\n"最近风声太紧了。公司要求我加强对' + idolName + '的行程管理。接下来的几周，你们见面会比较困难。\n\n这是为了保护你们，请理解。"';
+      var options = [
+        { label: '😔 接受安排', choice: 'accept',
+          desc: '接受限制。约会对' + idolName + '的好感获取减半3回合' },
+        { label: '🔍 找其他方式', choice: 'workaround',
+          desc: '想办法绕开限制。体力-20，维持正常好感获取' },
+        { label: '😤 抗议', choice: 'protest',
+          desc: '"这太不合理了！" 压力+5，嫌疑度+3' }
+      ];
+
+      showSocialModal('🚧 接触限制', message, options, function(choice) {
+        resolveContactRestriction(i, choice, idolName, managerName);
+      });
+      return;
+    }
+  }
+
+  function resolveContactRestriction(idolIndex, choice, idolName, managerName) {
+    switch (choice) {
+      case 'accept':
+        Game.State.setContactRestriction(idolIndex, 2, 3); // 中度限制3回合
+        Game.State.addStress(randInRange([3, 5]));
+        Game.State.addSuspicion(randInRange([-3, -1]));
+        showToast('接受安排 😔', '你回复"好的，我理解。"虽然心里一万个不愿意，但为了长远的打算，暂时的忍耐是值得的。',
+          '🚧', { stress: [3, 5], suspicion: [-3, -1] }, 5000);
+        break;
+      case 'workaround':
+        Game.State.addStamina(randInRange([-25, -20]));
+        showToast('找其他方式 🔍', '你花了很大精力安排了秘密见面的方式。修改了行程、找了中间人传话...虽然累，但至少能维持联系。',
+          '🚧', { stamina: [-25, -20] }, 5000);
+        break;
+      case 'protest':
+        Game.State.addStress(randInRange([4, 5]));
+        Game.State.addSuspicion(randInRange([2, 3]));
+        showToast('抗议 😤', escapeHtml(managerName) + '叹了口气。"我是为了你们好。如果你执意这样，后果自负。"',
+          '🚧', { stress: [4, 5], suspicion: [2, 3] }, 5000);
+        break;
+    }
+
+    Game.State.addEventLog({ type: 'contact-restriction', idolIndex: idolIndex,
+      summary: '🚧 ' + escapeHtml(managerName) + '限制了你与' + idolName + '的接触（选择：' + choice + '）' });
+    refreshPanels();
+  }
+
+  // ======================================================================
+  //  通用社交弹窗（亲友社交圈 & 公司干涉共用）
+  // ======================================================================
+
+  /**
+   * 通用社交事件弹窗
+   * 复用 media-event-modal
+   */
+  function showSocialModal(title, message, options, callback) {
+    var modal = document.getElementById('media-event-modal');
+    var titleEl = document.getElementById('media-event-modal-title');
+    var bodyEl = document.getElementById('media-event-modal-body');
+    var actionsEl = document.getElementById('media-event-modal-actions');
+
+    if (!modal || !titleEl || !bodyEl || !actionsEl) return;
+
+    titleEl.textContent = title;
+    bodyEl.innerHTML = '<div class="media-event-scene">' +
+      '<p style="white-space:pre-line">' + escapeHtml(message) + '</p>' +
+      '</div>';
+
+    var actionsHtml = '';
+    for (var i = 0; i < options.length; i++) {
+      var opt = options[i];
+      var cls = 'media-option-safe';
+      if (i === options.length - 1 && options.length > 2) cls = 'media-option-pay';
+      else if (i === 1 && options.length === 3) cls = 'media-option-risk';
+      actionsHtml += '<button class="target-modal-btn ' + cls + '" data-choice="' + opt.choice + '">' +
+        escapeHtml(opt.label) + '<br><small>' + escapeHtml(opt.desc || '') + '</small>' +
+        '</button>';
+    }
+    actionsEl.innerHTML = actionsHtml;
+
+    // 绑定事件（使用一次性监听避免重复绑定）
+    actionsEl._callback = callback;
+    if (!actionsEl._listenerBound) {
+      actionsEl._listenerBound = true;
+      actionsEl.addEventListener('click', function(e) {
+        var btn = e.target.closest('button');
+        if (!btn) return;
+        var choice = btn.dataset.choice;
+        if (!choice) return;
+        modal.style.display = 'none';
+        if (actionsEl._callback) {
+          actionsEl._callback(choice);
+          actionsEl._callback = null;
+        }
+      });
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  /**
+   * 刷新面板
+   */
+  function refreshPanels() {
+    if (Game.Relations) Game.Relations.refresh();
+    if (Game.Profile) Game.Profile.refresh();
+  }
+
+  // ======================================================================
   //  公开API
   // ======================================================================
 
@@ -812,6 +1408,14 @@ Game.Reality = (() => {
     checkLocationSharing,
     _resolveSickVisit,
     _resolveLocationSharing,
+    // 亲友社交圈
+    checkBestFriendReaction,
+    checkFamilyReaction,
+    checkTeammateAttitude,
+    // 公司干涉
+    checkDatingBan,
+    checkGagOrder,
+    checkContactRestriction,
     // 工具
     isDatingActionLocked,
     hasMediaFlag,

@@ -661,6 +661,138 @@ Game.State = (() => {
     return cd[String(idolIndex)] || 0;
   }
 
+  // ===== 亲友社交圈 & 公司干涉（阶段8补充） =====
+
+  /**
+   * 禁爱令：设置/获取/清除
+   */
+  function hasDatingBan(idolIndex) {
+    var bans = Game.state.datingBans || {};
+    var ban = bans[String(idolIndex)];
+    if (!ban) return false;
+    if ((Game.state.currentTurn || 0) >= ban.untilTurn) return false; // 已过期
+    return true;
+  }
+
+  function setDatingBan(idolIndex, turns) {
+    if (!Game.state.datingBans) Game.state.datingBans = {};
+    Game.state.datingBans[String(idolIndex)] = {
+      untilTurn: (Game.state.currentTurn || 0) + turns,
+      startedTurn: Game.state.currentTurn || 0,
+      totalTurns: turns
+    };
+    autoSave();
+  }
+
+  function getDatingBanRemaining(idolIndex) {
+    if (!hasDatingBan(idolIndex)) return 0;
+    var bans = Game.state.datingBans || {};
+    var ban = bans[String(idolIndex)];
+    return Math.max(0, ban.untilTurn - (Game.state.currentTurn || 0));
+  }
+
+  function clearDatingBan(idolIndex) {
+    if (!Game.state.datingBans) return;
+    delete Game.state.datingBans[String(idolIndex)];
+    autoSave();
+  }
+
+  /**
+   * 封口协议：设置/获取
+   */
+  function hasGagOrder(idolIndex) {
+    var orders = Game.state.gagOrders || {};
+    return !!orders[String(idolIndex)];
+  }
+
+  function setGagOrder(idolIndex) {
+    if (!Game.state.gagOrders) Game.state.gagOrders = {};
+    Game.state.gagOrders[String(idolIndex)] = {
+      signed: true,
+      turn: Game.state.currentTurn || 0
+    };
+    autoSave();
+  }
+
+  function getGagOrder(idolIndex) {
+    var orders = Game.state.gagOrders || {};
+    return orders[String(idolIndex)] || null;
+  }
+
+  /**
+   * 限制接触：设置/获取
+   * level: 1=轻度(好感获取-30%), 2=中度(好感获取-50%), 3=重度(好感获取-70%)
+   */
+  function hasContactRestriction(idolIndex) {
+    var restrictions = Game.state.contactRestrictions || {};
+    var r = restrictions[String(idolIndex)];
+    if (!r) return false;
+    if ((Game.state.currentTurn || 0) >= r.untilTurn) return false;
+    return true;
+  }
+
+  function setContactRestriction(idolIndex, level, turns) {
+    if (!Game.state.contactRestrictions) Game.state.contactRestrictions = {};
+    Game.state.contactRestrictions[String(idolIndex)] = {
+      level: level || 1,
+      untilTurn: (Game.state.currentTurn || 0) + (turns || 3),
+      startedTurn: Game.state.currentTurn || 0
+    };
+    autoSave();
+  }
+
+  function getContactRestriction(idolIndex) {
+    if (!hasContactRestriction(idolIndex)) return null;
+    var restrictions = Game.state.contactRestrictions || {};
+    return restrictions[String(idolIndex)] || null;
+  }
+
+  /**
+   * 家人反应：记录/获取
+   */
+  function setFamilyReaction(idolIndex, reaction) {
+    if (!Game.state.familyReactions) Game.state.familyReactions = {};
+    Game.state.familyReactions[String(idolIndex)] = {
+      reaction: reaction,
+      turn: Game.state.currentTurn || 0
+    };
+    autoSave();
+  }
+
+  function getFamilyReaction(idolIndex) {
+    var reactions = Game.state.familyReactions || {};
+    return reactions[String(idolIndex)] || null;
+  }
+
+  /**
+   * 队友态度：记录/获取
+   */
+  function setTeammateAttitude(idolIndex, attitude) {
+    if (!Game.state.teammateAttitudes) Game.state.teammateAttitudes = {};
+    Game.state.teammateAttitudes[String(idolIndex)] = {
+      attitude: attitude,
+      turn: Game.state.currentTurn || 0
+    };
+    autoSave();
+  }
+
+  function getTeammateAttitude(idolIndex) {
+    var attitudes = Game.state.teammateAttitudes || {};
+    return attitudes[String(idolIndex)] || null;
+  }
+
+  /**
+   * 闺蜜态度冷却
+   */
+  function setBestFriendCooldown(turn) {
+    Game.state.lastBestFriendTurn = turn || Game.state.currentTurn || 0;
+    autoSave();
+  }
+
+  function getBestFriendCooldown() {
+    return Game.state.lastBestFriendTurn || 0;
+  }
+
   // ===== 事件系统通用标记（阶段9） =====
 
   /**
@@ -900,6 +1032,13 @@ Game.State = (() => {
     if (!data.locationSharing) data.locationSharing = {};
     if (!data.checkInCooldowns) data.checkInCooldowns = {};
     if (data.lastFamousSceneTurn === undefined) data.lastFamousSceneTurn = 0;
+    // 亲友社交圈 & 公司干涉字段（阶段8补充）
+    if (!data.datingBans) data.datingBans = {};
+    if (!data.gagOrders) data.gagOrders = {};
+    if (!data.contactRestrictions) data.contactRestrictions = {};
+    if (!data.familyReactions) data.familyReactions = {};
+    if (!data.teammateAttitudes) data.teammateAttitudes = {};
+    if (data.lastBestFriendTurn === undefined) data.lastBestFriendTurn = 0;
     // 补填已有恋爱/已婚关系纪念日（估算值，避免立即触发）
     (data.idols || []).forEach(function(idol, i) {
       var key = String(i);
@@ -1068,6 +1207,23 @@ Game.State = (() => {
     hasLocationSharing,
     setCheckInCooldown,
     getCheckInCooldown,
+    // 亲友社交圈 & 公司干涉（阶段8补充）
+    hasDatingBan,
+    setDatingBan,
+    getDatingBanRemaining,
+    clearDatingBan,
+    hasGagOrder,
+    setGagOrder,
+    getGagOrder,
+    hasContactRestriction,
+    setContactRestriction,
+    getContactRestriction,
+    setFamilyReaction,
+    getFamilyReaction,
+    setTeammateAttitude,
+    getTeammateAttitude,
+    setBestFriendCooldown,
+    getBestFriendCooldown,
     // 事件系统（阶段9）
     setEventFlag,
     hasEventFlag,
