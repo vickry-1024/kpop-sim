@@ -365,6 +365,28 @@
   flex-shrink: 0;
 }
 
+/* 联系人列表未读消息角标 */
+.chat-contact-unread {
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #FF3B30;
+  color: #FFF;
+  font-size: 11px;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(255,59,48,0.4);
+  animation: badgePopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.chat-contact-unread.has-unread {
+  display: flex;
+}
+
 /* 联系人列表分区标签 */
 .chat-section-label {
   padding: 10px var(--spacing-md) 6px;

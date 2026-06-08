@@ -84,6 +84,7 @@ Game.PhoneChat = (() => {
             '<span class="chat-contact-type-badge friend-type-' + friend.type + '">' + typeLabel + '</span>' +
             '<span class="chat-contact-last-msg" id="chat-friend-last-msg-' + friend.id + '">' + (friend.desc || '随时可以找我聊天～') + '</span>' +
           '</div>' +
+          '<span class="chat-contact-unread" id="chat-friend-unread-' + friend.id + '"></span>' +
           '<span class="chat-contact-time" id="chat-friend-time-' + friend.id + '"></span>' +
         '</button>';
       });
@@ -106,6 +107,7 @@ Game.PhoneChat = (() => {
               '<span class="chat-contact-type-badge manager-type-' + (intervention.action || 'warn') + '">经纪人</span>' +
               '<span class="chat-contact-last-msg" id="chat-manager-last-msg-' + i + '">' + (intervention.lastMessage || '有新消息') + '</span>' +
             '</div>' +
+            '<span class="chat-contact-unread" id="chat-manager-unread-' + i + '"></span>' +
           '</button>';
         }
         html += '<button class="chat-contact-item" onclick="Game.PhoneChat.openConversation(' + i + ', \'' + phoneType + '\')">' +
@@ -118,6 +120,7 @@ Game.PhoneChat = (() => {
               (idol.stats.affection >= 60 ? '💜 关系亲密' : idol.stats.affection >= 30 ? '正在变熟...' : '新认识的爱豆') +
             '</span>' +
           '</div>' +
+          '<span class="chat-contact-unread" id="chat-unread-' + i + '"></span>' +
           '<span class="chat-contact-time" id="chat-time-' + i + '"></span>' +
         '</button>' +
         managerRowHTML;
@@ -196,6 +199,18 @@ Game.PhoneChat = (() => {
           }
         }
       } catch (e) { /* 无历史 */ }
+
+      // 加载未读消息数
+      var unreadCount = getUnreadCount(i, phoneType);
+      var unreadEl = document.getElementById('chat-unread-' + i);
+      if (unreadEl) {
+        if (unreadCount > 0) {
+          unreadEl.textContent = unreadCount > 99 ? '99+' : unreadCount;
+          unreadEl.classList.add('has-unread');
+        } else {
+          unreadEl.classList.remove('has-unread');
+        }
+      }
     }
 
     // 加载好友最近消息
@@ -211,6 +226,18 @@ Game.PhoneChat = (() => {
           if (fTimeEl && fLastMsg.time) fTimeEl.textContent = formatTime(fLastMsg.time);
         }
       } catch (e) { /* 无好友历史 */ }
+
+      // 好友未读消息数
+      var fUnread = getFriendUnreadCount(friends[fi].id);
+      var fUnreadEl = document.getElementById('chat-friend-unread-' + friends[fi].id);
+      if (fUnreadEl) {
+        if (fUnread > 0) {
+          fUnreadEl.textContent = fUnread > 99 ? '99+' : fUnread;
+          fUnreadEl.classList.add('has-unread');
+        } else {
+          fUnreadEl.classList.remove('has-unread');
+        }
+      }
     }
 
     // 加载经纪人最近消息
@@ -223,10 +250,53 @@ Game.PhoneChat = (() => {
           if (mMsgEl) mMsgEl.textContent = mLastMsg.text;
         }
       } catch (e) { /* 无经纪人历史 */ }
+
+      // 经纪人未读消息数
+      var mUnread = getManagerUnreadCount(mi);
+      var mUnreadEl = document.getElementById('chat-manager-unread-' + mi);
+      if (mUnreadEl) {
+        if (mUnread > 0) {
+          mUnreadEl.textContent = mUnread > 99 ? '99+' : mUnread;
+          mUnreadEl.classList.add('has-unread');
+        } else {
+          mUnreadEl.classList.remove('has-unread');
+        }
+      }
     }
   }
 
   // ===== 对话界面 =====
+
+  /**
+   * 从对话界面返回联系人列表（而非手机主屏幕）
+   * @param {string} phoneType - 'main' | 'secret'
+   */
+  function backToContactList(phoneType) {
+    _currentIdolIndex = null;
+
+    var container = _getContentEl();
+    if (!container) return;
+
+    // 恢复标题
+    var titleEl = document.getElementById('phone-app-title');
+    if (titleEl) {
+      titleEl.textContent = '💬 ' + (phoneType === 'secret' ? '私密聊天' : '聊天');
+    }
+
+    // 恢复返回按钮为关闭APP
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.onclick = function() { Game.Phone.closeApp(); };
+    }
+
+    // 重新渲染联系人列表
+    if (phoneType === 'secret') {
+      var idolIndex = Game.Phone.getSecretPhoneIdolIndex ? Game.Phone.getSecretPhoneIdolIndex() : null;
+      renderSecretContact(container, idolIndex);
+    } else {
+      renderContactList(container, phoneType);
+    }
+  }
 
   /**
    * 打开与爱豆的对话
@@ -255,6 +325,12 @@ Game.PhoneChat = (() => {
     // 更新标题
     const titleEl = document.getElementById('phone-app-title');
     if (titleEl) titleEl.textContent = '💬 ' + idolName;
+
+    // 更新返回按钮：回到联系人列表而非手机主屏幕
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.onclick = function() { Game.PhoneChat.backToContactList(phoneType); };
+    }
 
     // 渲染对话界面
     container.innerHTML = `
@@ -631,6 +707,220 @@ Game.PhoneChat = (() => {
     }
   }
 
+  // ===== 性格风格系统 =====
+
+  /**
+   * 检测爱豆的性格风格类型
+   * @param {Object} idol
+   * @returns {string} 风格类型：'cold'|'sunny'|'tsundere'|'gentle'|'quirky'|'bossy'|'gapmoe'|'cute'|'neutral'
+   */
+  function detectPersonalityStyle(idol) {
+    var text = ((idol.personalityTags || []).join(' ') + ' ' + (idol.personalityCustom || '')).toLowerCase();
+
+    // 按优先级匹配（先匹配更具体的）
+    if (text.indexOf('反差萌') >= 0 || text.indexOf('反差') >= 0) return 'gapmoe';
+    if (text.indexOf('傲娇') >= 0) return 'tsundere';
+    if (text.indexOf('四次元') >= 0 || text.indexOf('神秘') >= 0) return 'quirky';
+    if (text.indexOf('高冷') >= 0 || text.indexOf('冷都') >= 0) return 'cold';
+    if (text.indexOf('霸气') >= 0 || text.indexOf('强势') >= 0 || text.indexOf('女王') >= 0 || text.indexOf('霸总') >= 0) return 'bossy';
+    if (text.indexOf('阳光') >= 0 || text.indexOf('元气') >= 0 || text.indexOf('开朗') >= 0 || text.indexOf('活泼') >= 0 || text.indexOf('搞笑') >= 0) return 'sunny';
+    if (text.indexOf('温柔') >= 0 || text.indexOf('软') >= 0 || text.indexOf('暖') >= 0 || text.indexOf('治愈') >= 0) return 'gentle';
+    if (text.indexOf('可爱') >= 0 || text.indexOf('萌') >= 0 || text.indexOf('甜') >= 0 || text.indexOf('忙内') >= 0) return 'cute';
+
+    return 'neutral';
+  }
+
+  /**
+   * 根据性格风格修饰回复文本
+   * @param {string} text - 原始回复
+   * @param {string} style - 性格风格类型
+   * @param {number} affection - 好感度（影响风格强度）
+   * @returns {string} 风格化后的回复
+   */
+  function applyPersonalityStyle(text, style, affection) {
+    if (!text || style === 'neutral') return text;
+
+    var aff = affection || 0;
+    // 好感度越高，性格特征越明显（越放得开）
+    var intensity = aff >= 60 ? 1.0 : aff >= 30 ? 0.7 : 0.4;
+
+    switch (style) {
+      case 'cold':
+        return applyColdStyle(text, intensity);
+      case 'sunny':
+        return applySunnyStyle(text, intensity);
+      case 'tsundere':
+        return applyTsundereStyle(text, intensity);
+      case 'gentle':
+        return applyGentleStyle(text, intensity);
+      case 'quirky':
+        return applyQuirkyStyle(text, intensity);
+      case 'bossy':
+        return applyBossyStyle(text, intensity);
+      case 'gapmoe':
+        return applyGapMoeStyle(text, intensity);
+      case 'cute':
+        return applyCuteStyle(text, intensity);
+      default:
+        return text;
+    }
+  }
+
+  // ---- 各风格修饰函数 ----
+
+  function applyColdStyle(text, intensity) {
+    // 高冷：话少、简洁、偶尔反差暖
+    // intensity < 0.6: 保持原样偏冷；>= 0.6: 偶尔加温暖后缀
+    var t = text;
+    // 去掉过多的感叹号和emoji（高冷不爱用）
+    if (intensity < 0.8) {
+      t = t.replace(/！！+/g, '。');
+      t = t.replace(/！/g, '。');
+      t = t.replace(/[😊💜✨🥺💕🌟]/g, '');
+      t = t.replace(/ㅋㅋㅋ+/g, '');
+    }
+    // 话少：如果文本过长，取前1-2句
+    if (intensity < 0.7 && t.length > 30) {
+      var sentences = t.split(/[。！？]/);
+      if (sentences.length > 2) {
+        t = sentences.slice(0, 2).join('。') + '。';
+      }
+    }
+    // 好感度高时偶尔反差暖
+    if (intensity >= 0.8 && Math.random() < 0.35) {
+      var warmSuffixes = [' ..也不是不可以。', ' ..嗯。', ' （其实我也这么想）', ' 你..算了。', ''];
+      t = t.replace(/。$/, '') + warmSuffixes[Math.floor(Math.random() * warmSuffixes.length)];
+    }
+    return t;
+  }
+
+  function applySunnyStyle(text, intensity) {
+    // 阳光：话多、感叹号、emoji、积极
+    var t = text;
+    // 加感叹号
+    if (intensity >= 0.6 && !t.match(/[！!]$/)) {
+      t = t.replace(/[。.]$/, '！');
+      if (!t.match(/[！!]$/)) t += '！';
+    }
+    // 加emoji
+    if (intensity >= 0.7 && Math.random() < 0.5 && !t.match(/[💪✨🌟😆🎉]/)) {
+      var emojis = [' ✨', ' 💪', ' 🌟', ' 😆', ' 🎉', ''];
+      t += emojis[Math.floor(Math.random() * emojis.length)];
+    }
+    // 加语气词
+    if (intensity >= 0.8 && Math.random() < 0.4 && t.indexOf('Fighting') < 0 && t.indexOf('加油') < 0) {
+      var extras = [' 超开心的！！', ' 今天也是元气满满的一天！', ' 哈哈是吧是吧！', ' 对吧对吧！'];
+      if (t.length < 40) t += extras[Math.floor(Math.random() * extras.length)];
+    }
+    return t;
+  }
+
+  function applyTsundereStyle(text, intensity) {
+    // 傲娇：嘴硬心软
+    var t = text;
+    if (intensity >= 0.6 && Math.random() < 0.45) {
+      var prefixes = ['哼，', '才不是呢..', '笨蛋，', '又不是特意等你的..', '随、随便啦。', ''];
+      var prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+      if (prefix && t.indexOf(prefix) !== 0) t = prefix + t;
+    }
+    // 偶尔暴露真心
+    if (intensity >= 0.8 && Math.random() < 0.3) {
+      var honestSuffixes = [' ..其实有点想你。', ' 但、但是你在的话也挺好的。', ' 我只是顺便关心一下而已！', ''];
+      t += honestSuffixes[Math.floor(Math.random() * honestSuffixes.length)];
+    }
+    return t;
+  }
+
+  function applyGentleStyle(text, intensity) {
+    // 温柔：软语、波浪号、关心
+    var t = text;
+    // 加波浪号
+    if (intensity >= 0.5 && !t.match(/～$/)) {
+      t = t.replace(/[。.]$/, '～');
+    }
+    // 关心后缀
+    if (intensity >= 0.7 && Math.random() < 0.4) {
+      var careSuffixes = [' 你也要照顾好自己哦～', ' 别太累了呀～', ' 有什么事都可以跟我说哦', ' 我会一直在这里的～'];
+      if (t.length < 50) t += careSuffixes[Math.floor(Math.random() * careSuffixes.length)];
+    }
+    // 软语替换
+    if (intensity >= 0.6) {
+      t = t.replace(/知道/g, '知道呀');
+      t = t.replace(/好的/g, '好的呢');
+    }
+    return t;
+  }
+
+  function applyQuirkyStyle(text, intensity) {
+    // 四次元：跳脱、意想不到、有趣
+    var t = text;
+    if (intensity >= 0.5 && Math.random() < 0.35) {
+      var quirkyAddons = [
+        ' 对了你相信平行宇宙吗？',
+        ' 说起来我今天看到一只鸽子在跳舞..',
+        ' 你觉不觉得云长得像一只炸鸡？',
+        ' 我突然想到一个超好笑的冷笑话..算了还是不说了ㅋㅋ',
+        ' 话说回来，你觉得外星人存在吗？',
+        ' 🤔 不过这个让我想到了之前的一个梦..'
+      ];
+      if (t.length < 50) t += quirkyAddons[Math.floor(Math.random() * quirkyAddons.length)];
+    }
+    return t;
+  }
+
+  function applyBossyStyle(text, intensity) {
+    // 霸气：直接、有主见、干脆
+    var t = text;
+    if (intensity >= 0.6) {
+      // 去掉犹豫的语气词
+      t = t.replace(/[～~]+/g, '');
+      t = t.replace(/[。.]$/, '。');
+      // 加决断力
+      if (Math.random() < 0.3 && t.indexOf('听我的') < 0 && t.indexOf('我来') < 0) {
+        t = t.replace(/^/, '听我说，');
+      }
+    }
+    return t;
+  }
+
+  function applyGapMoeStyle(text, intensity) {
+    // 反差萌：前冷后暖/前酷后可爱
+    var t = text;
+    if (intensity >= 0.6 && Math.random() < 0.4) {
+      // 把文本分成两半，前半保持原样，后半加可爱元素
+      var mid = Math.floor(t.length / 2);
+      var firstHalf = t.substring(0, mid);
+      var secondHalf = t.substring(mid);
+      // 后半变可爱
+      if (!secondHalf.match(/[～♥💕]/)) {
+        secondHalf = secondHalf.replace(/[。.]$/, '..其实也不是不行啦～♥');
+      }
+      t = firstHalf + secondHalf;
+    }
+    return t;
+  }
+
+  function applyCuteStyle(text, intensity) {
+    // 可爱：撒娇、语气词、颜文字
+    var t = text;
+    // 加撒娇语气
+    if (intensity >= 0.6) {
+      t = t.replace(/了/g, '了啦');
+      t = t.replace(/吗/g, '嘛');
+      t = t.replace(/呢/g, '呢～');
+    }
+    // 加ㅠㅠ
+    if (intensity >= 0.7 && Math.random() < 0.4 && t.indexOf('ㅠ') < 0) {
+      t += ' ㅠㅠ';
+    }
+    // 撒娇后缀
+    if (intensity >= 0.8 && Math.random() < 0.35) {
+      var cuteSuffixes = [' 好嘛好嘛～', ' 人家不是故意的啦', ' 嘿嘿最喜欢你了～', ' 啾咪♥'];
+      if (t.length < 50) t += cuteSuffixes[Math.floor(Math.random() * cuteSuffixes.length)];
+    }
+    return t;
+  }
+
   /**
    * 根据玩家回复生成爱豆回复（优先AI，降级预设）
    * @param {Object} idol - 爱豆对象
@@ -661,8 +951,10 @@ Game.PhoneChat = (() => {
     }
 
     // 降级：预设回复逻辑（每个好感度层级20条，大幅增加多样性）
+    // 性格风格会在选出回复后进行修饰
     const aff = idol.stats.affection || 0;
     const honorific = Game.Actions.getHonorific(idol.gender);
+    var replyText = '';
 
     if (aff >= 60) {
       const replies = [
@@ -692,7 +984,7 @@ Game.PhoneChat = (() => {
         '刚才看了一个超级搞笑的综艺笑到肚子疼，回头分享给你！',
         '今天学了一个新技能！你猜是什么？提示：和厨房有关ㅋㅋ'
       ];
-      return replies[Math.floor(Math.random() * replies.length)];
+      replyText = replies[Math.floor(Math.random() * replies.length)];
     } else if (aff >= 30) {
       const replies = [
         // 日常聊天类
@@ -722,7 +1014,7 @@ Game.PhoneChat = (() => {
         '你说我下辈子做什么好？..开个玩笑，这辈子做爱豆虽然累但是也挺好的',
         '你知道吗我现在一天能记住20个人的名字了，以前10个都记不住'
       ];
-      return replies[Math.floor(Math.random() * replies.length)];
+      replyText = replies[Math.floor(Math.random() * replies.length)];
     } else {
       const replies = [
         // 礼貌回应
@@ -751,8 +1043,13 @@ Game.PhoneChat = (() => {
         '我会好好努力的！不想让支持我的人失望',
         '好的！下次有机会聊更多～先不说了要去练习了'
       ];
-      return replies[Math.floor(Math.random() * replies.length)];
+      replyText = replies[Math.floor(Math.random() * replies.length)];
     }
+
+    // 应用性格风格修饰
+    var style = detectPersonalityStyle(idol);
+    replyText = applyPersonalityStyle(replyText, style, aff);
+    return replyText;
   }
 
   /**
@@ -832,6 +1129,12 @@ Game.PhoneChat = (() => {
     // 更新标题
     var titleEl = document.getElementById('phone-app-title');
     if (titleEl) titleEl.textContent = '👥 ' + friend.name + '（' + (FRIEND_TYPE_LABELS[friend.type] || '好友') + '）';
+
+    // 更新返回按钮：回到联系人列表
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.onclick = function() { Game.PhoneChat.backToContactList('main'); };
+    }
 
     // 渲染对话界面
     container.innerHTML = '<div class="chat-conversation">' +
@@ -1269,6 +1572,12 @@ Game.PhoneChat = (() => {
     var titleEl = document.getElementById('phone-app-title');
     if (titleEl) titleEl.textContent = '📋 ' + (intervention.managerName || '经纪人') + '（经纪人）';
 
+    // 更新返回按钮：回到联系人列表
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.onclick = function() { Game.PhoneChat.backToContactList('main'); };
+    }
+
     // 渲染对话界面
     container.innerHTML = '<div class="chat-conversation">' +
       '<div class="chat-conv-messages" id="chat-conv-messages">' +
@@ -1503,6 +1812,7 @@ Game.PhoneChat = (() => {
     }
 
     // 预设消息池
+    var msgText = '';
     if (aff >= 60) {
       const msgs = [
         '今天练习好累啊..但是一想到能见到你就觉得都值得了💜',
@@ -1521,7 +1831,7 @@ Game.PhoneChat = (() => {
         '刚和成员们聊到理想型..我描述的那个人好像你',
         '你知道吗，我今天在台上看到观众席有个人很像你，差点忘记动作了'
       ];
-      return msgs[Math.floor(Math.random() * msgs.length)];
+      msgText = msgs[Math.floor(Math.random() * msgs.length)];
     } else if (aff >= 30) {
       const msgs = [
         '刚练习完！今天学了一首新歌的编舞，好难但是好有意思',
@@ -1540,7 +1850,7 @@ Game.PhoneChat = (() => {
         '录了新歌的demo！还不能给你们听但是真的超好听',
         '你知道吗今天我在街上看到一只猫，长得好像我们团的忙内ㅋㅋㅋ'
       ];
-      return msgs[Math.floor(Math.random() * msgs.length)];
+      msgText = msgs[Math.floor(Math.random() * msgs.length)];
     } else {
       const msgs = [
         '今天练习好累啊～不过想到有粉丝的支持就觉得很有动力！',
@@ -1554,8 +1864,13 @@ Game.PhoneChat = (() => {
         '有点困..但是还要再练一会才能休息。大家工作/学习也辛苦了吧？',
         '突然想到我们团的应援色，每次看到都好感动'
       ];
-      return msgs[Math.floor(Math.random() * msgs.length)];
+      msgText = msgs[Math.floor(Math.random() * msgs.length)];
     }
+
+    // 应用性格风格修饰
+    var style = detectPersonalityStyle(idol);
+    msgText = applyPersonalityStyle(msgText, style, aff);
+    return msgText;
   }
 
   /**

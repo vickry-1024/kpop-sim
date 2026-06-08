@@ -188,6 +188,12 @@ Game.Phone = (() => {
     // 设置标题
     if (appTitle) appTitle.textContent = app.icon + ' ' + app.name;
 
+    // 确保返回按钮恢复为关闭APP（可能在对话中被修改过）
+    var backBtn = document.querySelector('.phone-app-back');
+    if (backBtn) {
+      backBtn.onclick = function() { Game.Phone.closeApp(); };
+    }
+
     // 渲染APP内容
     renderAppContent(appId, appContent);
   }
