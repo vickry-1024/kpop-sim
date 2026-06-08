@@ -167,12 +167,12 @@ Game.Actions = (() => {
       desc: '通过人脉打听爱豆行程，有风险'
     },
     {
-      id: 'checkin', category: 'intel', name: '查岗', icon: '📞',
+      id: 'checkin', category: 'intel', name: '打电话关心', icon: '📞',
       staminaCost: 5,
       effects: { stress: [-3, 1], suspicion: [0, 2] },
       needsTarget: true,
-      subType: 'chat',  // 弹出聊天对话界面（爱豆回应查岗）
-      desc: '打电话查岗，看看爱豆在干什么'
+      subType: 'chat',  // 弹出聊天对话界面（爱豆回应）
+      desc: '打电话关心一下爱豆的近况，看看ta在干什么'
     },
 
     // ---- 休息恢复 ----

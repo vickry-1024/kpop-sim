@@ -341,7 +341,17 @@
   font-weight: 500;
   background: var(--bg-card);
   color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
   transition: all var(--transition-fast);
+}
+
+.gender-btn:hover {
+  background: var(--color-primary-lighter);
+}
+
+.gender-btn:active {
+  transform: scale(0.97);
 }
 
 .gender-btn.selected {

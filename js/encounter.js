@@ -54,8 +54,8 @@ Game.Encounter = (() => {
         '<input type="text" id="encounter-name" class="setup-input" value="' + escapeHtml(defaultName) + '" maxlength="20">' +
         '<label class="setup-label">性别</label>' +
         '<div class="gender-toggle" id="encounter-gender">' +
-          '<button class="gender-btn selected" data-gender="male" onclick="Game.Encounter.selectGender(\'male\')">♂ 男</button>' +
-          '<button class="gender-btn" data-gender="female" onclick="Game.Encounter.selectGender(\'female\')">♀ 女</button>' +
+          '<button type="button" class="gender-btn selected" data-gender="male" onclick="Game.Encounter.selectGender(\'male\')">♂ 男</button>' +
+          '<button type="button" class="gender-btn" data-gender="female" onclick="Game.Encounter.selectGender(\'female\')">♀ 女</button>' +
         '</div>' +
         '<label class="setup-label">所属团体</label>' +
         '<input type="text" id="encounter-group" class="setup-input" value="' + escapeHtml(defaultGroup) + '" maxlength="30">' +
@@ -99,14 +99,24 @@ Game.Encounter = (() => {
    * 性别切换
    */
   function selectGender(gender) {
+    // 更新按钮样式
     var toggle = document.getElementById('encounter-gender');
     if (toggle) {
-      toggle.querySelectorAll('.gender-btn').forEach(function(b) {
-        b.classList.toggle('selected', b.dataset.gender === gender);
-      });
+      var buttons = toggle.querySelectorAll('.gender-btn');
+      for (var i = 0; i < buttons.length; i++) {
+        if (buttons[i].dataset.gender === gender) {
+          buttons[i].classList.add('selected');
+        } else {
+          buttons[i].classList.remove('selected');
+        }
+      }
     }
+    // 存储选择的性别
     var body = document.getElementById('encounter-modal-body');
-    if (body) body.dataset.gender = gender;
+    if (body) {
+      body.dataset.gender = gender;
+    }
+    Game.DEBUG && console.log('[Encounter] 性别选择: ' + gender);
   }
 
   /**

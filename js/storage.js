@@ -312,6 +312,21 @@ Game.Storage = (() => {
   }
 
   /**
+   * 清除所有聊天历史（新游戏开始时调用）
+   * 防止旧存档的聊天记录泄露到新存档
+   */
+  async function clearAllChatData() {
+    var db = await openDB();
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction('chatHistory', 'readwrite');
+      var store = tx.objectStore('chatHistory');
+      var request = store.clear();
+      request.onsuccess = function() { resolve(); };
+      request.onerror = function() { reject(request.error); };
+    });
+  }
+
+  /**
    * 清除所有游戏数据
    */
   async function clearAll() {
@@ -361,6 +376,7 @@ Game.Storage = (() => {
     getStorageUsage,
     // 其他
     clearAll,
+    clearAllChatData,
     KEYS
   };
 })();

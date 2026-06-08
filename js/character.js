@@ -252,9 +252,9 @@ Game.Setup = (() => {
                    data-field="name"
                    onchange="Game.Setup.updateIdolField(${i}, 'name', this.value)">
             <div class="gender-toggle" data-idol="${i}">
-              <button class="gender-btn ${idol.gender === 'male' ? 'selected' : ''}"
+              <button type="button" class="gender-btn ${idol.gender === 'male' ? 'selected' : ''}"
                       onclick="Game.Setup.setIdolGender(${i}, 'male', this)">♂ 男</button>
-              <button class="gender-btn ${idol.gender === 'female' ? 'selected' : ''}"
+              <button type="button" class="gender-btn ${idol.gender === 'female' ? 'selected' : ''}"
                       onclick="Game.Setup.setIdolGender(${i}, 'female', this)">♀ 女</button>
             </div>
           </div>
@@ -562,6 +562,14 @@ Game.Setup = (() => {
 
   async function startGame() {
     Game.DEBUG && console.log('[Setup] 开始游戏...');
+
+    // 0. 清除旧存档的聊天历史（防止跨存档泄露）
+    try {
+      await Game.Storage.clearAllChatData();
+      Game.DEBUG && console.log('[Setup] 旧聊天记录已清除');
+    } catch (e) {
+      console.warn('[Setup] 清除聊天记录失败（可忽略）:', e);
+    }
 
     // 1. 保存照片到IndexedDB
     for (let i = 0; i < _idolsData.length; i++) {
